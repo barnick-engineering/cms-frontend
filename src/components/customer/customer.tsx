@@ -60,20 +60,20 @@ export default function Customer() {
           },
         }
       );
-      // Log the response structure to debug
-      console.log("API Response structure:", {
-        type: typeof response.data,
-        isArray: Array.isArray(response.data),
-        sample: response.data.length > 0 ? response.data[0] : null,
-        fullResponse: response.data,
-      });
 
       // Ensure we're setting an array
-      const customersData = Array.isArray(response.data)
+      let customersData = Array.isArray(response.data)
         ? response.data
         : response.data.results || response.data.data || [];
 
+      // Map the snake_case to camelCase
+      customersData = customersData.map((customer: any) => ({
+        ...customer,
+        contactPersonName: customer.contact_person_name,
+      }));
+
       setCustomers(customersData);
+      console.log("Fetched customers:", customersData);
     } catch (error) {
       console.error("Failed to fetch customers", error);
     } finally {
@@ -86,12 +86,7 @@ export default function Customer() {
   }, []);
 
   // This useEffect will run whenever customers state changes
-  useEffect(() => {
-    console.log("Updated customers state:", {
-      length: customers.length,
-      data: customers,
-    });
-  }, [customers]);
+  useEffect(() => {}, [customers]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -102,11 +97,11 @@ export default function Customer() {
       await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/customer/`,
         {
-          name,
-          email,
-          phone,
-          address,
-          contactPersonName,
+          name: name,
+          email: email,
+          phone: phone,
+          address: address,
+          contact_person_name: contactPersonName,
         },
         {
           headers: {
@@ -303,7 +298,7 @@ export default function Customer() {
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Contract Person Name
+                    Contact Person Name
                   </TableCell>
                 </TableRow>
               </TableHeader>
