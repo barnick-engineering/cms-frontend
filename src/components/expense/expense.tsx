@@ -23,7 +23,7 @@ interface Customer {
   status: boolean;
 }
 
-export default function Customer() {
+export default function Expense() {
   const { isOpen, openModal, closeModal } = useModal();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -33,6 +33,7 @@ export default function Customer() {
   const [hideSaveButton, setHideSaveButton] = useState(false);
 
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [expenses, setExpenses] = useState([]);
 
   const handleCloseModal = () => {
     closeModal();
@@ -48,6 +49,30 @@ export default function Customer() {
     setContactPersonName("");
     setHideSaveButton(false);
   };
+
+  const fetchExpenses = async () => {
+    // setLoading(true);
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/expense/`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access")}`,
+          },
+        }
+      );
+      setExpenses(response?.data?.data);
+      console.log("Fetched expenses:", response.data);
+    } catch (error) {
+      console.error("Failed to fetch expenses", error);
+    } finally {
+      // setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchExpenses();
+  }, []);
 
   const fetchCustomers = async () => {
     // setLoading(true);
@@ -134,17 +159,14 @@ export default function Customer() {
     setHideSaveButton(true);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: number) => {
     try {
-      await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/customer/${id}/`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("access")}`,
-          },
-        }
-      );
-      fetchCustomers();
+      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/expense/${id}/`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access")}`,
+        },
+      });
+      fetchExpenses();
     } catch (error) {
       console.error(error);
     }
@@ -160,7 +182,7 @@ export default function Customer() {
         <div className="flex flex-col px-2 overflow-y-auto custom-scrollbar">
           <div>
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-              Create Customer
+              Create Expense
             </h3>
           </div>
           <form onSubmit={handleSubmit}>
@@ -261,7 +283,7 @@ export default function Customer() {
           </form>
         </div>
       </Modal>
-      <Button onClick={openModal}>Create Customer</Button>
+      <Button onClick={openModal}>Create Expense</Button>
 
       <div className="mt-5 overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="max-w-full overflow-x-auto">
@@ -274,75 +296,81 @@ export default function Customer() {
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Name
+                    No
                   </TableCell>
                   <TableCell
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Phone
+                    Customer
                   </TableCell>
                   <TableCell
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Email
+                    Workorder
                   </TableCell>
                   <TableCell
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Address
+                    purpose
                   </TableCell>
                   <TableCell
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Contact Person Name
+                    amount
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                  >
+                    disbursement date
                   </TableCell>
                 </TableRow>
               </TableHeader>
 
               {/* Table Body */}
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                {customers.length > 0 ? (
-                  customers.map((customer) => (
-                    <TableRow key={customer.id || "n/a"}>
+                {expenses.length > 0 ? (
+                  expenses.map((expense) => (
+                    <TableRow key={expense?.id}>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {customer.name || "n/a"}
+                        {expense.no}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {customer.phone || "n/a"}
+                        {expense.client}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {customer.email || "n/a"}
+                        {expense.workorder}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {customer.address.length > 30
-                          ? customer.address.slice(0, 30) + "..."
-                          : customer.address}
+                        {expense.purpose.length > 30
+                          ? expense.purpose.slice(0, 30) + "..."
+                          : expense.purpose}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {customer.contactPersonName || "n/a"}
+                        {expense.amount}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                         <button
                           type="button"
-                          onClick={() => handleView(customer?.id)}
+                          onClick={() => handleView(expense?.id)}
                           className="inline-flex items-center justify-center gap-2 rounded-lg"
                         >
                           <ListIcon />
                         </button>
                         {/* <button
                           type="button"
-                          onClick={() => handleEdit(customer?.id)}
+                          onClick={() => handleEdit(expense?.id)}
                           className="inline-flex items-center justify-center gap-2 rounded-lg"
                         >
                           <PencilIcon />
                         </button> */}
                         <button
                           type="button"
-                          onClick={() => handleDelete(customer?.id)}
+                          onClick={() => handleDelete(expense?.id)}
                           className="inline-flex items-center justify-center gap-2 rounded-lg"
                         >
                           <TrashBinIcon />
@@ -353,7 +381,7 @@ export default function Customer() {
                 ) : (
                   <TableRow>
                     <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                      No customers found
+                      No expenses found
                     </TableCell>
                   </TableRow>
                 )}

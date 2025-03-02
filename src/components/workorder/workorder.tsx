@@ -13,7 +13,7 @@ import {
 } from "../ui/table";
 
 interface Customer {
-  guid: string;
+  id: number;
   name: string;
   email: string;
   phone: string;
@@ -157,9 +157,9 @@ export default function Workorder() {
     }
   };
 
-  const handleView = (guid: string) => {
+  const handleView = (id: string) => {
     // Handle view logic here
-    const customer = customers.find((c) => c.guid === guid);
+    const customer = customers.find((c) => c.id === id);
     if (customer) {
       // Set form fields with customer data
     }
@@ -168,10 +168,10 @@ export default function Workorder() {
     setHideSaveButton(true);
   };
 
-  const handleDelete = async (guid: string) => {
+  const handleDelete = async (id: string) => {
     try {
       await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/work-order/${guid}/`,
+        `${import.meta.env.VITE_BACKEND_URL}/work-order/${id}/`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access")}`,
@@ -212,7 +212,7 @@ export default function Workorder() {
                     >
                       <option value="">Select a customer</option>
                       {customers.map((customer) => (
-                        <option key={customer.guid} value={customer.guid}>
+                        <option key={customer.id} value={customer.id}>
                           {customer.name}
                         </option>
                       ))}
@@ -383,7 +383,7 @@ export default function Workorder() {
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {workorders.length > 0 ? (
                   workorders.map((workorder) => (
-                    <TableRow key={workorder?.guid || "n/a"}>
+                    <TableRow key={workorder?.id || "n/a"}>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                         {workorder?.no || "n/a"}
                       </TableCell>
@@ -409,14 +409,14 @@ export default function Workorder() {
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                         <button
                           type="button"
-                          onClick={() => handleView(workorder?.guid)}
+                          onClick={() => handleView(workorder?.id)}
                           className="inline-flex items-center justify-center gap-2 rounded-lg"
                         >
                           <ListIcon />
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleDelete(workorder?.guid)}
+                          onClick={() => handleDelete(workorder?.id)}
                           className="inline-flex items-center justify-center gap-2 rounded-lg"
                         >
                           <TrashBinIcon />
