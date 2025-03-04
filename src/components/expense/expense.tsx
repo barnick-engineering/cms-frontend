@@ -31,8 +31,15 @@ export default function Expense() {
   const [address, setAddress] = useState("");
   const [contactPersonName, setContactPersonName] = useState("");
   const [hideSaveButton, setHideSaveButton] = useState(false);
+  const [customer, setCustomer] = useState(0);
+  const [workorder, setWorkorder] = useState(0);
+  const [paidBy, setPaidBy] = useState(0);
+  const [purpose, setPurpose] = useState("");
+  const [amount, setAmount] = useState(0);
 
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [workorders, setWorkorders] = useState([]);
+  const [users, setUsers] = useState([]);
   const [expenses, setExpenses] = useState([]);
 
   const handleCloseModal = () => {
@@ -70,9 +77,22 @@ export default function Expense() {
     }
   };
 
-  useEffect(() => {
-    fetchExpenses();
-  }, []);
+  const fetchUsers = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/account/`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access")}`,
+          },
+        }
+      );
+      console.log("Fetched users:", response?.data?.data);
+      setUsers(response?.data?.data);
+    } catch (error) {
+      console.error("Failed to fetch users", error);
+    }
+  };
 
   const fetchCustomers = async () => {
     // setLoading(true);
@@ -106,8 +126,31 @@ export default function Expense() {
     }
   };
 
+  const fetchWorkorders = async () => {
+    // setLoading(true);
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/work-order/`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access")}`,
+          },
+        }
+      );
+      console.log("Fetched work orders:", response?.data?.data);
+      setWorkorders(response?.data?.data);
+    } catch (error) {
+      console.error("Failed to fetch work orders", error);
+    } finally {
+      // setLoading(false);
+    }
+  };
+
   useEffect(() => {
+    fetchExpenses();
+    fetchUsers();
     fetchCustomers();
+    fetchWorkorders();
   }, []);
 
   // This useEffect will run whenever customers state changes
@@ -120,13 +163,13 @@ export default function Expense() {
     // Handle form submission here
     try {
       await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/customer/`,
+        `${import.meta.env.VITE_BACKEND_URL}/expense/`,
         {
-          name: name,
-          email: email,
-          phone: phone,
-          address: address,
-          contact_person_name: contactPersonName,
+          customer,
+          work_order: workorder,
+          paid_by: paidBy,
+          purpose,
+          amount,
         },
         {
           headers: {
@@ -136,6 +179,7 @@ export default function Expense() {
       );
 
       closeModal();
+      fetchExpenses();
       // fetch customers
       fetchCustomers();
     } catch (e) {
@@ -191,15 +235,57 @@ export default function Expense() {
                 <div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                      Name
+                      Customer
+                    </label>
+                    <select
+                      value={customer}
+                      onChange={(e) => setCustomer(parseInt(e.target.value))}
+                      className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                    >
+                      <option value="">Select a customer</option>
+                      {customers.map((customer) => (
+                        <option key={customer.id} value={customer.id}>
+                          {customer.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-2">
+                <div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                      Work Order
+                    </label>
+                    <select
+                      value={workorder}
+                      onChange={(e) => setWorkorder(parseInt(e.target.value))}
+                      className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                    >
+                      <option value="">Select Work Order</option>
+                      {workorders.map((workorder) => (
+                        <option key={workorder.id} value={workorder.id}>
+                          {workorder.no} {workorder.customer}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-2">
+                <div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                      Purpose
                     </label>
                     <input
                       id="event-title"
                       type="text"
-                      value={name}
+                      value={purpose}
                       className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                      onChange={(e) => setName(e.target.value)}
-                      required
+                      onChange={(e) => setPurpose(e.target.value)}
                     />
                   </div>
                 </div>
@@ -208,15 +294,14 @@ export default function Expense() {
                 <div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                      Phone
+                      Amount
                     </label>
                     <input
                       id="event-title"
-                      type="text"
-                      value={phone}
+                      type="number"
+                      value={amount}
                       className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                      onChange={(e) => setPhone(e.target.value)}
-                      required
+                      onChange={(e) => setAmount(parseInt(e.target.value))}
                     />
                   </div>
                 </div>
@@ -225,48 +310,20 @@ export default function Expense() {
                 <div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                      Email
+                      Paid By
                     </label>
-                    <input
-                      id="event-title"
-                      type="email"
-                      value={email}
+                    <select
+                      value={paidBy}
+                      onChange={(e) => setPaidBy(parseInt(e.target.value))}
                       className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="mt-2">
-                <div>
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                      address
-                    </label>
-                    <input
-                      id="event-title"
-                      type="text"
-                      value={address}
-                      className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                      onChange={(e) => setAddress(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="mt-2">
-                <div>
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                      Contact Person Name
-                    </label>
-                    <input
-                      id="event-title"
-                      type="text"
-                      value={contactPersonName}
-                      className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                      onChange={(e) => setContactPersonName(e.target.value)}
-                    />
+                    >
+                      <option value="">Select Paid By</option>
+                      {users.map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.first_name} {user.last_name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>
