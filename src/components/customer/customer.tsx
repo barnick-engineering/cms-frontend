@@ -3,7 +3,9 @@ import Button from "../ui/button/Button";
 import { useModal } from "../../hooks/useModal";
 import { Modal } from "../ui/modal";
 import axios from "axios";
-import { ListIcon, TrashBinIcon } from "../../icons";
+import { ListIcon, PencilIcon, TrashBinIcon } from "../../icons";
+import toast, { Toaster } from "react-hot-toast";
+
 import {
   Table,
   TableCell,
@@ -24,6 +26,11 @@ interface Customer {
 }
 
 export default function Customer() {
+  const [loading, setLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentCustomerId, setCurrentCustomerId] = useState(null);
+  const [isViewOnly, setIsViewOnly] = useState(false);
+
   const { isOpen, openModal, closeModal } = useModal();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -47,6 +54,9 @@ export default function Customer() {
     setAddress("");
     setContactPersonName("");
     setHideSaveButton(false);
+    setIsEditing(false);
+    setIsViewOnly(false);
+    setCurrentCustomerId(null);
   };
 
   const fetchCustomers = async () => {
@@ -76,6 +86,7 @@ export default function Customer() {
       console.log("Fetched customers:", customersData);
     } catch (error) {
       console.error("Failed to fetch customers", error);
+      toast.error("Failed to fetch customers");
     } finally {
       // setLoading(false);
     }
@@ -90,25 +101,61 @@ export default function Customer() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    clearFormFields();
-    openModal();
+
     // Handle form submission here
     try {
-      await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/customer/`,
-        {
-          name: name,
-          email: email,
-          phone: phone,
-          address: address,
-          contact_person_name: contactPersonName,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("access")}`,
-          },
+      if (isEditing && currentCustomerId) {
+        // Update existing customer
+        const customerData: any = {};
+
+        if (name) {
+          customerData.name = name;
         }
-      );
+
+        if (email) {
+          customerData.email = email;
+        }
+
+        if (phone) {
+          customerData.phone = phone;
+        }
+
+        if (address) {
+          customerData.address = address;
+        }
+
+        if (contactPersonName) {
+          customerData.contact_person_name = contactPersonName;
+        }
+        await axios.put(
+          `${import.meta.env.VITE_BACKEND_URL}/customer/${currentCustomerId}/`,
+          customerData,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("access")}`,
+            },
+          }
+        );
+        toast.success("Customer updated successfully");
+      } else {
+        // Create new customer
+        await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/customer/`,
+          {
+            name: name,
+            email: email,
+            phone: phone,
+            address: address,
+            contact_person_name: contactPersonName,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("access")}`,
+            },
+          }
+        );
+        toast.success("Customer created successfully");
+      }
 
       closeModal();
       // fetch customers
@@ -118,7 +165,8 @@ export default function Customer() {
     }
   };
 
-  const handleView = (id: string) => {
+  const handleView = (id: number) => {
+    setIsViewOnly(true);
     // Handle view logic here
     const customer = customers.find((c) => c.id === id);
     if (customer) {
@@ -134,7 +182,22 @@ export default function Customer() {
     setHideSaveButton(true);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleEdit = (id: number) => {
+    const customer = customers.find((c) => c.id === id);
+    if (customer) {
+      // Set form fields with customer data
+      setName(customer.name);
+      setEmail(customer.email);
+      setPhone(customer.phone);
+      setAddress(customer.address);
+      setContactPersonName(customer.contactPersonName);
+      setIsEditing(true);
+      setCurrentCustomerId(id);
+    }
+    openModal();
+  };
+
+  const handleDelete = async (id: number) => {
     try {
       await axios.delete(
         `${import.meta.env.VITE_BACKEND_URL}/customer/${id}/`,
@@ -145,13 +208,17 @@ export default function Customer() {
         }
       );
       fetchCustomers();
+      toast.success("Customer deleted successfully");
     } catch (error) {
-      console.error(error);
+      toast.error("Customer associated workorder or expense exist");
     }
   };
 
   return (
     <div>
+      <Toaster
+        position="bottom-right"
+      />
       <Modal
         isOpen={isOpen}
         onClose={handleCloseModal}
@@ -160,7 +227,11 @@ export default function Customer() {
         <div className="flex flex-col px-2 overflow-y-auto custom-scrollbar">
           <div>
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-              Create Customer
+              {isEditing
+                ? "Edit Customer"
+                : isViewOnly
+                ? "View Customer"
+                : "Add Customer"}
             </h3>
           </div>
           <form onSubmit={handleSubmit}>
@@ -254,14 +325,21 @@ export default function Customer() {
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-brand-600 w-full"
                   hidden={hideSaveButton}
                 >
-                  <span>Save</span>
+                  <span>{isEditing ? "Update" : "Create"}</span>
                 </button>
               </div>
             </div>
           </form>
         </div>
       </Modal>
-      <Button onClick={openModal}>Create Customer</Button>
+      <Button
+        onClick={() => {
+          openModal();
+          clearFormFields();
+        }}
+      >
+        Create Customer
+      </Button>
 
       <div className="mt-5 overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="max-w-full overflow-x-auto">
@@ -333,13 +411,13 @@ export default function Customer() {
                         >
                           <ListIcon />
                         </button>
-                        {/* <button
+                        <button
                           type="button"
                           onClick={() => handleEdit(customer?.id)}
                           className="inline-flex items-center justify-center gap-2 rounded-lg"
                         >
                           <PencilIcon />
-                        </button> */}
+                        </button>
                         <button
                           type="button"
                           onClick={() => handleDelete(customer?.id)}

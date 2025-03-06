@@ -4,6 +4,7 @@ import { useModal } from "../../hooks/useModal";
 import { Modal } from "../ui/modal";
 import axios from "axios";
 import { ListIcon, PencilIcon, TrashBinIcon } from "../../icons";
+import toast, { Toaster } from "react-hot-toast";
 import {
   Table,
   TableCell,
@@ -178,6 +179,7 @@ export default function Expense() {
             },
           }
         );
+        toast.success("Expense updated successfully");
       } else {
         // Create new expense
         await axios.post(
@@ -189,13 +191,15 @@ export default function Expense() {
             },
           }
         );
+        toast.success("Expense created successfully");
       }
 
       closeModal();
       fetchExpenses();
       clearFormFields();
     } catch (e) {
-      console.error("Error saving expense:", e);
+      console.error(e);
+      toast.error("Failed to save expense");
     }
   };
 
@@ -239,8 +243,10 @@ export default function Expense() {
         },
       });
       fetchExpenses();
+      toast.success("Expense deleted successfully");
     } catch (error) {
       console.error(error);
+      toast.error("Failed to delete expense");
     }
   };
 
@@ -261,6 +267,7 @@ export default function Expense() {
 
   return (
     <div>
+      <Toaster position="bottom-right" />
       <Modal
         isOpen={isOpen}
         onClose={handleCloseModal}
@@ -282,7 +289,7 @@ export default function Expense() {
                 <div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                      Customer 
+                      Customer
                     </label>
                     <select
                       value={customer || ""}
