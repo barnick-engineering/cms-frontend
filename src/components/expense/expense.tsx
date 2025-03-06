@@ -282,7 +282,7 @@ export default function Expense() {
                 <div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                      Customer (Optional)
+                      Customer 
                     </label>
                     <select
                       value={customer || ""}
@@ -308,7 +308,7 @@ export default function Expense() {
                 <div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                      Work Order (Optional)
+                      Work Order
                     </label>
                     <select
                       value={workorder || ""}
@@ -342,6 +342,7 @@ export default function Expense() {
                       onChange={(e) => setPurpose(e.target.value)}
                       className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
                       disabled={isViewOnly}
+                      required
                     >
                       <option value="">Select Purpose Type</option>
                       {purposeTypes.map((purpose) => (
@@ -366,6 +367,7 @@ export default function Expense() {
                       className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
                       onChange={(e) => setDetails(e.target.value)}
                       disabled={isViewOnly}
+                      required
                     />
                   </div>
                 </div>
@@ -385,6 +387,7 @@ export default function Expense() {
                         setAmount(e.target.value ? e.target.value : "")
                       }
                       disabled={isViewOnly}
+                      required
                     />
                   </div>
                 </div>
@@ -400,6 +403,7 @@ export default function Expense() {
                       onChange={(e) => setPaidBy(e.target.value)}
                       className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
                       disabled={isViewOnly}
+                      required
                     >
                       <option value="">Select Paid By</option>
                       {users.map((user) => (

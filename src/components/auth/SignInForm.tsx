@@ -28,6 +28,14 @@ export default function SignInForm() {
       localStorage.setItem("access", response?.data?.access);
       localStorage.setItem("refresh", response?.data?.refresh);
 
+      // call and save user data
+      const userResponse = await axios.get(`${backendUrl}/account/whoami/`, {
+        headers: {
+          Authorization: `Bearer ${response?.data?.access}`,
+        },
+      });
+      localStorage.setItem("user", JSON.stringify(userResponse?.data?.data));
+
       // navigate to dashboard
       navigate("/");
     } catch (error) {

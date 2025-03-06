@@ -21,6 +21,7 @@ import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
 import WorkorderPage from "./pages/WorkorderPages/WorkorderPage";
 import ExpensePage from "./pages/ExpensePage/ExpensePage";
+import ProtectedRoute from "./components/auth/Auth";
 
 export default function App() {
   return (
@@ -29,7 +30,13 @@ export default function App() {
         <ScrollToTop />
         <Routes>
           {/* Dashboard Layout */}
-          <Route element={<AppLayout />}>
+          <Route
+            element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
             <Route index path="/" element={<Home />} />
             <Route path="/customers" element={<CustomerPage />} />
             <Route path="/workorders" element={<WorkorderPage />} />
