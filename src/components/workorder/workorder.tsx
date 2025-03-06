@@ -11,6 +11,7 @@ import {
   TableBody,
   TableHeader,
 } from "../ui/table";
+import toast, { Toaster } from "react-hot-toast";
 
 interface Customer {
   id: number;
@@ -33,12 +34,15 @@ export default function Workorder() {
 
   // Create an array of line items instead of individual state variables
   const [lineItems, setLineItems] = useState([
-    { item: "", unit_price: "", total_order: "" },
+    { item: "", details: "", unit_price: "", total_order: "" },
   ]);
 
   // Function to add a new row
   const addLineItem = () => {
-    setLineItems([...lineItems, { item: "", unit_price: "", total_order: "" }]);
+    setLineItems([
+      ...lineItems,
+      { item: "", details: "", unit_price: "", total_order: "" },
+    ]);
   };
 
   // Function to remove a row by index
@@ -64,7 +68,7 @@ export default function Workorder() {
   // clear form fields
   const clearFormFields = () => {
     setCustomer("");
-    setLineItems([{ item: "", unit_price: "", total_order: "" }]);
+    setLineItems([{ item: "", details: "", unit_price: "", total_order: "" }]);
     setHideSaveButton(false);
   };
 
@@ -152,8 +156,10 @@ export default function Workorder() {
       closeModal();
       clearFormFields();
       fetchWorkOrders();
+      toast.success("Workorder created successfully");
     } catch (e) {
       console.error(e);
+      toast.error("Failed to create workorder");
     }
   };
 
@@ -179,8 +185,10 @@ export default function Workorder() {
         }
       );
       fetchWorkOrders();
+      toast.success("Workorder deleted successfully");
     } catch (error) {
       console.error(error);
+      toast.error("Failed to delete workorder");
     }
   };
 
@@ -245,6 +253,25 @@ export default function Workorder() {
                     <div>
                       <div>
                         <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                          details
+                        </label>
+                        <input
+                          type="text"
+                          value={lineItem.details}
+                          className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                          onChange={(e) =>
+                            updateLineItem(index, "details", e.target.value)
+                          }
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-2 w-1/4">
+                    <div>
+                      <div>
+                        <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
                           Unit Price
                         </label>
                         <input
@@ -292,7 +319,7 @@ export default function Workorder() {
                         <button
                           type="button"
                           onClick={addLineItem}
-                          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded dark:text-white"
                         >
                           <PlusIcon />
                         </button>
@@ -303,7 +330,7 @@ export default function Workorder() {
                         <button
                           type="button"
                           onClick={() => removeLineItem(index)}
-                          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded dark:text-white"
                         >
                           <TrashBinIcon />
                         </button>
