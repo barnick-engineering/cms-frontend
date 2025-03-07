@@ -41,6 +41,7 @@ export default function Expense() {
   const [workorders, setWorkorders] = useState([]);
   const [users, setUsers] = useState([]);
   const [expenses, setExpenses] = useState([]);
+  const [search, setSearch] = useState("");
 
   // Pagination state
   const [pagination, setPagination] = useState({
@@ -56,8 +57,9 @@ export default function Expense() {
   // Calculate total pages
   const totalPages = Math.ceil(pagination.total / pagination.limit);
 
-  const fetchExpenses = async (offset = 0, limit = 10) => {
+  const fetchExpenses = async (offset = 0, limit = 10, search = null) => {
     setIsLoading(true);
+
     try {
       const response = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/expense/`,
@@ -68,6 +70,7 @@ export default function Expense() {
           params: {
             offset,
             limit,
+            search,
           },
         }
       );
@@ -88,6 +91,11 @@ export default function Expense() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSearch = (searchResult) => {
+    setSearch(searchResult);
+    fetchExpenses(0, pagination.limit, searchResult);
   };
 
   const handlePageChange = (newOffset) => {
@@ -483,15 +491,26 @@ export default function Expense() {
           </form>
         </div>
       </Modal>
-      <Button
-        onClick={() => {
-          clearFormFields();
-          openModal();
-        }}
-      >
-        Create Expense
-      </Button>
-
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={() => {
+              clearFormFields();
+              openModal();
+            }}
+          >
+            Create Expense
+          </Button>
+        </div>
+        <div className="flex items-center gap-3">
+          <input
+            type="text"
+            className="p-2 rounded border border-gray-500 shadow dark:bg-dark-900 text-black dark:text-white dark:border-gray-700"
+            placeholder="Search....."
+            onChange={(e) => handleSearch(e.target.value)}
+          />
+        </div>
+      </div>
       <div className="mt-5 overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="max-w-full overflow-x-auto">
           <div className="min-w-[1102px]">

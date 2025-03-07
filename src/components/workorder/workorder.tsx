@@ -353,7 +353,14 @@ export default function Workorder() {
           </form>
         </div>
       </Modal>
-      <Button onClick={openModal}>Create Workorder</Button>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Button onClick={openModal}>Create Workorder</Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <input type="text" placeholder="Search" />
+        </div>
+      </div>
 
       <div className="mt-5 overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="max-w-full overflow-x-auto">
