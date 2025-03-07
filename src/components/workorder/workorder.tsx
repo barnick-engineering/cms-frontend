@@ -194,6 +194,7 @@ export default function Workorder() {
 
   return (
     <div>
+      <Toaster position="bottom-right" />
       <Modal
         isOpen={isOpen}
         onClose={handleCloseModal}
@@ -201,12 +202,12 @@ export default function Workorder() {
       >
         <div className="flex flex-col px-2 overflow-y-auto custom-scrollbar">
           <div>
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+            <h3 className="text-2xl font-semibold text-gray-800 dark:text-white/90">
               Create Workorder
             </h3>
           </div>
           <form onSubmit={handleSubmit}>
-            <div className="flex flex-col gap-2 mt-2 justify-between">
+            <div className="flex flex-col gap-1 mt-2 justify-between">
               <div className="mt-2">
                 <div>
                   <div>
@@ -229,7 +230,7 @@ export default function Workorder() {
                 </div>
               </div>
               {lineItems.map((lineItem, index) => (
-                <div className="flex flex-row gap-2 mt-2" key={index}>
+                <div className="flex flex-row gap-1 mt-2" key={index}>
                   <div className="flex mt-2">
                     <div>
                       <div>
@@ -249,7 +250,7 @@ export default function Workorder() {
                     </div>
                   </div>
 
-                  <div className="mt-2 w-1/4">
+                  <div className="mt-2 w-1/5">
                     <div>
                       <div>
                         <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
