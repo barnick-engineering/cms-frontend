@@ -3,7 +3,7 @@ import Button from "../ui/button/Button";
 import { useModal } from "../../hooks/useModal";
 import { Modal } from "../ui/modal";
 import axios from "axios";
-import { ListIcon, PlusIcon, TrashBinIcon } from "../../icons";
+import { ListIcon, PencilIcon, PlusIcon, TrashBinIcon } from "../../icons";
 import {
   Table,
   TableCell,
@@ -26,13 +26,29 @@ interface Customer {
 
 export default function Workorder() {
   const { isOpen, openModal, closeModal } = useModal();
+  const {
+    isOpen: isDetailsModalOpen,
+    openModal: openDetailsModal,
+    closeModal: closeDetailsModal,
+  } = useModal();
+
+  const {
+    isOpen: isEditModalOpen,
+    openModal: openEditModal,
+    closeModal: closeEditModal,
+  } = useModal();
   const [customer, setCustomer] = useState("");
   const [hideSaveButton, setHideSaveButton] = useState(false);
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [workorders, setWorkorders] = useState([]);
+  const [workorder, setWorkorder] = useState({});
   const [total, setTotal] = useState(0);
   const [paid, setPaid] = useState(0);
+  const [totalPaid, setTotalPaid] = useState(0);
+  const [isDelivered, setIsDelivered] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentWorkorderId, setCurrentWorkorderId] = useState(null);
 
   // Create an array of line items instead of individual state variables
   const [lineItems, setLineItems] = useState([
@@ -78,6 +94,8 @@ export default function Workorder() {
 
   const handleCloseModal = () => {
     closeModal();
+    closeDetailsModal();
+    closeEditModal();
     clearFormFields();
   };
 
@@ -184,15 +202,30 @@ export default function Workorder() {
     }
   };
 
-  const handleView = (id: string) => {
+  const handleView = async (id: number) => {
     // Handle view logic here
-    const customer = customers.find((c) => c.id === id);
-    if (customer) {
+    const response = await axios.get(
+      `${import.meta.env.VITE_BACKEND_URL}/work-order/${id}/`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access")}`,
+        },
+      }
+    );
+    setWorkorder(response?.data?.data);
+    openDetailsModal();
+  };
+
+  const handleEdit = (id: number) => {
+    const workorder = workorders.find((w) => w.id === id);
+    if (workorder) {
       // Set form fields with customer data
+      setTotalPaid(workorder?.total_paid);
+      setIsDelivered(workorder?.is_delivered);
+      setIsEditing(true);
+      setCurrentWorkorderId(id);
     }
-    openModal();
-    // but save button should be disabled
-    setHideSaveButton(true);
+    openEditModal();
   };
 
   const handleDelete = async (id: string) => {
@@ -216,6 +249,146 @@ export default function Workorder() {
   return (
     <div>
       <Toaster position="bottom-right" />
+      <Modal
+        isOpen={isDetailsModalOpen}
+        onClose={handleCloseModal}
+        className="max-w-[700px] p-6 lg:p-10"
+      >
+        <div className="flex flex-col px-2 overflow-y-auto custom-scrollbar">
+          <div className="flex justify-between">
+            <h3 className="text-2xl font-semibold text-gray-800 dark:text-white/90">
+              Workorder Details
+            </h3>
+          </div>
+
+          <div className="flex flex-col gap-1 mt-2">
+            <div className="mt-2">
+              <div className="flex justify-center">
+                <div className="w-1/3">
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                    No
+                  </label>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {workorder?.no}
+                  </p>
+                </div>
+                <div className="w-1/3">
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                    Customer
+                  </label>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {workorder?.customer?.name}
+                  </p>
+                </div>
+                <div className="w-1/3">
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                    Created
+                  </label>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {workorder?.created}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-5">
+              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                Ordered Items
+              </label>
+              <Table className="border">
+                <TableHeader>
+                  <TableRow>
+                    <TableCell
+                      isHeader
+                      className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                    >
+                      Item
+                    </TableCell>
+                    <TableCell
+                      isHeader
+                      className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                    >
+                      Details
+                    </TableCell>
+                    <TableCell
+                      isHeader
+                      className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                    >
+                      Quantity
+                    </TableCell>
+                    <TableCell
+                      isHeader
+                      className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                    >
+                      Unit Price
+                    </TableCell>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+                  {workorder?.items?.map((item: any) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="px-5 py-3 text-sm text-gray-600 dark:text-gray-400">
+                        {item.item}
+                      </TableCell>
+                      <TableCell className="px-5 py-3 text-sm text-gray-600 dark:text-gray-400">
+                        {item.details}
+                      </TableCell>
+                      <TableCell className="px-5 py-3 text-sm text-gray-600 dark:text-gray-400">
+                        {item.total_order}
+                      </TableCell>
+                      <TableCell className="px-5 py-3 text-sm text-gray-600 dark:text-gray-400">
+                        {item.unit_price}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="mt-2">
+              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                Summary
+              </label>
+            </div>
+            <div className="flex justify-center gap-3 border p-3">
+              <div className="mt-5 w-1/4">
+                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                  Total
+                </label>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {workorder?.amount}
+                </p>
+              </div>
+              <div className="mt-5 w-1/4">
+                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                  Paid
+                </label>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {workorder?.total_paid}
+                </p>
+              </div>
+              <div className="mt-5 w-1/4">
+                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                  Expense
+                </label>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {workorder?.expense?.[0]?.total || 0}
+                </p>
+              </div>
+              <div className="mt-5 w-1/4">
+                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                  Profit
+                </label>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {workorder?.amount -
+                    workorder?.total_paid -
+                    workorder?.expense?.[0]?.total || 0}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Modal>
+
       <Modal
         isOpen={isOpen}
         onClose={handleCloseModal}
@@ -410,6 +583,24 @@ export default function Workorder() {
           </form>
         </div>
       </Modal>
+
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={handleCloseModal}
+        className="max-w-[700px] p-6 lg:p-10"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+              Create Workorder
+            </h3>
+            <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
+              Create a new workorder
+            </p>
+          </div>
+        </div>
+      </Modal>
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Button onClick={openModal}>Create Workorder</Button>
@@ -442,25 +633,7 @@ export default function Workorder() {
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Total Items
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                  >
-                    Total Amount
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                  >
-                    Total paid
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                  >
-                    Remaining
+                    Total / Paid / Net
                   </TableCell>
                   <TableCell
                     isHeader
@@ -480,18 +653,10 @@ export default function Workorder() {
                         {workorder?.no || "n/a"}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {workorder?.customer}
+                        {workorder?.customer} ({workorder?.total_items})
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {workorder?.total_items}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {workorder?.amount || "n/a"}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {workorder?.total_paid}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                        {workorder?.amount || "n/a"} / {workorder?.total_paid} /{" "}
                         {parseFloat(workorder?.amount) -
                           parseFloat(workorder?.total_paid) || "n/a"}
                       </TableCell>
@@ -505,6 +670,13 @@ export default function Workorder() {
                           className="inline-flex items-center justify-center gap-2 rounded-lg"
                         >
                           <ListIcon />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(workorder?.id)}
+                          className="inline-flex items-center justify-center gap-2 rounded-lg"
+                        >
+                          <PencilIcon />
                         </button>
                         <button
                           type="button"

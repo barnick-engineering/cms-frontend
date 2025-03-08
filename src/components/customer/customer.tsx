@@ -26,7 +26,6 @@ interface Customer {
 }
 
 export default function Customer() {
-  const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentCustomerId, setCurrentCustomerId] = useState(null);
   const [isViewOnly, setIsViewOnly] = useState(false);
@@ -52,7 +51,6 @@ export default function Customer() {
     prevUrl: null,
     nextUrl: null,
   });
-  const [isLoading, setIsLoading] = useState(false);
 
   // Calculate total pages
   const totalPages = Math.ceil(pagination.total / pagination.limit);
