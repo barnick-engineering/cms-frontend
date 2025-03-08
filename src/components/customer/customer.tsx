@@ -41,6 +41,22 @@ export default function Customer() {
 
   const [customers, setCustomers] = useState<Customer[]>([]);
 
+  const [search, setSearch] = useState("");
+
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    total: 0,
+    currentPage: 1,
+    limit: 10,
+    offset: 0,
+    prevUrl: null,
+    nextUrl: null,
+  });
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Calculate total pages
+  const totalPages = Math.ceil(pagination.total / pagination.limit);
+
   const handleCloseModal = () => {
     closeModal();
     clearFormFields();
@@ -59,7 +75,7 @@ export default function Customer() {
     setCurrentCustomerId(null);
   };
 
-  const fetchCustomers = async () => {
+  const fetchCustomers = async (offset = 0, limit = 10, search = null) => {
     // setLoading(true);
     try {
       const response = await axios.get(
@@ -67,6 +83,11 @@ export default function Customer() {
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access")}`,
+          },
+          params: {
+            offset,
+            limit,
+            search,
           },
         }
       );
@@ -83,6 +104,14 @@ export default function Customer() {
       }));
 
       setCustomers(customersData);
+      setPagination({
+        total: response.data.total || 0,
+        currentPage: Math.floor(offset / limit) + 1,
+        limit,
+        offset,
+        prevUrl: response.data.prev_url,
+        nextUrl: response.data.next_url,
+      });
       console.log("Fetched customers:", customersData);
     } catch (error) {
       console.error("Failed to fetch customers", error);
@@ -98,6 +127,27 @@ export default function Customer() {
 
   // This useEffect will run whenever customers state changes
   useEffect(() => {}, [customers]);
+
+  const handleSearch = (searchResult) => {
+    setSearch(searchResult);
+    fetchCustomers(0, pagination.limit, searchResult);
+  };
+
+  const handlePageChange = (newOffset) => {
+    fetchCustomers(newOffset, pagination.limit);
+  };
+
+  const handlePrevPage = () => {
+    if (pagination.prevUrl) {
+      handlePageChange(pagination.offset - pagination.limit);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (pagination.nextUrl) {
+      handlePageChange(pagination.offset + pagination.limit);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -216,9 +266,7 @@ export default function Customer() {
 
   return (
     <div>
-      <Toaster
-        position="bottom-right"
-      />
+      <Toaster position="bottom-right" />
       <Modal
         isOpen={isOpen}
         onClose={handleCloseModal}
@@ -332,14 +380,26 @@ export default function Customer() {
           </form>
         </div>
       </Modal>
-      <Button
-        onClick={() => {
-          openModal();
-          clearFormFields();
-        }}
-      >
-        Create Customer
-      </Button>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={() => {
+              clearFormFields();
+              openModal();
+            }}
+          >
+            Create Customer
+          </Button>
+        </div>
+        <div className="flex items-center gap-3">
+          <input
+            type="text"
+            className="p-2 rounded border border-gray-500 shadow dark:bg-dark-900 text-black dark:text-white dark:border-gray-700"
+            placeholder="Search....."
+            onChange={(e) => handleSearch(e.target.value)}
+          />
+        </div>
+      </div>
 
       <div className="mt-5 overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="max-w-full overflow-x-auto">
@@ -437,6 +497,150 @@ export default function Customer() {
                 )}
               </TableBody>
             </Table>
+            {/* Pagination Controls */}
+            {pagination.total > 0 && (
+              <div className="flex items-center justify-between border-t border-gray-200 dark:border-white/[0.05] px-4 py-3 sm:px-6">
+                <div className="flex flex-1 justify-between sm:hidden">
+                  <button
+                    onClick={handlePrevPage}
+                    disabled={!pagination.prevUrl}
+                    className={`relative inline-flex items-center rounded-md px-4 py-2 text-sm font-medium ${
+                      pagination.prevUrl
+                        ? "text-gray-700 bg-white hover:bg-gray-50 dark:text-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700"
+                        : "text-gray-400 bg-gray-100 dark:text-gray-500 dark:bg-gray-700"
+                    }`}
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={handleNextPage}
+                    disabled={!pagination.nextUrl}
+                    className={`relative ml-3 inline-flex items-center rounded-md px-4 py-2 text-sm font-medium ${
+                      pagination.nextUrl
+                        ? "text-gray-700 bg-white hover:bg-gray-50 dark:text-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700"
+                        : "text-gray-400 bg-gray-100 dark:text-gray-500 dark:bg-gray-700"
+                    }`}
+                  >
+                    Next
+                  </button>
+                </div>
+                <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      Showing{" "}
+                      <span className="font-medium">
+                        {pagination.offset + 1}
+                      </span>{" "}
+                      to{" "}
+                      <span className="font-medium">
+                        {Math.min(
+                          pagination.offset + pagination.limit,
+                          pagination.total
+                        )}
+                      </span>{" "}
+                      of <span className="font-medium">{pagination.total}</span>{" "}
+                      results
+                    </p>
+                  </div>
+                  <div>
+                    <nav
+                      className="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                      aria-label="Pagination"
+                    >
+                      <button
+                        onClick={handlePrevPage}
+                        disabled={!pagination.prevUrl}
+                        className={`relative inline-flex items-center rounded-l-md px-2 py-2 ${
+                          pagination.prevUrl
+                            ? "text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700"
+                            : "text-gray-300 dark:text-gray-600"
+                        }`}
+                      >
+                        <span className="sr-only">Previous</span>
+                        <svg
+                          className="h-5 w-5"
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </button>
+
+                      {/* Page Numbers */}
+                      {Array.from(
+                        { length: Math.min(5, totalPages) },
+                        (_, i) => {
+                          // Logic to show pagination buttons around current page
+                          let pageNum;
+                          if (totalPages <= 5) {
+                            // If 5 or fewer pages, show all page numbers
+                            pageNum = i + 1;
+                          } else if (pagination.currentPage <= 3) {
+                            // If near the start, show first 5 pages
+                            pageNum = i + 1;
+                          } else if (pagination.currentPage >= totalPages - 2) {
+                            // If near the end, show last 5 pages
+                            pageNum = totalPages - 4 + i;
+                          } else {
+                            // Otherwise, show 2 pages before and after current page
+                            pageNum = pagination.currentPage - 2 + i;
+                          }
+
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() =>
+                                handlePageChange(
+                                  (pageNum - 1) * pagination.limit
+                                )
+                              }
+                              className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                                pageNum === pagination.currentPage
+                                  ? "z-10 bg-brand-500 text-white dark:bg-brand-600"
+                                  : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:text-gray-300 dark:ring-gray-700 dark:hover:bg-gray-700"
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        }
+                      )}
+
+                      <button
+                        onClick={handleNextPage}
+                        disabled={!pagination.nextUrl}
+                        className={`relative inline-flex items-center rounded-r-md px-2 py-2 ${
+                          pagination.nextUrl
+                            ? "text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700"
+                            : "text-gray-300 dark:text-gray-600"
+                        }`}
+                      >
+                        <span className="sr-only">Next</span>
+                        <svg
+                          className="h-5 w-5"
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </button>
+                    </nav>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
