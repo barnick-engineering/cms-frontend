@@ -31,6 +31,8 @@ export default function Workorder() {
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [workorders, setWorkorders] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [paid, setPaid] = useState(0);
 
   // Create an array of line items instead of individual state variables
   const [lineItems, setLineItems] = useState([
@@ -54,9 +56,23 @@ export default function Workorder() {
     setLineItems(updatedItems);
   };
 
-  const updateLineItem = (index: any, field: any, value: any) => {
+  const updateLineItem = (index: number, field: string, value: any) => {
+    if (index < 0 || index >= lineItems.length) {
+      console.error("Invalid index provided to updateLineItem:", index);
+      return;
+    }
+
     const updatedItems = [...lineItems];
     updatedItems[index] = { ...updatedItems[index], [field]: value };
+
+    // Calculate total from updatedItems, ensuring numbers are properly handled
+    const total = updatedItems.reduce((acc, item) => {
+      const unitPrice = Number(item.unit_price) || 0;
+      const quantity = Number(item.total_order) || 0;
+      return acc + unitPrice * quantity;
+    }, 0);
+
+    setTotal(total);
     setLineItems(updatedItems);
   };
 
@@ -80,6 +96,9 @@ export default function Workorder() {
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access")}`,
+          },
+          params: {
+            limit: 1000,
           },
         }
       );
@@ -146,6 +165,8 @@ export default function Workorder() {
         {
           customer: customer,
           items: lineItems,
+          amount: total,
+          total_paid: paid,
         },
         {
           headers: {
@@ -231,7 +252,7 @@ export default function Workorder() {
               </div>
               {lineItems.map((lineItem, index) => (
                 <div className="flex flex-row gap-1 mt-2" key={index}>
-                  <div className="flex mt-2">
+                  <div className="flex mt-2 w-1/5">
                     <div>
                       <div>
                         <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
@@ -250,7 +271,7 @@ export default function Workorder() {
                     </div>
                   </div>
 
-                  <div className="mt-2 w-1/5">
+                  <div className="mt-2 w-1/4">
                     <div>
                       <div>
                         <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
@@ -269,7 +290,7 @@ export default function Workorder() {
                     </div>
                   </div>
 
-                  <div className="mt-2 w-1/4">
+                  <div className="mt-2 w-1/5">
                     <div>
                       <div>
                         <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
@@ -291,7 +312,7 @@ export default function Workorder() {
                     </div>
                   </div>
 
-                  <div className="mt-2 w-1/4">
+                  <div className="mt-2 w-1/5">
                     <div>
                       <div>
                         <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
@@ -313,8 +334,8 @@ export default function Workorder() {
                     </div>
                   </div>
 
-                  <div className="mt-10">
-                    <div className="flex gap-2">
+                  <div className="mt-10 w-1/7">
+                    <div className="flex gap-2 ">
                       {/* Only show plus button on the last row */}
                       {index === lineItems.length - 1 && (
                         <button
@@ -340,6 +361,42 @@ export default function Workorder() {
                   </div>
                 </div>
               ))}
+              <div className="flex gap-2">
+                <div className="mt-2">
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                    Total
+                  </label>
+                  <input
+                    type="number"
+                    value={total}
+                    onChange={(e) => setTotal(parseFloat(e.target.value))}
+                    className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                    disabled
+                  />
+                </div>
+                <div className="mt-2">
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                    Total
+                  </label>
+                  <input
+                    type="number"
+                    value={paid}
+                    onChange={(e) => setPaid(parseFloat(e.target.value))}
+                    className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                  />
+                </div>
+                <div className="mt-2">
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                    Paid
+                  </label>
+                  <input
+                    type="number"
+                    value={total - paid}
+                    className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                    disabled
+                  />
+                </div>
+              </div>
               <div className="mt-2">
                 <button
                   type="submit"
