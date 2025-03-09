@@ -40,7 +40,7 @@ export default function Customer() {
 
   const [customers, setCustomers] = useState<Customer[]>([]);
 
-  const [search, setSearch] = useState("");
+  const [, setSearch] = useState("");
 
   // Pagination state
   const [pagination, setPagination] = useState({
@@ -73,7 +73,11 @@ export default function Customer() {
     setCurrentCustomerId(null);
   };
 
-  const fetchCustomers = async (offset = 0, limit = 10, search = null) => {
+  const fetchCustomers = async (
+    offset = 0,
+    limit = 10,
+    search = null
+  ) => {
     // setLoading(true);
     try {
       const response = await axios.get(
@@ -126,7 +130,7 @@ export default function Customer() {
   // This useEffect will run whenever customers state changes
   useEffect(() => {}, [customers]);
 
-  const handleSearch = (searchResult) => {
+  const handleSearch = (searchResult: string) => {
     setSearch(searchResult);
     fetchCustomers(0, pagination.limit, searchResult);
   };

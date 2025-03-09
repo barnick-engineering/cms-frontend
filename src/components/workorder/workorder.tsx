@@ -12,6 +12,7 @@ import {
   TableHeader,
 } from "../ui/table";
 import toast, { Toaster } from "react-hot-toast";
+import Checkbox from "../form/input/Checkbox";
 
 interface Customer {
   id: number;
@@ -174,28 +175,49 @@ export default function Workorder() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    clearFormFields();
-    openModal();
     // Handle form submission here
     try {
-      await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/work-order/`,
-        {
-          customer: customer,
-          items: lineItems,
-          amount: total,
-          total_paid: paid,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("access")}`,
-          },
+      if (isEditing && currentWorkorderId) {
+        const updateWorkorderData: any = {};
+        updateWorkorderData.is_delivered = isDelivered;
+        if (totalPaid) {
+          updateWorkorderData.total_paid = totalPaid;
         }
-      );
+        // Update existing workorder
+        await axios.put(
+          `${
+            import.meta.env.VITE_BACKEND_URL
+          }/work-order/${currentWorkorderId}/`,
+          updateWorkorderData,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("access")}`,
+            },
+          }
+        );
+        toast.success("Workorder Updated Successfully");
+      } else {
+        await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/work-order/`,
+          {
+            customer: customer,
+            items: lineItems,
+            amount: total,
+            total_paid: paid,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("access")}`,
+            },
+          }
+        );
+        toast.success("Workorder Created Successfully");
+      }
+
       closeModal();
+      closeEditModal();
       clearFormFields();
       fetchWorkOrders();
-      toast.success("Workorder created successfully");
     } catch (e) {
       console.error(e);
       toast.error("Failed to create workorder");
@@ -220,7 +242,7 @@ export default function Workorder() {
     const workorder = workorders.find((w) => w.id === id);
     if (workorder) {
       // Set form fields with customer data
-      setTotalPaid(workorder?.total_paid);
+      setTotalPaid(0);
       setIsDelivered(workorder?.is_delivered);
       setIsEditing(true);
       setCurrentWorkorderId(id);
@@ -549,7 +571,7 @@ export default function Workorder() {
                 </div>
                 <div className="mt-2">
                   <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                    Total
+                    Paid
                   </label>
                   <input
                     type="number"
@@ -560,7 +582,7 @@ export default function Workorder() {
                 </div>
                 <div className="mt-2">
                   <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                    Paid
+                    Net
                   </label>
                   <input
                     type="number"
@@ -587,16 +609,55 @@ export default function Workorder() {
       <Modal
         isOpen={isEditModalOpen}
         onClose={handleCloseModal}
-        className="max-w-[700px] p-6 lg:p-10"
+        className="max-w-[400px] p-6 lg:p-10"
       >
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-              Create Workorder
+            <h3 className="text-md font-semibold text-gray-800 dark:text-white/90">
+              Update Workorder
             </h3>
-            <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
-              Create a new workorder
-            </p>
+            <form onSubmit={handleSubmit}>
+              <div className="mt-5">
+                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                  Paid
+                </label>
+                <input
+                  type="number"
+                  value={totalPaid}
+                  onChange={(e) => setTotalPaid(parseFloat(e.target.value))}
+                  className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                />
+              </div>
+              <div className="mt-5">
+                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                  Is Delivered
+                </label>
+                <div className="mt-5">
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                    Is Delivered
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={isDelivered}
+                      onChange={(checked) => {
+                        const boolValue = Boolean(checked);
+                        console.log("Sending to backend:", boolValue);
+                        setIsDelivered(boolValue);
+                      }}
+                      label="Delivered"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="mt-5">
+                <button
+                  type="submit"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-brand-600 w-full"
+                >
+                  <span>Update</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </Modal>
