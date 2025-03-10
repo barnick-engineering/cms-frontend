@@ -53,6 +53,11 @@ const navItems: NavItem[] = [
     path: "/expenses",
   },
   {
+    icon: <TableIcon />,
+    name: "Reports",
+    path: "/reports",
+  },
+  {
     icon: <UserIcon />,
     name: "User Profile",
     path: "/profile",

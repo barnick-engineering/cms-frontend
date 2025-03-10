@@ -36,6 +36,11 @@ export default function Expense() {
   const [purpose, setPurpose] = useState("");
   const [details, setDetails] = useState("");
   const [amount, setAmount] = useState("");
+  const getTodayFormatted = () => {
+    const today = new Date();
+    return today.toISOString().split("T")[0];
+  };
+  const [expenseDate, setExpenseDate] = useState(getTodayFormatted());
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [workorders, setWorkorders] = useState([]);
@@ -222,6 +227,11 @@ export default function Expense() {
       expenseData.work_order = workorder;
     }
 
+    if (expenseDate) {
+      expenseData.expense_date =
+        expenseDate || new Date().toISOString().split("T")[0];
+    }
+
     try {
       if (isEditing && currentExpenseId) {
         // Update existing expense
@@ -267,7 +277,8 @@ export default function Expense() {
       setPaidBy(expense?.paid_by);
       setPurpose(expense?.purpose);
       setDetails(expense?.details);
-      setAmount(expense.amount);
+      setAmount(expense?.amount);
+      setExpenseDate(expense?.expense_date);
       setIsViewOnly(true);
       setCurrentExpenseId(id);
     }
@@ -284,6 +295,9 @@ export default function Expense() {
       setPurpose(expense.purpose || "");
       setDetails(expense.details || "");
       setAmount(expense.amount?.toString() || "");
+      setExpenseDate(
+        expense?.expense_date || new Date().toISOString().split("T")[0]
+      );
       setIsEditing(true);
       setCurrentExpenseId(id);
     }
@@ -395,7 +409,6 @@ export default function Expense() {
                   </div>
                 </div>
               </div>
-
               <div className="mt-2">
                 <div>
                   <div>
@@ -451,6 +464,23 @@ export default function Expense() {
                       onChange={(e) =>
                         setAmount(e.target.value ? e.target.value : "")
                       }
+                      disabled={isViewOnly}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="mt-2">
+                <div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                      Expense Date
+                    </label>
+                    <input
+                      value={expenseDate}
+                      type="date"
+                      onChange={(e) => setExpenseDate(e.target.value)}
+                      className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
                       disabled={isViewOnly}
                       required
                     />
@@ -561,6 +591,12 @@ export default function Expense() {
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
+                    Date
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                  >
                     Paid By
                   </TableCell>
                   <TableCell
@@ -590,12 +626,15 @@ export default function Expense() {
                         {expense.purpose}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {expense?.details && expense?.details?.length > 30
-                          ? expense?.details.slice(0, 30) + "..."
+                        {expense?.details && expense?.details?.length > 10
+                          ? expense?.details.slice(0, 10) + "..."
                           : expense?.details || "-"}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {expense.amount}
+                        {expense?.amount}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                        {expense?.expense_date}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                         {expense.cost_paid_by}

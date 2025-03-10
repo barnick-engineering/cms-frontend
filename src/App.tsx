@@ -23,6 +23,7 @@ import WorkorderPage from "./pages/WorkorderPages/WorkorderPage";
 import ExpensePage from "./pages/ExpensePage/ExpensePage";
 import ProtectedRoute from "./components/auth/Auth";
 import ProductPage from "./pages/ProductPage/ProductPage";
+import ReportPage from "./pages/ReportPages/ReportPage";
 
 export default function App() {
   return (
@@ -43,7 +44,7 @@ export default function App() {
             <Route path="/customers" element={<CustomerPage />} />
             <Route path="/workorders" element={<WorkorderPage />} />
             <Route path="/expenses" element={<ExpensePage />} />
-
+            <Route path="/reports" element={<ReportPage />} />
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />
             <Route path="/users" element={<UserProfiles />} />

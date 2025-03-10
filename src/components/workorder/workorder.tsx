@@ -46,6 +46,13 @@ export default function Workorder() {
   const [workorder, setWorkorder] = useState({});
   const [total, setTotal] = useState(0);
   const [paid, setPaid] = useState(0);
+  const getTodayFormatted = () => {
+    const today = new Date();
+    return today.toISOString().split("T")[0];
+  };
+
+  const [date, setDate] = useState(getTodayFormatted());
+
   const [totalPaid, setTotalPaid] = useState(0);
   const [isDelivered, setIsDelivered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -117,6 +124,9 @@ export default function Workorder() {
   // clear form fields
   const clearFormFields = () => {
     setCustomer("");
+    setDate("");
+    setTotal(0);
+    setPaid(0);
     setLineItems([{ item: "", details: "", unit_price: "", total_order: "" }]);
     setHideSaveButton(false);
   };
@@ -252,6 +262,7 @@ export default function Workorder() {
             items: lineItems,
             amount: total,
             total_paid: paid,
+            date: date || new Date().toISOString().split("T")[0],
           },
           {
             headers: {
@@ -471,25 +482,46 @@ export default function Workorder() {
             </h3>
           </div>
           <form onSubmit={handleSubmit}>
-            <div className="flex flex-col gap-1 mt-2 justify-between">
-              <div className="mt-2">
-                <div>
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                      Customers
-                    </label>
-                    <select
-                      value={customer}
-                      onChange={(e) => setCustomer(e.target.value)}
-                      className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                    >
-                      <option value="">Select a customer</option>
-                      {customers.map((customer) => (
-                        <option key={customer.id} value={customer.id}>
-                          {customer.name}
-                        </option>
-                      ))}
-                    </select>
+            <div className="flex flex-col gap-1 mt-2 justify-center">
+              <div className="flex flex-col gap-1 mt-2 justify-between">
+                <div className="flex flex-row gap-4 mt-2">
+                  <div className="mt-2 flex-1">
+                    <div>
+                      <div>
+                        <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                          Customers
+                        </label>
+                        <select
+                          value={customer}
+                          onChange={(e) => setCustomer(e.target.value)}
+                          className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                          required
+                        >
+                          <option value="">Select a customer</option>
+                          {customers.map((customer) => (
+                            <option key={customer.id} value={customer.id}>
+                              {customer.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-2 flex-1">
+                    <div>
+                      <div>
+                        <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                          Date
+                        </label>
+                        <input
+                          type="date"
+                          value={date}
+                          onChange={(e) => setDate(e.target.value)}
+                          className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                          required
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -761,6 +793,12 @@ export default function Workorder() {
                   >
                     Delivered
                   </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                  >
+                    Created
+                  </TableCell>
                 </TableRow>
               </TableHeader>
 
@@ -782,6 +820,9 @@ export default function Workorder() {
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                         {workorder?.is_delivered ? "Yes" : "No"}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                        {workorder?.date || "n/a"}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                         <button
