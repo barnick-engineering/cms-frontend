@@ -13,34 +13,17 @@ import {
   TableHeader,
 } from "../ui/table";
 
-interface Customer {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  contactPersonName: string;
-  remarks: string;
-  status: boolean;
-}
-
-export default function Expense() {
+export default function Product() {
   const { isOpen, openModal, closeModal } = useModal();
   const [isEditing, setIsEditing] = useState(false);
-  const [currentExpenseId, setCurrentExpenseId] = useState(null);
+  const [currentProductId, setCurrentProductId] = useState(null);
   const [isViewOnly, setIsViewOnly] = useState(false);
 
-  const [customer, setCustomer] = useState<number | null>(null);
-  const [workorder, setWorkorder] = useState<number | null>(null);
-  const [paidBy, setPaidBy] = useState("");
-  const [purpose, setPurpose] = useState("");
+  const [name, setName] = useState("");
   const [details, setDetails] = useState("");
-  const [amount, setAmount] = useState("");
+  const [price, setPrice] = useState("");
 
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [workorders, setWorkorders] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [expenses, setExpenses] = useState([]);
+  const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
 
   // Pagination state
@@ -57,12 +40,12 @@ export default function Expense() {
   // Calculate total pages
   const totalPages = Math.ceil(pagination.total / pagination.limit);
 
-  const fetchExpenses = async (offset = 0, limit = 10, search = null) => {
+  const fetchProducts = async (offset = 0, limit = 10, search = null) => {
     setIsLoading(true);
 
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/expense/`,
+        `${import.meta.env.VITE_BACKEND_URL}/product/`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access")}`,
@@ -75,7 +58,7 @@ export default function Expense() {
         }
       );
 
-      setExpenses(response.data.data || []);
+      setProducts(response.data.data || []);
       setPagination({
         total: response.data.total || 0,
         currentPage: Math.floor(offset / limit) + 1,
@@ -84,10 +67,10 @@ export default function Expense() {
         prevUrl: response.data.prev_url,
         nextUrl: response.data.next_url,
       });
-      console.log("Fetched expenses:", response.data);
+      console.log("Fetched products:", response.data);
     } catch (error) {
-      console.error("Failed to fetch expenses", error);
-      toast.error("Failed to fetch expenses");
+      console.error("Failed to fetch products", error);
+      toast.error("Failed to fetch products");
     } finally {
       setIsLoading(false);
     }
@@ -95,11 +78,11 @@ export default function Expense() {
 
   const handleSearch = (searchResult) => {
     setSearch(searchResult);
-    fetchExpenses(0, pagination.limit, searchResult);
+    fetchProducts(0, pagination.limit, searchResult);
   };
 
   const handlePageChange = (newOffset) => {
-    fetchExpenses(newOffset, pagination.limit);
+    fetchProducts(newOffset, pagination.limit, search);
   };
 
   const handlePrevPage = () => {
@@ -121,207 +104,113 @@ export default function Expense() {
 
   // clear form fields
   const clearFormFields = () => {
-    setCustomer(null);
-    setWorkorder(null);
-    setPaidBy("");
-    setPurpose("");
+    setName("");
     setDetails("");
-    setAmount("");
+    setPrice("");
     setIsEditing(false);
     setIsViewOnly(false);
-    setCurrentExpenseId(null);
-  };
-
-  const fetchUsers = async () => {
-    try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/account/`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("access")}`,
-          },
-        }
-      );
-      console.log("Fetched users:", response?.data?.data);
-      setUsers(response?.data?.data);
-    } catch (error) {
-      console.error("Failed to fetch users", error);
-    }
-  };
-
-  const fetchCustomers = async () => {
-    try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/customer/`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("access")}`,
-          },
-        }
-      );
-
-      // Ensure we're setting an array
-      let customersData = Array.isArray(response.data)
-        ? response.data
-        : response.data.results || response.data.data || [];
-
-      // Map the snake_case to camelCase
-      customersData = customersData.map((customer: any) => ({
-        ...customer,
-        contactPersonName: customer.contact_person_name,
-      }));
-
-      setCustomers(customersData);
-      console.log("Fetched customers:", customersData);
-    } catch (error) {
-      console.error("Failed to fetch customers", error);
-    }
-  };
-
-  const fetchWorkorders = async () => {
-    try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/work-order/`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("access")}`,
-          },
-        }
-      );
-      console.log("Fetched work orders:", response?.data?.data);
-      setWorkorders(response?.data?.data);
-    } catch (error) {
-      console.error("Failed to fetch work orders", error);
-    }
+    setCurrentProductId(null);
   };
 
   useEffect(() => {
-    fetchExpenses();
-    fetchUsers();
-    fetchCustomers();
-    fetchWorkorders();
+    fetchProducts();
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Build expense data object, omitting optional fields if they're not set
-    const expenseData: any = {
-      paid_by: paidBy,
-      purpose,
-      details,
-      amount,
-    };
+    // Build product data object, omitting optional fields if they're not set
+    const productData = {};
 
-    // Only add customer and work_order if they have values
-    if (customer) {
-      expenseData.customer = customer;
+    // Only add fields if they have values
+    if (name) {
+      productData.name = name;
     }
 
-    if (workorder) {
-      expenseData.work_order = workorder;
+    if (details) {
+      productData.details = details;
+    }
+
+    if (price) {
+      productData.price = price;
     }
 
     try {
-      if (isEditing && currentExpenseId) {
-        // Update existing expense
+      if (isEditing && currentProductId) {
+        // Update existing product
         await axios.put(
-          `${import.meta.env.VITE_BACKEND_URL}/expense/${currentExpenseId}/`,
-          expenseData,
+          `${import.meta.env.VITE_BACKEND_URL}/product/${currentProductId}/`,
+          productData,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("access")}`,
             },
           }
         );
-        toast.success("Expense updated successfully");
+        toast.success("Product updated successfully");
       } else {
-        // Create new expense
+        // Create new product
         await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/expense/`,
-          expenseData,
+          `${import.meta.env.VITE_BACKEND_URL}/product/`,
+          productData,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("access")}`,
             },
           }
         );
-        toast.success("Expense created successfully");
+        toast.success("Product created successfully");
       }
 
       closeModal();
-      fetchExpenses();
+      fetchProducts();
       clearFormFields();
     } catch (e) {
       console.error(e);
-      toast.error("Failed to save expense");
+      toast.error("Failed to save product");
     }
   };
 
-  const handleView = (id: number) => {
-    const expense = expenses.find((e) => e?.id === id);
-    if (expense) {
-      // Set form fields with expense data
-      setCustomer(expense.customer || null);
-      setWorkorder(expense.work_order || null);
-      setPaidBy(expense?.paid_by);
-      setPurpose(expense?.purpose);
-      setDetails(expense?.details);
-      setAmount(expense.amount);
+  const handleView = (id) => {
+    const product = products.find((p) => p?.id === id);
+    if (product) {
+      // Set form fields with product data
+      setName(product?.name);
+      setDetails(product?.details);
+      setPrice(product?.price);
       setIsViewOnly(true);
-      setCurrentExpenseId(id);
+      setCurrentProductId(id);
     }
     openModal();
   };
 
-  const handleEdit = (id: number) => {
-    const expense = expenses.find((e) => e?.id === id);
-    if (expense) {
-      // Set form fields with expense data
-      setCustomer(expense.customer || null);
-      setWorkorder(expense.work_order || null);
-      setPaidBy(expense.paid_by || "");
-      setPurpose(expense.purpose || "");
-      setDetails(expense.details || "");
-      setAmount(expense.amount?.toString() || "");
+  const handleEdit = (id) => {
+    const product = products.find((p) => p?.id === id);
+    if (product) {
+      // Set form fields with product data
+      setName(product?.name);
+      setDetails(product?.details);
+      setPrice(product?.price);
       setIsEditing(true);
-      setCurrentExpenseId(id);
+      setCurrentProductId(id);
     }
     openModal();
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id) => {
     try {
-      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/expense/${id}/`, {
+      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/product/${id}/`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access")}`,
         },
       });
-      fetchExpenses();
-      toast.success("Expense deleted successfully");
+      fetchProducts();
+      toast.success("Product deleted successfully");
     } catch (error) {
       console.error(error);
-      toast.error("Failed to delete expense");
+      toast.error("Failed to delete product");
     }
   };
-
-  // purpose type
-  const purposeTypes = [
-    { id: "making", name: "Making" },
-    { id: "material", name: "Material" },
-    { id: "labour", name: "Labour" },
-    { id: "transport", name: "Transport" },
-    { id: "meeting", name: "Meeting" },
-    { id: "design", name: "Design" },
-    { id: "dye cut", name: "Dye Cut" },
-    { id: "printing", name: "Printing" },
-    { id: "packing", name: "Packing" },
-    { id: "pasting", name: "Pasting" },
-    { id: "spot lamination", name: "Spot Lamination" },
-    { id: "matt lamination", name: "Matt Lamination" },
-    { id: "glossy lamination", name: "Glossy Lamination" },
-    { id: "other", name: "Other" },
-  ];
 
   return (
     <div>
@@ -335,10 +224,10 @@ export default function Expense() {
           <div>
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
               {isEditing
-                ? "Edit Expense"
+                ? "Edit Product"
                 : isViewOnly
-                ? "View Expense"
-                : "Create Expense"}
+                ? "View Product"
+                : "Create Product"}
             </h3>
           </div>
           <form onSubmit={handleSubmit}>
@@ -347,75 +236,17 @@ export default function Expense() {
                 <div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                      Customer
+                      Product
                     </label>
-                    <select
-                      value={customer || ""}
-                      onChange={(e) =>
-                        setCustomer(
-                          e.target.value ? parseInt(e.target.value) : null
-                        )
-                      }
-                      className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                      disabled={isViewOnly}
-                    >
-                      <option value="">Select a customer</option>
-                      {customers.map((customer) => (
-                        <option key={customer.id} value={customer.id}>
-                          {customer.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-2">
-                <div>
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                      Work Order
-                    </label>
-                    <select
-                      value={workorder || ""}
-                      onChange={(e) =>
-                        setWorkorder(
-                          e.target.value ? parseInt(e.target.value) : null
-                        )
-                      }
-                      className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                      disabled={isViewOnly}
-                    >
-                      <option value="">Select Work Order</option>
-                      {workorders.map((workorder) => (
-                        <option key={workorder.id} value={workorder.id}>
-                          {workorder.no} {workorder.customer}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-2">
-                <div>
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                      Purpose
-                    </label>
-                    <select
-                      value={purpose}
-                      onChange={(e) => setPurpose(e.target.value)}
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Product name"
                       className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
                       disabled={isViewOnly}
                       required
-                    >
-                      <option value="">Select Purpose Type</option>
-                      {purposeTypes.map((purpose) => (
-                        <option key={purpose?.id} value={purpose?.name}>
-                          {purpose?.name}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </div>
                 </div>
               </div>
@@ -426,11 +257,11 @@ export default function Expense() {
                       Details
                     </label>
                     <input
-                      id="event-title"
                       type="text"
                       value={details}
-                      className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
                       onChange={(e) => setDetails(e.target.value)}
+                      placeholder="Description"
+                      className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
                       disabled={isViewOnly}
                       required
                     />
@@ -441,45 +272,21 @@ export default function Expense() {
                 <div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                      Amount
+                      Price
                     </label>
                     <input
-                      id="event-title"
                       type="number"
-                      value={amount}
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      placeholder="Product Price"
                       className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                      onChange={(e) =>
-                        setAmount(e.target.value ? e.target.value : "")
-                      }
                       disabled={isViewOnly}
                       required
                     />
                   </div>
                 </div>
               </div>
-              <div className="mt-2">
-                <div>
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                      Paid By
-                    </label>
-                    <select
-                      value={paidBy}
-                      onChange={(e) => setPaidBy(e.target.value)}
-                      className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                      disabled={isViewOnly}
-                      required
-                    >
-                      <option value="">Select Paid By</option>
-                      {users.map((user) => (
-                        <option key={user?.id} value={user?.id}>
-                          {user?.first_name} {user?.last_name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
+
               <div className="mt-2">
                 {!isViewOnly && (
                   <button
@@ -502,7 +309,7 @@ export default function Expense() {
               openModal();
             }}
           >
-            Create Expense
+            Create Product
           </Button>
         </div>
         <div className="flex items-center gap-3">
@@ -525,43 +332,19 @@ export default function Expense() {
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    No
+                    Name
                   </TableCell>
                   <TableCell
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Customer
+                    Description
                   </TableCell>
                   <TableCell
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Workorder
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                  >
-                    Purpose
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                  >
-                    Details
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                  >
-                    Amount
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                  >
-                    Paid By
+                    Price
                   </TableCell>
                   <TableCell
                     isHeader
@@ -574,50 +357,36 @@ export default function Expense() {
 
               {/* Table Body */}
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                {expenses.length > 0 ? (
-                  expenses.map((expense) => (
-                    <TableRow key={expense?.id}>
+                {products.length > 0 ? (
+                  products.map((product) => (
+                    <TableRow key={product?.id}>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {expense.no}
+                        {product.name || "-"}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {expense.client || "-"}
+                        {product.details || "-"}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {expense.workorder || "-"}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {expense.purpose}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {expense?.details && expense?.details?.length > 30
-                          ? expense?.details.slice(0, 30) + "..."
-                          : expense?.details || "-"}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {expense.amount}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {expense.cost_paid_by}
+                        {product.price || "-"}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                         <button
                           type="button"
-                          onClick={() => handleView(expense?.id)}
+                          onClick={() => handleView(product?.id)}
                           className="inline-flex items-center justify-center gap-2 rounded-lg mr-2"
                         >
                           <ListIcon />
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleEdit(expense?.id)}
+                          onClick={() => handleEdit(product?.id)}
                           className="inline-flex items-center justify-center gap-2 rounded-lg mr-2"
                         >
                           <PencilIcon />
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleDelete(expense?.id)}
+                          onClick={() => handleDelete(product?.id)}
                           className="inline-flex items-center justify-center gap-2 rounded-lg"
                         >
                           <TrashBinIcon />
@@ -627,8 +396,11 @@ export default function Expense() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell className="px-4 py-3 text-gray-500 text-center text-theme-sm dark:text-gray-400">
-                      No expenses found
+                    <TableCell
+                      colSpan={4}
+                      className="px-4 py-3 text-gray-500 text-center text-theme-sm dark:text-gray-400"
+                    >
+                      No Products Found
                     </TableCell>
                   </TableRow>
                 )}

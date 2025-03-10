@@ -22,6 +22,7 @@ import Home from "./pages/Dashboard/Home";
 import WorkorderPage from "./pages/WorkorderPages/WorkorderPage";
 import ExpensePage from "./pages/ExpensePage/ExpensePage";
 import ProtectedRoute from "./components/auth/Auth";
+import ProductPage from "./pages/ProductPage/ProductPage";
 
 export default function App() {
   return (
@@ -38,6 +39,7 @@ export default function App() {
             }
           >
             <Route index path="/" element={<Home />} />
+            <Route path="/products" element={<ProductPage />} />
             <Route path="/customers" element={<CustomerPage />} />
             <Route path="/workorders" element={<WorkorderPage />} />
             <Route path="/expenses" element={<ExpensePage />} />
