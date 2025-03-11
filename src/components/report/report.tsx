@@ -27,13 +27,6 @@ export default function Report() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // clear form fields
-  const clearFormFields = () => {
-    setStartDate("");
-    setEndDate("");
-    setReportData(null);
-  };
-
   useEffect(() => {}, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

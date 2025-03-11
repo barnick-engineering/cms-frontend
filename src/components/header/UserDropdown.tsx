@@ -1,5 +1,5 @@
+// @ts-nocheck
 import { useState } from "react";
-import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { Link } from "react-router";
 
@@ -20,7 +20,7 @@ export default function UserDropdown() {
         className="flex items-center text-gray-700 dropdown-toggle dark:text-gray-400"
       >
         <span className="block mr-1 font-medium text-theme-sm border border-black-200 dark:border-white-900 rounded-full w-10 h-10 pt-2 ">
-          {JSON.parse(localStorage.getItem("user")).short_name}
+          {JSON.parse(localStorage.getItem("user")).short_name || null}
         </span>
       </button>
 

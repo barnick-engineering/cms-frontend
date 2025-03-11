@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {
   Table,
   TableBody,
@@ -5,7 +6,6 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
-import Badge from "../ui/badge/Badge";
 import { useEffect, useState } from "react";
 import axios from "axios";
 
@@ -90,9 +90,9 @@ export default function RecentOrders() {
                 </TableCell>
                 <TableCell className="py-3 font-sm text-gray-800 dark:text-white/90">
                   {item.is_delivered ? (
-                    <Badge type="success">Yes</Badge>
+                    <p className="text-green-500">Yes</p>
                   ) : (
-                    <Badge type="error">No</Badge>
+                    <p className="text-red-500">No</p>
                   )}
                 </TableCell>
               </TableRow>

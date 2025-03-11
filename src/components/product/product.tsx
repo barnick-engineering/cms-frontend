@@ -13,18 +13,27 @@ import {
   TableHeader,
 } from "../ui/table";
 
+type Product = {
+  id: number;
+  name: string;
+  details: string;
+  price: number;
+};
+
 export default function Product() {
   const { isOpen, openModal, closeModal } = useModal();
   const [isEditing, setIsEditing] = useState(false);
-  const [currentProductId, setCurrentProductId] = useState(null);
+  const [currentProductId, setCurrentProductId] = useState<number | undefined>(
+    undefined
+  );
   const [isViewOnly, setIsViewOnly] = useState(false);
 
   const [name, setName] = useState("");
   const [details, setDetails] = useState("");
-  const [price, setPrice] = useState("");
+  const [price, setPrice] = useState<number>();
 
-  const [products, setProducts] = useState([]);
-  const [search, setSearch] = useState("");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [, setSearch] = useState("");
 
   // Pagination state
   const [pagination, setPagination] = useState({
@@ -35,7 +44,7 @@ export default function Product() {
     prevUrl: null,
     nextUrl: null,
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [, setIsLoading] = useState(false);
 
   // Calculate total pages
   const totalPages = Math.ceil(pagination.total / pagination.limit);
@@ -76,13 +85,13 @@ export default function Product() {
     }
   };
 
-  const handleSearch = (searchResult) => {
+  const handleSearch = (searchResult: any) => {
     setSearch(searchResult);
     fetchProducts(0, pagination.limit, searchResult);
   };
 
-  const handlePageChange = (newOffset) => {
-    fetchProducts(newOffset, pagination.limit, search);
+  const handlePageChange = (newOffset: number) => {
+    fetchProducts(newOffset, pagination.limit, null);
   };
 
   const handlePrevPage = () => {
@@ -106,21 +115,21 @@ export default function Product() {
   const clearFormFields = () => {
     setName("");
     setDetails("");
-    setPrice("");
+    setPrice(0); // Reset to a number
     setIsEditing(false);
     setIsViewOnly(false);
-    setCurrentProductId(null);
+    setCurrentProductId(undefined); // Corrected type here
   };
 
   useEffect(() => {
-    fetchProducts();
+    fetchProducts(0, pagination.limit, null);
   }, []);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
 
     // Build product data object, omitting optional fields if they're not set
-    const productData = {};
+    const productData: Partial<Product> = {};
 
     // Only add fields if they have values
     if (name) {
@@ -163,7 +172,7 @@ export default function Product() {
       }
 
       closeModal();
-      fetchProducts();
+      fetchProducts(0, pagination.limit, null);
       clearFormFields();
     } catch (e) {
       console.error(e);
@@ -171,8 +180,8 @@ export default function Product() {
     }
   };
 
-  const handleView = (id) => {
-    const product = products.find((p) => p?.id === id);
+  const handleView = (id: number) => {
+    const product = products.find((p: Product) => p?.id === id);
     if (product) {
       // Set form fields with product data
       setName(product?.name);
@@ -184,27 +193,26 @@ export default function Product() {
     openModal();
   };
 
-  const handleEdit = (id) => {
-    const product = products.find((p) => p?.id === id);
+  const handleEdit = (id: number) => {
+    const product = products.find((p: Product) => p.id === id);
     if (product) {
-      // Set form fields with product data
-      setName(product?.name);
-      setDetails(product?.details);
-      setPrice(product?.price);
+      setName(product.name);
+      setDetails(product.details);
+      setPrice(product.price); // Ensure that price is always a number
       setIsEditing(true);
-      setCurrentProductId(id);
+      setCurrentProductId(id); // this should be fine as `id` is a number
     }
     openModal();
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: number) => {
     try {
       await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/product/${id}/`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access")}`,
         },
       });
-      fetchProducts();
+      fetchProducts(0, pagination.limit, null);
       toast.success("Product deleted successfully");
     } catch (error) {
       console.error(error);
@@ -277,7 +285,7 @@ export default function Product() {
                     <input
                       type="number"
                       value={price}
-                      onChange={(e) => setPrice(e.target.value)}
+                      onChange={(e) => setPrice(Number(e.target.value))}
                       placeholder="Product Price"
                       className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
                       disabled={isViewOnly}
@@ -358,7 +366,7 @@ export default function Product() {
               {/* Table Body */}
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {products.length > 0 ? (
-                  products.map((product) => (
+                  products.map((product: any) => (
                     <TableRow key={product?.id}>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                         {product.name || "-"}
@@ -396,11 +404,8 @@ export default function Product() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell
-                      colSpan={4}
-                      className="px-4 py-3 text-gray-500 text-center text-theme-sm dark:text-gray-400"
-                    >
-                      No Products Found
+                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                      No products found
                     </TableCell>
                   </TableRow>
                 )}

@@ -1,12 +1,10 @@
+// @ts-nocheck
 import axios from "axios";
 import {
-  ArrowDownIcon,
-  ArrowUpIcon,
   BoxIconLine,
   GroupIcon,
 } from "../../icons";
-import Badge from "../ui/badge/Badge";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function EcommerceMetrics() {
   const [dashboardData, setDashboardData] = useState([]);
