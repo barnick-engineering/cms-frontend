@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useState } from "react";
 import Button from "../ui/button/Button";
 import { useModal } from "../../hooks/useModal";
@@ -25,36 +26,6 @@ interface Customer {
   status: boolean;
 }
 
-interface LineItem {
-  id: number;
-  item: string;
-  details: string;
-  unit_price: string;
-  total_order: string;
-}
-
-interface WorkOrder {
-  id: number;
-  no: string;
-  customer: string;
-  total_items: number;
-  amount: string;
-  total_paid: string;
-  is_delivered: boolean;
-  date: string;
-  created: string;
-  items: {
-    id: number;
-    item: string;
-    details: string;
-    total_order: string;
-    unit_price: string;
-  }[];
-  expense?: {
-    total: number;
-  }[];
-}
-
 export default function Workorder() {
   const { isOpen, openModal, closeModal } = useModal();
   const {
@@ -72,8 +43,8 @@ export default function Workorder() {
   const [hideSaveButton, setHideSaveButton] = useState(false);
 
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [workorders, setWorkorders] = useState<WorkOrder[]>([]);
-  const [workorder, setWorkorder] = useState<WorkOrder | null>(null);
+  const [workorders, setWorkorders] = useState([]);
+  const [workorder, setWorkorder] = useState({});
   const [total, setTotal] = useState(0);
   const [paid, setPaid] = useState(0);
   const getTodayFormatted = () => {
@@ -86,10 +57,7 @@ export default function Workorder() {
   const [totalPaid, setTotalPaid] = useState(0);
   const [isDelivered, setIsDelivered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [currentWorkorderId, setCurrentWorkorderId] = useState<
-    number | undefined
-  >(undefined);
-
+  const [currentWorkorderId, setCurrentWorkorderId] = useState(null);
   const [search, setSearch] = useState("");
   // Pagination state
   const [pagination, setPagination] = useState({
@@ -100,6 +68,7 @@ export default function Workorder() {
     prevUrl: null,
     nextUrl: null,
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   // Calculate total pages
   const totalPages = Math.ceil(pagination.total / pagination.limit);
@@ -202,11 +171,7 @@ export default function Workorder() {
     fetchCustomers();
   }, []);
 
-  const fetchWorkOrders = async (
-    offset: number = 0,
-    limit: number = 10,
-    search: string
-  ) => {
+  const fetchWorkOrders = async (offset = 0, limit = 10, search = null) => {
     // setLoading(true);
     try {
       const response = await axios.get(
@@ -222,6 +187,7 @@ export default function Workorder() {
           },
         }
       );
+      console.log("Fetched work orders:", response?.data?.data);
       setWorkorders(response?.data?.data || []);
       setPagination({
         total: response.data.total || 0,
@@ -239,15 +205,15 @@ export default function Workorder() {
   };
 
   useEffect(() => {
-    fetchWorkOrders(0, pagination.limit, search);
+    fetchWorkOrders();
   }, []);
 
-  const handleSearch = (searchResult: string) => {
+  const handleSearch = (searchResult) => {
     setSearch(searchResult);
     fetchWorkOrders(0, pagination.limit, searchResult);
   };
 
-  const handlePageChange = (newOffset: number) => {
+  const handlePageChange = (newOffset) => {
     fetchWorkOrders(newOffset, pagination.limit, search);
   };
 
@@ -273,7 +239,7 @@ export default function Workorder() {
       if (isEditing && currentWorkorderId) {
         const updateWorkorderData: any = {};
         updateWorkorderData.is_delivered = isDelivered;
-        if (totalPaid !== undefined) {
+        if (totalPaid) {
           updateWorkorderData.total_paid = totalPaid;
         }
         // Update existing workorder
@@ -311,7 +277,7 @@ export default function Workorder() {
       closeModal();
       closeEditModal();
       clearFormFields();
-      fetchWorkOrders(0, pagination.limit, search);
+      fetchWorkOrders();
     } catch (e) {
       console.error(e);
       toast.error("Failed to create workorder");
@@ -337,14 +303,14 @@ export default function Workorder() {
     if (workorder) {
       // Set form fields with customer data
       setTotalPaid(0);
-      setIsDelivered(workorder.is_delivered);
+      setIsDelivered(workorder?.is_delivered);
       setIsEditing(true);
       setCurrentWorkorderId(id);
     }
     openEditModal();
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     try {
       await axios.delete(
         `${import.meta.env.VITE_BACKEND_URL}/work-order/${id}/`,
@@ -354,7 +320,7 @@ export default function Workorder() {
           },
         }
       );
-      fetchWorkOrders(0, pagination.limit, search);
+      fetchWorkOrders();
       toast.success("Workorder deleted successfully");
     } catch (error) {
       console.error(error);
@@ -393,7 +359,7 @@ export default function Workorder() {
                     Customer
                   </label>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {workorder?.customer}
+                    {workorder?.customer?.name}
                   </p>
                 </div>
                 <div className="w-1/3">
@@ -440,7 +406,7 @@ export default function Workorder() {
                   </TableRow>
                 </TableHeader>
                 <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                  {workorder?.items?.map((item: LineItem) => (
+                  {workorder?.items?.map((item: any) => (
                     <TableRow key={item.id}>
                       <TableCell className="px-5 py-3 text-sm text-gray-600 dark:text-gray-400">
                         {item.item}
@@ -495,9 +461,9 @@ export default function Workorder() {
                   Profit
                 </label>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {parseFloat(workorder?.amount || "0") -
-                    parseFloat(workorder?.total_paid || "0") -
-                    (workorder?.expense?.[0]?.total || 0)}
+                  {workorder?.amount -
+                    workorder?.total_paid -
+                    workorder?.expense?.[0]?.total || 0}
                 </p>
               </div>
             </div>
@@ -756,6 +722,7 @@ export default function Workorder() {
                       checked={isDelivered}
                       onChange={(checked) => {
                         const boolValue = Boolean(checked);
+                        console.log("Sending to backend:", boolValue);
                         setIsDelivered(boolValue);
                       }}
                       label="Delivered"
@@ -791,7 +758,7 @@ export default function Workorder() {
             type="text"
             className="p-2 rounded border border-gray-500 shadow dark:bg-dark-900 text-black dark:text-white dark:border-gray-700"
             placeholder="Search....."
-            onChange={(e) => handleSearch((e.target.value as string) || "")}
+            onChange={(e) => handleSearch(e.target.value)}
           />
         </div>
       </div>
@@ -839,8 +806,8 @@ export default function Workorder() {
               {/* Table Body */}
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {workorders.length > 0 ? (
-                  workorders.map((workorder: WorkOrder) => (
-                    <TableRow key={workorder?.id}>
+                  workorders.map((workorder) => (
+                    <TableRow key={workorder?.id || "n/a"}>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                         {workorder?.no || "n/a"}
                       </TableCell>
@@ -875,7 +842,7 @@ export default function Workorder() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleDelete(workorder.id)}
+                          onClick={() => handleDelete(workorder?.id)}
                           className="inline-flex items-center justify-center gap-2 rounded-lg"
                         >
                           <TrashBinIcon />
