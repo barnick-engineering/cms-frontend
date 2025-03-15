@@ -36,9 +36,7 @@ interface LineItem {
 interface WorkOrder {
   id: number;
   no: string;
-  customer: {
-    name: string;
-  };
+  customer: string;
   total_items: number;
   amount: string;
   total_paid: string;
@@ -847,7 +845,7 @@ export default function Workorder() {
                         {workorder?.no || "n/a"}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {workorder?.customer?.name} ({workorder?.total_items})
+                        {workorder?.customer} ({workorder?.total_items})
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                         {workorder?.amount || "n/a"} / {workorder?.total_paid} /{" "}
