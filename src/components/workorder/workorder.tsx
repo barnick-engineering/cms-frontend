@@ -393,7 +393,7 @@ export default function Workorder() {
                     Customer
                   </label>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {workorder?.customer?.name}
+                    {workorder?.customer}
                   </p>
                 </div>
                 <div className="w-1/3">
