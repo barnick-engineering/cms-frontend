@@ -37,7 +37,7 @@ type WorkOrderFormSchema = z.infer<typeof workOrderFormSchema>
 const WorkOrderMutateDrawer = ({
   open,
   onOpenChange,
-  currentRow,
+  currentRow: _currentRow,
   onSave,
 }: WorkOrderMutateDrawerProps) => {
   const createMutation = useCreateWorkOrder()
@@ -91,13 +91,16 @@ const WorkOrderMutateDrawer = ({
     }
   }, [open, form])
 
-  // Watch items for real-time calculation
+  // Watch items array for real-time calculation
   const watchedItems = form.watch("items")
 
   // Calculate total amount - updates in real-time
   const totalAmount = useMemo(() => {
+    if (!watchedItems || watchedItems.length === 0) return 0
     return watchedItems.reduce((sum, item) => {
-      return sum + (item.total_order || 0) * (item.unit_price || 0)
+      const quantity = Number(item.total_order) || 0
+      const price = Number(item.unit_price) || 0
+      return sum + (quantity * price)
     }, 0)
   }, [watchedItems])
 
@@ -257,9 +260,11 @@ const WorkOrderMutateDrawer = ({
                               {...field}
                               value={field.value || ""}
                               onChange={(e) => {
-                                field.onChange(Number(e.target.value) || 0)
-                                // Trigger form update for real-time calculation
-                                form.trigger(`items.${index}.total_order`)
+                                const value = Number(e.target.value) || 0
+                                field.onChange(value)
+                                // Force re-render by updating the items array reference
+                                const currentItems = form.getValues("items")
+                                form.setValue("items", [...currentItems], { shouldValidate: false, shouldDirty: true })
                               }}
                               min={1}
                               placeholder="0"
@@ -282,9 +287,11 @@ const WorkOrderMutateDrawer = ({
                               {...field}
                               value={field.value || ""}
                               onChange={(e) => {
-                                field.onChange(Number(e.target.value) || 0)
-                                // Trigger form update for real-time calculation
-                                form.trigger(`items.${index}.unit_price`)
+                                const value = Number(e.target.value) || 0
+                                field.onChange(value)
+                                // Force re-render by updating the items array reference
+                                const currentItems = form.getValues("items")
+                                form.setValue("items", [...currentItems], { shouldValidate: false, shouldDirty: true })
                               }}
                               min={0}
                               step="0.01"

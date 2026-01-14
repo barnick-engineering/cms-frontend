@@ -9,7 +9,7 @@ type WorkOrderViewDrawerProps = {
 }
 
 const WorkOrderViewDrawer = ({ open, onOpenChange, currentRow }: WorkOrderViewDrawerProps) => {
-    const { data: workOrderDetail, isLoading } = useWorkOrderById(
+    const { data: workOrderDetail, isLoading, isError } = useWorkOrderById(
         currentRow?.id || 0,
         { enabled: !!currentRow?.id && open }
     )
@@ -26,29 +26,37 @@ const WorkOrderViewDrawer = ({ open, onOpenChange, currentRow }: WorkOrderViewDr
 
                 {isLoading ? (
                     <div className="text-center py-8">Loading work order details...</div>
+                ) : isError ? (
+                    <div className="text-center py-8 text-destructive">Failed to load work order details</div>
                 ) : workOrderDetail ? (
                     <div className="space-y-4 text-sm">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <span className="font-medium text-foreground">Work Order No:</span> {workOrderDetail.no}
+                                <span className="font-medium text-foreground">Work Order No:</span> {workOrderDetail.no || currentRow.no}
                             </div>
                             <div>
-                                <span className="font-medium text-foreground">Date:</span> {new Date(workOrderDetail.date).toLocaleDateString()}
+                                <span className="font-medium text-foreground">Date:</span> {workOrderDetail.date ? new Date(workOrderDetail.date).toLocaleDateString() : 'N/A'}
                             </div>
                             <div>
-                                <span className="font-medium text-foreground">Customer:</span> {workOrderDetail.customer.name}
+                                <span className="font-medium text-foreground">Customer:</span> {
+                                    workOrderDetail.customer 
+                                        ? (typeof workOrderDetail.customer === 'string' 
+                                            ? workOrderDetail.customer 
+                                            : workOrderDetail.customer.name || 'N/A')
+                                        : currentRow.customer || 'N/A'
+                                }
                             </div>
                             <div>
                                 <span className="font-medium text-foreground">Status:</span> {workOrderDetail.is_delivered ? 'Delivered' : 'Pending'}
                             </div>
                             <div>
-                                <span className="font-medium text-foreground">Total Amount:</span> ৳{workOrderDetail.amount.toLocaleString('en-IN')}
+                                <span className="font-medium text-foreground">Total Amount:</span> ৳{(workOrderDetail.amount || 0).toLocaleString('en-IN')}
                             </div>
                             <div>
-                                <span className="font-medium text-foreground">Total Paid:</span> ৳{workOrderDetail.total_paid.toLocaleString('en-IN')}
+                                <span className="font-medium text-foreground">Total Paid:</span> ৳{(workOrderDetail.total_paid || 0).toLocaleString('en-IN')}
                             </div>
                             <div>
-                                <span className="font-medium text-foreground">Pending:</span> ৳{(workOrderDetail.amount - workOrderDetail.total_paid).toLocaleString('en-IN')}
+                                <span className="font-medium text-foreground">Pending:</span> ৳{((workOrderDetail.amount || 0) - (workOrderDetail.total_paid || 0)).toLocaleString('en-IN')}
                             </div>
                         </div>
 
@@ -58,31 +66,33 @@ const WorkOrderViewDrawer = ({ open, onOpenChange, currentRow }: WorkOrderViewDr
                             </div>
                         )}
 
-                        <div className="mt-4">
-                            <h4 className="font-semibold mb-2">Items:</h4>
-                            <div className="border rounded-lg">
-                                <table className="w-full">
-                                    <thead className="bg-muted">
-                                        <tr>
-                                            <th className="text-left p-2">Item</th>
-                                            <th className="text-right p-2">Quantity</th>
-                                            <th className="text-right p-2">Unit Price</th>
-                                            <th className="text-right p-2">Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {workOrderDetail.items.map((item, index) => (
-                                            <tr key={index} className="border-t">
-                                                <td className="p-2">{item.item}</td>
-                                                <td className="p-2 text-right">{item.total_order.toLocaleString('en-IN')}</td>
-                                                <td className="p-2 text-right">৳{item.unit_price.toLocaleString('en-IN')}</td>
-                                                <td className="p-2 text-right">৳{(item.total_order * item.unit_price).toLocaleString('en-IN')}</td>
+                        {workOrderDetail.items && workOrderDetail.items.length > 0 && (
+                            <div className="mt-4">
+                                <h4 className="font-semibold mb-2">Items:</h4>
+                                <div className="border rounded-lg">
+                                    <table className="w-full">
+                                        <thead className="bg-muted">
+                                            <tr>
+                                                <th className="text-left p-2">Item</th>
+                                                <th className="text-right p-2">Quantity</th>
+                                                <th className="text-right p-2">Unit Price</th>
+                                                <th className="text-right p-2">Total</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            {workOrderDetail.items.map((item, index) => (
+                                                <tr key={index} className="border-t">
+                                                    <td className="p-2">{item.item || 'N/A'}</td>
+                                                    <td className="p-2 text-right">{(item.total_order || 0).toLocaleString('en-IN')}</td>
+                                                    <td className="p-2 text-right">৳{(item.unit_price || 0).toLocaleString('en-IN')}</td>
+                                                    <td className="p-2 text-right">৳{((item.total_order || 0) * (item.unit_price || 0)).toLocaleString('en-IN')}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 ) : (
                     <div className="text-center py-8 text-muted-foreground">Failed to load work order details</div>
