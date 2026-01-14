@@ -1,7 +1,6 @@
 import { apiEndpoints } from "@/config/api"
 import { axiosInstance } from "./axios"
 import type { CustomerFormInterface, CustomerListInterface, CustomerListResponse, Customer } from "@/interface/customerInterface"
-import type { VendorTransactionApiResponse } from "@/interface/vendorInterface"
 
 // customer list with search params
 export const customerList = async (
@@ -65,49 +64,5 @@ export const deleteCustomer = async (id: string | number) => {
     const res = await axiosInstance.delete(
         `${apiEndpoints.customer.deleteCustomer}${id}/`
     )
-    return res.data
-}
-
-// get Customer transactions by CustomerId
-// export const getCustomerTransactions = async (
-//     customerId: string,
-//     page: number = 1,
-//     limit: number = 10,
-//     startDate?: string,
-//     endDate?: string
-// ): Promise<VendorTransactionApiResponse> => {
-//     if (!customerId) throw new Error("Customer ID is required");
-
-//     const res = await axiosInstance.get<VendorTransactionApiResponse>(
-//         apiEndpoints.customer.customerTransactions.replace("id", customerId),
-//         {
-//             params: {
-//                 page,
-//                 limit,
-//                 ...(startDate && { startDate }),
-//                 ...(endDate && { endDate }),
-//             },
-//         }
-//     );
-
-//     return res.data;
-// }
-
-export const getCustomerTransactions = async (
-    customerId: string,
-    page: number = 1,
-    limit: number = 10,
-    startDate?: string,
-    endDate?: string
-): Promise<VendorTransactionApiResponse> => {
-    if (!customerId) throw new Error("Customer ID is required")
-
-    const res = await axiosInstance.get<VendorTransactionApiResponse>(
-        apiEndpoints.customer.customerTransactions.replace("id", customerId),
-        {
-            params: { page, limit, startDate, endDate },
-        }
-    )
-
     return res.data
 }

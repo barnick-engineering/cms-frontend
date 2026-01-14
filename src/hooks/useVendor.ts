@@ -1,12 +1,11 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query"
-import { createVendor, deleteVendor, getVendorById, getVendorTransactions, updateVendor, vendorList } from "@/api/vendorApi"
-import type { VendorFormInterface, VendorTransactionApiResponse } from "@/interface/vendorInterface"
+import { createVendor, deleteVendor, getVendorById, updateVendor, vendorList } from "@/api/vendorApi"
+import type { VendorFormInterface } from "@/interface/vendorInterface"
 import type { UseQueryOptions, UseQueryResult } from "@tanstack/react-query"
 
 const VENDOR_KEYS = {
     all: ["vendors"] as const,
     detail: (shopId: string, id: string) => [...VENDOR_KEYS.all, shopId, id] as const,
-    transactions: (vendorId: string, page: number, limit: number) => ["vendorTransactions", vendorId, page, limit] as const,
 }
 
 // vendor list
@@ -72,12 +71,3 @@ export const useDeleteVendor = (shopId: string) => {
     })
 }
 
-// get vendor transactions by vendorId
-export const useVendorTransactions = (vendorId: string, pageIndex: number, pageSize: number) => {
-    return useQuery<VendorTransactionApiResponse>({
-        queryKey: ["vendorTransactions", vendorId, pageIndex, pageSize],
-        queryFn: () => getVendorTransactions(vendorId, pageIndex + 1, pageSize), // pageIndex +1 for 1-based API
-        enabled: !!vendorId,
-        placeholderData: keepPreviousData,
-    })
-}

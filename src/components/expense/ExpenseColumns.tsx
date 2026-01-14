@@ -1,12 +1,11 @@
-import type { ExpenseItemInterface } from '@/interface/expenseInterface'
+import type { Expense } from '@/interface/expenseInterface'
 import { type ColumnDef } from '@tanstack/react-table'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTableColumnHeader } from '../customers/DataTableColumnHeader'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
 import { DataTableRowActions } from './DataTableRowActions'
-import { ChevronRight } from 'lucide-react'
+import { Badge } from '../ui/badge'
 
-export const ExpenseColumns: ColumnDef<ExpenseItemInterface>[] = [
+export const ExpenseColumns: ColumnDef<Expense>[] = [
     {
         id: 'select',
         header: ({ table }) => (
@@ -34,54 +33,51 @@ export const ExpenseColumns: ColumnDef<ExpenseItemInterface>[] = [
         enableHiding: false,
     },
     {
-        accessorKey: 'title',
-        header: ({ column }) => <DataTableColumnHeader column={column} title='Title' />,
+        accessorKey: 'id',
+        header: ({ column }) => <DataTableColumnHeader column={column} title='ID' />,
     },
     {
-        accessorKey: 'type',
-        header: ({ column }) => <DataTableColumnHeader column={column} title='Type' />,
+        accessorKey: 'no',
+        header: ({ column }) => <DataTableColumnHeader column={column} title='Expense No' />,
+    },
+    {
+        accessorKey: 'workorder',
+        header: ({ column }) => <DataTableColumnHeader column={column} title='Work Order' />,
+    },
+    {
+        accessorKey: 'purpose',
+        header: ({ column }) => <DataTableColumnHeader column={column} title='Purpose' />,
+        cell: ({ row }) => {
+            const purpose = row.getValue<string>('purpose')
+            return <Badge variant="secondary">{purpose}</Badge>
+        },
+    },
+    {
+        accessorKey: 'details',
+        header: ({ column }) => <DataTableColumnHeader column={column} title='Details' />,
     },
     {
         accessorKey: 'amount',
         header: ({ column }) => <DataTableColumnHeader column={column} title='Amount' />,
         cell: ({ row }) => {
-            const value = row.getValue<number>('amount')
-            return <>{value}</>
+            const amount = row.getValue<number>('amount')
+            return `৳${amount.toLocaleString('en-IN')}`
         },
     },
     {
-        accessorKey: 'remarks',
-        header: ({ column }) => <DataTableColumnHeader column={column} title='Remarks' />,
+        accessorKey: 'expense_date',
+        header: ({ column }) => <DataTableColumnHeader column={column} title='Date' />,
         cell: ({ row }) => {
-            const text = row.getValue<string>('remarks')
-            if (!text) return null
-            return (
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <div className='max-w-50 truncate cursor-help'>{text}</div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p className='max-w-xs wrap-break-word'>{text}</p>
-                        </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
-            )
+            const date = row.getValue<string>('expense_date')
+            return date ? new Date(date).toLocaleDateString() : '-'
         },
     },
     {
-        id: 'open',
-        header: '',
-        cell: () => (
-            <div className="flex justify-center">
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </div>
-        ),
-        enableSorting: false,
-        enableHiding: false,
+        accessorKey: 'cost_paid_by',
+        header: ({ column }) => <DataTableColumnHeader column={column} title='Paid By' />,
     },
     {
         id: 'actions',
-        cell: ({ row }) => <DataTableRowActions row={row} />, // Implement ExpenseRowActions
+        cell: ({ row }) => <DataTableRowActions row={row} />,
     },
 ]

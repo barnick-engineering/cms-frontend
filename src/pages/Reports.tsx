@@ -7,29 +7,17 @@ import { Button } from "@/components/ui/button"
 import { Search, X } from "lucide-react"
 import { ReportType } from "@/utils/enums/reportType"
 import { useShopStore } from "@/stores/shopStore"
-import { useCustomerList } from "@/hooks/useCustomer"
-import { useVendorList } from "@/hooks/useVendor"
-import { useTransactionLedger } from "@/hooks/useTransaction"
 import { ReportCard } from "@/components/report/ReportCard"
 import { ReportTable } from "@/components/report/ReportTable"
 import { BalanceSheetTable } from "@/components/report/BalanceSheetTable"
 import type {
-  TransactionLedgerDetailItem,
-  TransactionReportItem,
-  TransactionLedgerItem,
-  TransactionDetailItem,
   ExpenseReportItem,
   StockReportItem,
   StockTrackReportItem,
 } from "@/interface/reportInterface"
-import { generateLedgerPDF } from "@/utils/enums/customerOrVendorLedgerPdf"
-import { generateTransactionReportPDF } from "@/utils/enums/transactionReportPdf"
-import { generateTransactionReportExcel } from "@/utils/enums/transactionReportExcel"
-import { generateLedgerExcel } from "@/utils/enums/customerOrVendorLedgerExcel"
 import { NoDataFound } from "@/components/NoDataFound"
-import { TRANSACTION_TYPES } from "@/constance/transactionConstances"
-import { useBalanceSheetReport, useExpensesReport, useStocksReport, useStocksReportTracking, useTransactionReport } from "@/hooks/useReport"
-import { ExpensesReportColumns, LedgerReportColumns, TransactionReportColumns, StocksReportColumns, StockTrackReportColumns } from "@/components/report/ReportColumns"
+import { useBalanceSheetReport, useExpensesReport, useStocksReport, useStocksReportTracking } from "@/hooks/useReport"
+import { ExpensesReportColumns, StocksReportColumns, StockTrackReportColumns } from "@/components/report/ReportColumns"
 import Loader from "@/components/layout/Loader"
 import { generateExpenseReportPDF } from "@/utils/enums/expensesreportPdf"
 import { generateExpenseReportExcel } from "@/utils/enums/expensesreportExcel"
@@ -65,8 +53,6 @@ const Reports = () => {
   const [reportTypeSearch, setReportTypeSearch] = useState("")
   const [selectedEntityIds, setSelectedEntityIds] = useState<string[]>([])
   const [entitySearch, setEntitySearch] = useState("")
-  const [transactionTypes, setTransactionTypes] = useState<string[]>([])
-  const [transactionTypeSearch, setTransactionTypeSearch] = useState("")
   const [dateRange, setDateRange] = useState<DateRange | undefined>(defaultDateRange)
   const [selectedInventoryIds, setSelectedInventoryIds] = useState<string[]>([])
   const [inventorySearch, setInventorySearch] = useState("")
@@ -76,24 +62,12 @@ const Reports = () => {
     reportType?: ReportType;
     entityIds?: string[];
     dateRange?: DateRange;
-    transactionTypes?: string[];
     inventoryIds?: string[];
   } | null>(null)
 
   const isReportTypeEnabled = !!dateRange?.from && !!dateRange?.to
   const isEntityEnabled = isReportTypeEnabled && !!reportType
 
-  // customer hook
-  const { data: customerResponse } = useCustomerList(
-    shopId, page, limit, entitySearch, undefined, undefined,
-    { enabled: reportType === ReportType.CUSTOMER_LEDGER && isEntityEnabled }
-  )
-
-  // vendor hook
-  const { data: vendorResponse } = useVendorList(
-    shopId, page, limit, entitySearch, undefined, undefined,
-    { enabled: reportType === ReportType.VENDOR_LEDGER && isEntityEnabled }
-  )
 
   // Fetch all inventories for the select box (when Stock Report or Stock Track Report is selected)
   const { data: allInventoriesResponse } = useStocksReport(
@@ -110,35 +84,6 @@ const Reports = () => {
     }
   )
 
-  // customer/vendor ledger hook
-  const { data: ledger, isLoading: isLedgerLoading } = useTransactionLedger(
-    shopId,
-    page,
-    appliedFilters?.entityIds?.[0] ?? "",
-    limit,
-    appliedFilters?.dateRange?.from?.toISOString(),
-    appliedFilters?.dateRange?.to?.toISOString(),
-  )
-
-  // transaction report hook
-  const { data: transactionData, isLoading: isTransactionLoading } = useTransactionReport(
-    {
-      shopId,
-      page: page,
-      limit: limit,
-      startDate: appliedFilters?.dateRange?.from?.toISOString(),
-      endDate: appliedFilters?.dateRange?.to?.toISOString(),
-      transactionTypes: appliedFilters?.transactionTypes,
-    },
-    {
-      enabled: !!appliedFilters &&
-        appliedFilters.reportType === ReportType.TRANSACTION_REPORT &&
-        !!appliedFilters.transactionTypes &&
-        appliedFilters.transactionTypes.length > 0 &&
-        !!appliedFilters.dateRange?.from &&
-        !!appliedFilters.dateRange?.to
-    }
-  )
 
   // use expense report hook
   const { data: expensesdata, isLoading: isExpensesLoading } = useExpensesReport(
@@ -221,8 +166,6 @@ const Reports = () => {
     setReportTypeSearch("")
     setSelectedEntityIds([])
     setEntitySearch("")
-    setTransactionTypes([])
-    setTransactionTypeSearch("")
     setSelectedInventoryIds([])
     setInventorySearch("")
     setAppliedFilters(null)
@@ -231,8 +174,6 @@ const Reports = () => {
   useEffect(() => {
     setSelectedEntityIds([])
     setEntitySearch("")
-    setTransactionTypes([])
-    setTransactionTypeSearch("")
     setSelectedInventoryIds([])
     setInventorySearch("")
     setAppliedFilters(null)
@@ -245,7 +186,6 @@ const Reports = () => {
       reportType,
       entityIds: selectedEntityIds.length > 0 ? selectedEntityIds : undefined,
       dateRange,
-      transactionTypes: transactionTypes.length > 0 ? transactionTypes : undefined,
       inventoryIds: selectedInventoryIds.length > 0 ? selectedInventoryIds : undefined
     })
   }
@@ -284,57 +224,12 @@ const Reports = () => {
     setSelectedEntityIds(newIds)
 
     // Update applied filters to trigger data refetch
-    if (appliedFilters?.reportType === ReportType.CUSTOMER_LEDGER ||
-      appliedFilters?.reportType === ReportType.VENDOR_LEDGER) {
-      if (newIds.length === 0) {
-        setAppliedFilters(null)
-      } else {
-        setAppliedFilters({
-          ...appliedFilters,
-          entityIds: newIds
-        })
-      }
-    }
   }
 
   const handleEntitySearchClear = () => {
     setEntitySearch("")
   }
 
-  // handlers for transaction type multi-select
-  const handleTransactionTypeSelect = (value: string) => {
-    if (!value.trim()) return;
-
-    // Check if already selected
-    if (!transactionTypes.includes(value)) {
-      setTransactionTypes(prev => [...prev, value])
-    }
-
-    // Clear search after selection
-    setTransactionTypeSearch("")
-  }
-
-  const handleRemoveTransactionType = (transactionType: string) => {
-    const newTypes = transactionTypes.filter(type => type !== transactionType)
-    setTransactionTypes(newTypes)
-
-    // Update applied filters to trigger data refetch
-    if (appliedFilters?.reportType === ReportType.TRANSACTION_REPORT) {
-      // If all types removed, fetch with all transaction types
-      const typesToApply = newTypes.length === 0
-        ? TRANSACTION_TYPES.map(t => t.value)
-        : newTypes
-
-      setAppliedFilters({
-        ...appliedFilters,
-        transactionTypes: typesToApply
-      })
-    }
-  }
-
-  const handleTransactionTypeSearchClear = () => {
-    setTransactionTypeSearch("")
-  }
 
   const handleInventorySelect = (value: string) => {
     if (!value.trim()) return;
@@ -398,20 +293,6 @@ const Reports = () => {
       }))
   }, [allInventoriesResponse, inventorySearch, selectedInventoryIds])
 
-  // filter transaction types based on search and already selected
-  const filteredTransactionTypes = useMemo(() => {
-    const searchLower = transactionTypeSearch.toLowerCase()
-    return TRANSACTION_TYPES.filter(type => {
-      const matchesSearch = !transactionTypeSearch ||
-        type.label.toLowerCase().includes(searchLower) ||
-        type.value.toLowerCase().includes(searchLower)
-      const notSelected = !transactionTypes.includes(type.value)
-      return matchesSearch && notSelected
-    }).map(type => ({
-      value: type.value,
-      label: type.label
-    }))
-  }, [transactionTypeSearch, transactionTypes])
 
   // filter report types based on search
   const filteredReportTypes = useMemo(() => {
@@ -427,48 +308,8 @@ const Reports = () => {
       }))
   }, [reportTypeSearch])
 
-  const detailRows: TransactionLedgerDetailItem[] = ledger?.transactions.flatMap(
-    (tran: TransactionLedgerItem) =>
-      tran.details.map((det: TransactionDetailItem) => ({
-        id: det.id,
-        transactionNo: tran.no,
-        createdAt: tran.createdAt,
-        transactionType: tran.transactionType,
-        entityName: tran.customer?.name ?? tran.vendor?.name ?? "",
-        inventoryName: det.inventory?.name ?? "",
-        quantity: det.quantity?.toString() ?? "0",
-        price: det.price?.toString() ?? "0",
-        total: det.total?.toString() ?? "0",
-        paymentType: tran.paymentType,
-        unitOfMeasurement: det.unitOfMeasurement,
-      }))
-  ) ?? []
-
-  const entityNames = appliedFilters?.entityIds
-    ? appliedFilters.entityIds.map(id => {
-      if (appliedFilters.reportType === ReportType.CUSTOMER_LEDGER) {
-        return customerResponse?.customers.find(c => c.id === id)?.name ?? "Customer"
-      } else {
-        return vendorResponse?.data.find(v => v.id === id)?.name ?? "Vendor"
-      }
-    }).join(", ")
-    : "Unknown"
 
   const handleDownloadPdf = () => {
-    // transaction report pdf
-    if (appliedFilters?.reportType === ReportType.TRANSACTION_REPORT && transactionData?.data) {
-      generateTransactionReportPDF(
-        transactionData.data,
-        currentShopName ?? "Shop Name",
-        appliedFilters.dateRange?.from && appliedFilters.dateRange?.to ? {
-          from: appliedFilters.dateRange.from.toISOString(),
-          to: appliedFilters.dateRange.to.toISOString()
-        } : undefined,
-        appliedFilters.transactionTypes?.join(", ")
-      );
-      return
-    }
-
     // expense report pdf
     if (appliedFilters?.reportType === ReportType.EXPENSE_REPORT && expensesdata) {
       generateExpenseReportPDF(
@@ -508,40 +349,9 @@ const Reports = () => {
       return;
     }
 
-    // ledger report pdf
-    if (!ledger || !appliedFilters?.entityIds || appliedFilters.entityIds.length === 0) return; // ← CHANGE
-
-    generateLedgerPDF(
-      entityNames,
-      currentShopName ?? "Shop Name",
-      detailRows,
-      {
-        totalAmount: ledger.totalAmount,
-        totalPaid: ledger.paid,
-      },
-      appliedFilters.dateRange?.from && appliedFilters.dateRange?.to ? {
-        from: appliedFilters.dateRange.from.toISOString(),
-        to: appliedFilters.dateRange.to.toISOString()
-      } : undefined,
-      appliedFilters.reportType === ReportType.CUSTOMER_LEDGER ? "customer" : "vendor"
-    )
   }
 
   const handleDownloadExcel = () => {
-    // transaction report excel
-    if (appliedFilters?.reportType === ReportType.TRANSACTION_REPORT && transactionData?.data) {
-      generateTransactionReportExcel(
-        transactionData.data,
-        currentShopName ?? "Shop Name",
-        appliedFilters.dateRange?.from && appliedFilters.dateRange?.to ? {
-          from: appliedFilters.dateRange.from.toISOString(),
-          to: appliedFilters.dateRange.to.toISOString()
-        } : undefined,
-        appliedFilters.transactionTypes?.join(", ")
-      )
-      return
-    }
-
     // expense report excel
     if (appliedFilters?.reportType === ReportType.EXPENSE_REPORT && expensesdata) {
       generateExpenseReportExcel(
@@ -581,61 +391,24 @@ const Reports = () => {
       return;
     }
 
-    // ledger report excel
-    if (!ledger || !appliedFilters?.entityIds || appliedFilters.entityIds.length === 0) return // ← CHANGE
-    generateLedgerExcel(
-      currentShopName ?? "Shop Name",
-      entityNames,
-      detailRows,
-      appliedFilters?.dateRange?.from && appliedFilters?.dateRange?.to
-        ? {
-          from: appliedFilters.dateRange.from.toISOString(),
-          to: appliedFilters.dateRange.to.toISOString(),
-        }
-        : undefined
-    )
   }
 
-  // filter customers/vendors based on search and already selected
-  const filteredEntities = useMemo(() => {
-    if (reportType === ReportType.CUSTOMER_LEDGER && customerResponse?.customers) {
-      return customerResponse.customers
-        .filter(c => !selectedEntityIds.includes(c.id))
-        .map(c => ({
-          value: c.id,
-          label: c.name
-        }))
-    } else if (reportType === ReportType.VENDOR_LEDGER && vendorResponse?.data) {
-      return vendorResponse.data
-        .filter(v => !selectedEntityIds.includes(v.id))
-        .map(v => ({
-          value: v.id,
-          label: v.name
-        }))
-    }
-    return []
-  }, [reportType, customerResponse, vendorResponse, selectedEntityIds])
 
-  // determine if we're in transaction report mode
-  const isTransactionReport = appliedFilters?.reportType === ReportType.TRANSACTION_REPORT
-  const isLedgerReport = appliedFilters?.reportType === ReportType.CUSTOMER_LEDGER || appliedFilters?.reportType === ReportType.VENDOR_LEDGER
   const isExpenseReport = appliedFilters?.reportType === ReportType.EXPENSE_REPORT
   const isStockReport = appliedFilters?.reportType === ReportType.STOCK_REPORT
   const isStockTrackReport = appliedFilters?.reportType === ReportType.STOCK_TRACK_REPORT
   const isBalanceSheetReport = appliedFilters?.reportType === ReportType.BALANCE_SHEET
 
   // determine loading state
-  const isLoading = isTransactionReport
-    ? isTransactionLoading
-    : isExpenseReport
-      ? isExpensesLoading
-      : isStockReport
-        ? isStocksLoading
-        : isStockTrackReport
-          ? isStockTrackLoading
-          : isBalanceSheetReport
-            ? isBalanceSheetLoading
-            : isLedgerLoading
+  const isLoading = isExpenseReport
+    ? isExpensesLoading
+    : isStockReport
+      ? isStocksLoading
+      : isStockTrackReport
+        ? isStockTrackLoading
+        : isBalanceSheetReport
+          ? isBalanceSheetLoading
+          : false
 
   // Extract stock data from response
   const stocksData = stocksResponse?.data || []
@@ -643,17 +416,15 @@ const Reports = () => {
 
 
   // determine if we have data to show
-  const hasData = isTransactionReport
-    ? (transactionData?.data && transactionData.data.length > 0)
-    : isExpenseReport
-      ? (!!expensesdata && expensesdata.length > 0)
-      : isStockReport
-        ? (stocksData.length > 0)
-        : isStockTrackReport
-          ? (stockTrackData.length > 0)
-          : isBalanceSheetReport
-            ? (balanceSheetResponse?.data && balanceSheetResponse.data.length > 0)
-            : (detailRows.length > 0 && ledger)
+  const hasData = isExpenseReport
+    ? (!!expensesdata && expensesdata.length > 0)
+    : isStockReport
+      ? (stocksData.length > 0)
+      : isStockTrackReport
+        ? (stockTrackData.length > 0)
+        : isBalanceSheetReport
+          ? (balanceSheetResponse?.data && balanceSheetResponse.data.length > 0)
+          : false
 
   return (
     <Main>
@@ -690,42 +461,6 @@ const Reports = () => {
           />
         </div>
 
-        {/* transaction type combobox */}
-        {reportType === ReportType.TRANSACTION_REPORT && (
-          <div>
-            <label className="text-sm font-medium mb-1 block">Transaction Types (Required)</label>
-            <Combobox
-              options={filteredTransactionTypes}
-              placeholder="Search & select types"
-              emptyMessage="No transaction types found"
-              value={transactionTypeSearch}
-              onSelect={handleTransactionTypeSelect}
-              onSearch={setTransactionTypeSearch}
-              onSearchClear={handleTransactionTypeSearchClear}
-              className="w-64"
-            />
-          </div>
-        )}
-
-        {/* customer/vendor combobox - Only show for CUSTOMER_LEDGER and VENDOR_LEDGER */}
-        {isEntityEnabled &&
-          (reportType === ReportType.CUSTOMER_LEDGER || reportType === ReportType.VENDOR_LEDGER) && (
-            <div>
-              <label className="text-sm font-medium mb-1 block">
-                {reportType === ReportType.CUSTOMER_LEDGER ? "Select Customers (Required)" : "Select Vendors (Required)"}
-              </label>
-              <Combobox
-                options={filteredEntities}
-                placeholder={`Search & select ${reportType === ReportType.CUSTOMER_LEDGER ? "customers" : "vendors"}`}
-                emptyMessage={`No ${reportType === ReportType.CUSTOMER_LEDGER ? "customers" : "vendors"} found`}
-                value={entitySearch}
-                onSelect={handleEntitySelect}
-                onSearch={setEntitySearch}
-                onSearchClear={handleEntitySearchClear}
-                className="w-64"
-              />
-            </div>
-          )}
 
         {/* inventory combobox - Show for STOCK_REPORT and STOCK_TRACK_REPORT */}
         {isEntityEnabled && (reportType === ReportType.STOCK_REPORT || reportType === ReportType.STOCK_TRACK_REPORT) && (
@@ -752,8 +487,6 @@ const Reports = () => {
           disabled={
             !reportType ||
             !dateRange?.from ||
-            (reportType === ReportType.TRANSACTION_REPORT && transactionTypes.length === 0) ||
-            ((reportType === ReportType.CUSTOMER_LEDGER || reportType === ReportType.VENDOR_LEDGER) && selectedEntityIds.length === 0) ||
             (reportType === ReportType.STOCK_TRACK_REPORT && selectedInventoryIds.length === 0)
           }
           className="flex gap-2"
@@ -763,91 +496,6 @@ const Reports = () => {
         </Button>
       </div>
 
-      {/* Transaction Types Badges */}
-      {reportType === ReportType.TRANSACTION_REPORT && transactionTypes.length > 0 && (
-        <div className="px-4 pb-4">
-          <div className="flex items-center gap-2 mb-2">
-            <label className="text-sm font-medium">Selected Transaction Types:</label>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setTransactionTypes([])
-                setAppliedFilters(null)
-              }}
-              className="h-7 text-xs text-muted-foreground hover:text-foreground"
-            >
-              Clear All
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {transactionTypes.map((type) => {
-              const transactionType = TRANSACTION_TYPES.find(t => t.value === type)
-              return (
-                <Badge key={type} variant="secondary" className="flex items-center gap-2 px-2 py-1">
-                  <span>{transactionType?.label || type}</span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      e.preventDefault()
-                      handleRemoveTransactionType(type)
-                    }}
-                    className="ml-1 hover:bg-destructive/20 rounded-full p-0.5"
-                  >
-                    <X className="h-3 w-3 cursor-pointer hover:text-destructive" />
-                  </button>
-                </Badge>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Entities Badges */}
-      {(reportType === ReportType.CUSTOMER_LEDGER || reportType === ReportType.VENDOR_LEDGER) && selectedEntityIds.length > 0 && (
-        <div className="px-4 pb-4">
-          <div className="flex items-center gap-2 mb-2">
-            <label className="text-sm font-medium">
-              Selected {reportType === ReportType.CUSTOMER_LEDGER ? "Customers" : "Vendors"}:
-            </label>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setSelectedEntityIds([])
-                setAppliedFilters(null)
-              }}
-              className="h-7 text-xs text-muted-foreground hover:text-foreground"
-            >
-              Clear All
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {selectedEntityIds.map((id) => {
-              const entity = reportType === ReportType.CUSTOMER_LEDGER
-                ? customerResponse?.customers.find(c => c.id === id)
-                : vendorResponse?.data.find(v => v.id === id)
-              return (
-                <Badge key={id} variant="secondary" className="flex items-center gap-2 px-2 py-1">
-                  <span>{entity?.name || id}</span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      e.preventDefault()
-                      handleRemoveEntity(id)
-                    }}
-                    className="ml-1 hover:bg-destructive/20 rounded-full p-0.5"
-                  >
-                    <X className="h-3 w-3 cursor-pointer hover:text-destructive" />
-                  </button>
-                </Badge>
-              )
-            })}
-          </div>
-        </div>
-      )}
 
       {/* Inventories Badges */}
       {(reportType === ReportType.STOCK_REPORT || reportType === ReportType.STOCK_TRACK_REPORT) && selectedInventoryIds.length > 0 && (
@@ -864,7 +512,6 @@ const Reports = () => {
                     reportType,
                     entityIds: selectedEntityIds,
                     dateRange,
-                    transactionTypes,
                     inventoryIds: undefined
                   })
                 }
@@ -901,35 +548,6 @@ const Reports = () => {
         </div>
       )}
 
-      {/* cards data for customer/vendor ledger */}
-      {appliedFilters && isLedgerReport && hasData && ledger && (
-        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-          <ReportCard label="Total Amount" value={ledger.totalAmount} />
-          <ReportCard label="Total Paid" value={ledger.paid} />
-          <ReportCard label="Total Pending" value={ledger.totalPending} />
-        </div>
-      )}
-
-      {/* card data for transaction reports */}
-      {appliedFilters && isTransactionReport && hasData && transactionData?.data && (
-        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-          <ReportCard
-            label="Total Amount"
-            value={transactionData.data.reduce(
-              (sum: number, t: TransactionReportItem) => sum + t.totalAmount, 0)}
-          />
-          <ReportCard
-            label="Total Paid"
-            value={transactionData.data.reduce(
-              (sum: number, t: TransactionReportItem) => sum + t.paid, 0)}
-          />
-          <ReportCard
-            label="Total Due"
-            value={transactionData.data.reduce(
-              (sum: number, t: TransactionReportItem) => sum + (t.totalAmount - t.paid), 0)}
-          />
-        </div>
-      )}
 
       {/* card expense*/}
       {appliedFilters && isExpenseReport && hasData && expensesdata && (
@@ -998,36 +616,6 @@ const Reports = () => {
         />
       )}
 
-      {/* transaction report table */}
-      {appliedFilters && !isLoading && isTransactionReport && transactionData?.data && transactionData.data.length > 0 && (
-        <ReportTable<TransactionReportItem>
-          data={transactionData.data}
-          columns={TransactionReportColumns}
-          pageIndex={pageIndex}
-          pageSize={limit}
-          total={transactionData.total ?? 0}
-          onPageChange={handlePageChange}
-          onDownloadPdf={handleDownloadPdf}
-          onDownloadExcel={handleDownloadExcel}
-          title="Transaction Report"
-        />
-      )}
-
-      {/* ledger report table */}
-      {appliedFilters && !isLoading && isLedgerReport && detailRows.length > 0 && ledger && (
-        <ReportTable<TransactionLedgerDetailItem>
-          data={detailRows}
-          columns={LedgerReportColumns}
-          pageIndex={pageIndex}
-          pageSize={limit}
-          total={ledger.total}
-          onPageChange={handlePageChange}
-          onDownloadPdf={handleDownloadPdf}
-          onDownloadExcel={handleDownloadExcel}
-          entityName={entityNames}
-          title="Ledger Details"
-        />
-      )}
 
       {/* expenses table */}
       {appliedFilters && !isLoading && isExpenseReport && expensesdata && expensesdata.length > 0 && (

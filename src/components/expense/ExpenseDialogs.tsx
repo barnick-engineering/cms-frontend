@@ -5,12 +5,9 @@ import ExpenseViewDrawer from "./ExpenseViewDrawer"
 import { useDeleteExpense } from "@/hooks/useExpense"
 import { useExpense } from "./expense-provider"
 import { useDrawerStore } from "@/stores/drawerStore"
-import { useShopStore } from "@/stores/shopStore"
 
 export default function ExpenseDialogs() {
     const { open, setOpen, currentRow, setCurrentRow } = useExpense()
-
-    const shopId = useShopStore((s) => s.currentShopId)
 
     const deleteMutation = useDeleteExpense()
 
@@ -27,7 +24,7 @@ export default function ExpenseDialogs() {
                 onSave={() => setOpen(null)}
             />
 
-            {/* View / Update / Delete */}
+            {/* View / Delete */}
             {currentRow && (
                 <>
                     {/* View drawer */}
@@ -41,18 +38,6 @@ export default function ExpenseDialogs() {
                         currentRow={currentRow}
                     />
 
-                    {/* Update drawer */}
-                    <ExpenseMutateDrawer
-                        key={`expense-update-${currentRow.id}`}
-                        open={open === "update"}
-                        onOpenChange={(val: boolean) => setOpen(val ? "update" : null)}
-                        currentRow={{
-                            ...currentRow,
-                            shopId: currentRow.shopId ?? shopId ?? "",
-                        }}
-                        onSave={() => setOpen(null)}
-                    />
-
                     {/* Delete dialog */}
                     <ConfirmDialog
                         key="expense-delete"
@@ -63,7 +48,7 @@ export default function ExpenseDialogs() {
                             if (!currentRow) return
 
                             deleteMutation.mutate(
-                                { id: currentRow.id },
+                                currentRow.id,
                                 {
                                     onSuccess: () => {
                                         setOpen(null)
@@ -74,11 +59,11 @@ export default function ExpenseDialogs() {
                             )
                         }}
                         className="max-w-md"
-                        title={`Delete this expense: ${currentRow.title} ?`}
+                        title={`Delete this expense: ${currentRow.no} ?`}
                         desc={
                             <>
-                                You are about to delete an expense titled{" "}
-                                <strong>{currentRow.title}</strong>.
+                                You are about to delete an expense with number{" "}
+                                <strong>{currentRow.no}</strong>.
                                 <br />
                                 This action cannot be undone.
                             </>

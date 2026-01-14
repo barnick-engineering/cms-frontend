@@ -1,6 +1,5 @@
 import { useCallback, useState } from "react"
 import { Main } from "@/components/layout/main"
-import { useShopStore } from "@/stores/shopStore"
 import { useExpenseList } from "@/hooks/useExpense"
 import ExpenseTable from "@/components/expense/ExpenseTable"
 import { ExpenseProvider } from "@/components/expense/expense-provider"
@@ -8,42 +7,29 @@ import ExpenseCreateButton from "@/components/expense/ExpenseCreateButton"
 import ExpenseDialogs from "@/components/expense/ExpenseDialogs"
 
 const Expense = () => {
-  const shopId = useShopStore((s) => s.currentShopId)
-
   const [pageIndex, setPageIndex] = useState(0)
   const [searchBy, setSearchBy] = useState("")
-  const [startDate, setStartDate] = useState<Date | undefined>()
-  const [endDate, setEndDate] = useState<Date | undefined>()
-
   const pageSize = 10
+  const offset = pageIndex * pageSize
 
   const handlePageChange = useCallback((index: number) => {
     setPageIndex(index)
   }, [])
 
-  const handleSearchChange = useCallback((value: string) => {
-    setSearchBy(value)
-    setPageIndex(0)
-  }, [])
-
-  const handleDateChange = useCallback((from?: Date, to?: Date) => {
-    setStartDate(from)
-    setEndDate(to)
+  const handleSearchChange = useCallback((value?: string) => {
+    setSearchBy(value || "")
     setPageIndex(0)
   }, [])
 
   const { data, isLoading, isError } = useExpenseList(
-    shopId || "",
-    pageIndex + 1,
+    searchBy || undefined,
     pageSize,
-    searchBy,
-    startDate,
-    endDate
+    offset
   )
 
   if (isError) return <p>Error loading expenses.</p>
 
-  const expenses = data?.items || []
+  const expenses = data?.data || []
   const total = data?.total || 0
 
   return (
@@ -53,7 +39,7 @@ const Expense = () => {
           <div>
             <h2 className="text-2xl font-bold tracking-tight">Expense</h2>
             <p className="text-muted-foreground">
-              Here is a list of your all expenses
+              Here is a list of all your expenses
             </p>
           </div>
           <ExpenseCreateButton />
@@ -70,7 +56,6 @@ const Expense = () => {
               total={total}
               onPageChange={handlePageChange}
               onSearchChange={handleSearchChange}
-              onDateChange={handleDateChange}
             />
           )}
         </div>

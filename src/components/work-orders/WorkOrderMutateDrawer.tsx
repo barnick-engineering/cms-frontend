@@ -1,0 +1,370 @@
+import { useEffect, useMemo, useState } from "react"
+import type z from "zod"
+import { useForm, useFieldArray } from "react-hook-form"
+import type { SubmitHandler } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Button } from "@/components/ui/button"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { toast } from "sonner"
+import type { AxiosError } from "axios"
+import type { WorkOrderMutateDrawerProps, WorkOrderFormInterface } from "@/interface/workOrderInterface"
+import { workOrderFormSchema } from "@/schema/workOrderFormSchema"
+import { useCreateWorkOrder, useWorkOrderList } from "@/hooks/useWorkOrder"
+import { useCustomerList } from "@/hooks/useCustomer"
+import { Combobox } from "@/components/ui/combobox"
+import { Plus, Minus } from "lucide-react"
+
+type WorkOrderFormSchema = z.infer<typeof workOrderFormSchema>
+
+const WorkOrderMutateDrawer = ({
+  open,
+  onOpenChange,
+  currentRow,
+  onSave,
+}: WorkOrderMutateDrawerProps) => {
+  const createMutation = useCreateWorkOrder()
+
+  // Fetch customers for combobox
+  const { data: customersData } = useCustomerList(undefined, 100, 0)
+  const customerOptions = useMemo(() => {
+    return (customersData?.data || []).map((customer) => ({
+      value: String(customer.id),
+      label: customer.name,
+    }))
+  }, [customersData])
+
+  // Fetch work orders for combobox
+  const [workOrderSearch, setWorkOrderSearch] = useState("")
+  const { data: workOrdersData } = useWorkOrderList(workOrderSearch || undefined, 100, 0)
+  const workOrderOptions = useMemo(() => {
+    return (workOrdersData?.data || []).map((workOrder) => ({
+      value: String(workOrder.id),
+      label: workOrder.no,
+    }))
+  }, [workOrdersData])
+
+  const form = useForm<WorkOrderFormSchema>({
+    resolver: zodResolver(workOrderFormSchema),
+    defaultValues: {
+      customer: undefined,
+      workorder: undefined,
+      items: [{ item: "", total_order: 0, unit_price: 0 }],
+      date: new Date().toISOString().split("T")[0],
+      total_paid: 0,
+      remarks: "",
+    },
+  })
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "items",
+  })
+
+  useEffect(() => {
+    if (!open) {
+      form.reset({
+        customer: undefined,
+        workorder: undefined,
+        items: [{ item: "", total_order: 0, unit_price: 0 }],
+        date: new Date().toISOString().split("T")[0],
+        total_paid: 0,
+        remarks: "",
+      })
+    }
+  }, [open, form])
+
+  // Watch items for real-time calculation
+  const watchedItems = form.watch("items")
+
+  // Calculate total amount - updates in real-time
+  const totalAmount = useMemo(() => {
+    return watchedItems.reduce((sum, item) => {
+      return sum + (item.total_order || 0) * (item.unit_price || 0)
+    }, 0)
+  }, [watchedItems])
+
+  const onSubmit: SubmitHandler<WorkOrderFormSchema> = (data) => {
+    const normalizedData: WorkOrderFormInterface = {
+      customer: data.customer || undefined,
+      workorder: data.workorder || undefined,
+      items: data.items.map((item) => ({
+        item: item.item.trim(),
+        total_order: item.total_order,
+        unit_price: item.unit_price,
+      })),
+      date: data.date || new Date().toISOString().split("T")[0],
+      total_paid: data.total_paid || 0,
+      remarks: data.remarks || null,
+    }
+
+    createMutation.mutate(normalizedData, {
+      onSuccess: () => {
+        onOpenChange(false)
+        onSave?.(normalizedData)
+        form.reset()
+        toast.success("Work order created successfully.")
+      },
+      onError: (err: unknown) => {
+        const error = err as AxiosError<{ message: string }>
+        toast.error(error?.response?.data?.message || "Creation failed")
+      },
+    })
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="flex flex-col overflow-y-auto">
+        <SheetHeader className="text-start">
+          <SheetTitle>Create Work Order</SheetTitle>
+          <SheetDescription>
+            Add a new work order by providing necessary info. Click save when you're done.
+          </SheetDescription>
+        </SheetHeader>
+
+        <Form {...form}>
+          <form
+            id="work-order-form"
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex-1 space-y-6 overflow-y-auto px-4"
+          >
+            <div className="grid grid-cols-2 gap-3">
+              <FormField
+                control={form.control}
+                name="customer"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Customer</FormLabel>
+                    <FormControl>
+                      <Combobox
+                        options={customerOptions}
+                        value={field.value ? String(field.value) : ""}
+                        onSelect={(val) => field.onChange(Number(val))}
+                        placeholder="Select customer..."
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="workorder"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Work Order</FormLabel>
+                    <FormControl>
+                      <Combobox
+                        options={workOrderOptions}
+                        value={field.value ? String(field.value) : ""}
+                        onSelect={(val) => field.onChange(Number(val))}
+                        onSearch={setWorkOrderSearch}
+                        placeholder="Select work order..."
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <FormLabel>Items *</FormLabel>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => append({ item: "", total_order: 0, unit_price: 0 })}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Item
+                </Button>
+              </div>
+
+              {fields.map((field, index) => (
+                <div key={field.id} className="border rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Item {index + 1}</span>
+                    {fields.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => remove(index)}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name={`items.${index}.item`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Item Name *</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="e.g., Visiting Card" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField
+                      control={form.control}
+                      name={`items.${index}.total_order`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Quantity *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              value={field.value || ""}
+                              onChange={(e) => {
+                                field.onChange(Number(e.target.value) || 0)
+                                // Trigger form update for real-time calculation
+                                form.trigger(`items.${index}.total_order`)
+                              }}
+                              min={1}
+                              placeholder="0"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name={`items.${index}.unit_price`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Unit Price *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              value={field.value || ""}
+                              onChange={(e) => {
+                                field.onChange(Number(e.target.value) || 0)
+                                // Trigger form update for real-time calculation
+                                form.trigger(`items.${index}.unit_price`)
+                              }}
+                              min={0}
+                              step="0.01"
+                              placeholder="0.00"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="text-sm text-muted-foreground">
+                    Subtotal: ৳{((watchedItems[index]?.total_order || 0) * (watchedItems[index]?.unit_price || 0)).toLocaleString('en-IN')}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="border rounded-lg p-4 bg-muted/50">
+              <div className="flex justify-between items-center">
+                <span className="font-semibold">Total Amount:</span>
+                <span className="text-lg font-bold">৳{totalAmount.toLocaleString('en-IN')}</span>
+              </div>
+            </div>
+
+            <FormField
+              control={form.control}
+              name="total_paid"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Total Paid</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      {...field}
+                      value={field.value || ""}
+                      onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                      min={0}
+                      step="0.01"
+                      placeholder="0.00"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="remarks"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Remarks</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      value={field.value || ""}
+                      placeholder="Additional notes..."
+                      rows={3}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </form>
+        </Form>
+
+        <SheetFooter className="gap-2">
+          <SheetClose asChild>
+            <Button variant="outline">Close</Button>
+          </SheetClose>
+          <Button form="work-order-form" type="submit">
+            Save changes
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+export default WorkOrderMutateDrawer

@@ -1,98 +1,48 @@
-import type { ExpenseFormInterface, ExpenseItemInterface } from "@/interface/expenseInterface"
-import { axiosInstance } from "./axios";
-import { apiEndpoints } from "@/config/api";
+import { apiEndpoints } from "@/config/api"
+import { axiosInstance } from "./axios"
+import type {
+  ExpenseFormInterface,
+  ExpenseListResponse,
+  Expense,
+} from "@/interface/expenseInterface"
 
-// list
+// expense list with search params
 export const expenseList = async (
-    shopId: string,
-    page: number,
-    limit: number,
-    searchBy?: string,
-    startDate?: Date,
-    endDate?: Date
-): Promise<{ items: ExpenseItemInterface[]; total: number }> => {
-    const params = new URLSearchParams({
-        shopId,
-        page: String(page),
-        limit: String(limit),
-    })
+  search?: string,
+  limit?: number,
+  offset?: number
+): Promise<ExpenseListResponse> => {
+  const params = new URLSearchParams()
 
-    if (searchBy) params.append("searchBy", searchBy)
-    if (startDate) params.append("startDate", startDate.toISOString())
-    if (endDate) params.append("endDate", endDate.toISOString())
+  if (search) params.append("search", search)
+  if (limit) params.append("limit", String(limit))
+  if (offset) params.append("offset", String(offset))
 
-    const res = await axiosInstance.get(
-        `${apiEndpoints.expense.expenseList}?${params.toString()}`
-    )
+  const queryString = params.toString()
+  const url = queryString
+    ? `${apiEndpoints.expense.expenseList}?${queryString}`
+    : apiEndpoints.expense.expenseList
 
-    return {
-        items: res.data.data ?? [],
-        total: res.data.total ?? 0,
-    }
+  const res = await axiosInstance.get<ExpenseListResponse>(url)
+  return res.data
 }
 
-// create
-export const createExpense = async (
-    data: ExpenseFormInterface
-): Promise<ExpenseItemInterface> => {
-    if (!data.shopId) throw new Error("Shop ID is required")
-
-    const res = await axiosInstance.post(
-        apiEndpoints.expense.createExpense,
-        data
-    )
-
-    return res.data.data
+// create expense
+export const createExpense = async (data: ExpenseFormInterface) => {
+  const res = await axiosInstance.post<Expense>(
+    apiEndpoints.expense.createExpense,
+    data
+  )
+  return res.data
 }
 
-// get expense by id
-export const getExpenseById = async (
-    id: string
-): Promise<ExpenseFormInterface> => {
-    if (!id) throw new Error("Expense ID is required")
+// delete expense
+export const deleteExpense = async (id: string | number) => {
+  if (!id) throw new Error("Expense ID is required")
 
-    const res = await axiosInstance.get<ExpenseFormInterface>(
-        apiEndpoints.expense.getExpenseById.replace("id", id)
-    )
+  const res = await axiosInstance.delete(
+    `${apiEndpoints.expense.deleteExpense}${id}/`
+  )
 
-    return res.data
-}
-
-// update
-export const updateExpense = async ({
-    id,
-    data,
-    shopId,
-}: {
-    id: string
-    data: ExpenseFormInterface
-    shopId: string
-}): Promise<ExpenseItemInterface> => {
-    if (!shopId) throw new Error("Shop ID is required")
-
-    // Using replace to substitute the ID placeholder in the endpoint string
-    const url = apiEndpoints.expense.updateExpense.replace("{id}", id);
-
-    const res = await axiosInstance.put(url, data)
-
-    return res.data.data
-}
-
-// delete
-export const deleteExpense = async ({ id }: { id: string }) => {
-    if (!id) throw new Error("Expense ID is required")
-
-    // check if the endpoint string contains the placeholder and replace it.
-    // this is the robust way to handle endpoints defined with placeholders like "/expense/{id}".
-    let url = apiEndpoints.expense.deleteExpense;
-    if (url.includes("{id}")) {
-        url = url.replace("{id}", id);
-    } else {
-        // Fallback for clean base endpoint (e.g., if endpoint is "/expense")
-        url = `${url}/${id}`
-    }
-
-    const res = await axiosInstance.delete(url)
-
-    return res.data
+  return res.data
 }

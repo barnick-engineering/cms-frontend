@@ -23,7 +23,6 @@ export interface ApiEndpoints {
     updateCustomer: string
     deleteCustomer: string
     getCustomerById: string
-    customerTransactions: string
   }
   vendor: {
     vendorList: string
@@ -31,13 +30,13 @@ export interface ApiEndpoints {
     updateVendor: string
     deleteVendor: string
     getVendorById: string
-    vendorTransactions: string
   }
-  transactions: {
-    transactionsList: string
-    createTransactions: string
-    getTransactionById: string
-    transactionLedger: string
+  workOrder: {
+    workOrderList: string
+    createWorkOrder: string
+    updateWorkOrder: string
+    deleteWorkOrder: string
+    getWorkOrderById: string
   }
   inventory: {
     inventoryList: string
@@ -50,22 +49,13 @@ export interface ApiEndpoints {
   expense: {
     expenseList: string
     createExpense: string
-    updateExpense: string
     deleteExpense: string
-    getExpenseById: string
+  }
+  team: {
+    teamList: string
   }
   user: {
-    userList: string
-    allRoles: string
-    createUser: string
     changePassword: string
-  }
-  subscriptionPlans: {
-    subscriptionList: string
-    createSubscriptionPlan: string
-    updateSubscriptionPlan: string
-    getSubscriptionPlanById: string
-    deleteSubscriptionPlan: string
   }
   reports: {
     reportTransactions: string

@@ -30,17 +30,12 @@ import ExpenseViewDrawer from './ExpenseViewDrawer'
 
 import { DataTableViewOptions } from '@/features/users/components/data-table-view-options'
 import { DataTablePagination } from '@/features/users/components/data-table-pagination'
-import DateRangeSearch from '../DateRangeSearch'
 import { NoDataFound } from '../NoDataFound'
 
-import type {
-    ExpenseItemInterface,
-    // ExpenseListItem,
-    ExpenseTableProps,
-} from '@/interface/expenseInterface'
+import type { ExpenseTableProps } from '@/interface/expenseInterface'
 
 import { useDebounce } from '@/hooks/useDebounce'
-import { useShopStore } from '@/stores/shopStore'
+import type { Expense } from '@/interface/expenseInterface'
 
 const ExpenseTable = ({
     data,
@@ -49,12 +44,7 @@ const ExpenseTable = ({
     total,
     onPageChange,
     onSearchChange,
-    onDateChange,
-}: ExpenseTableProps & {
-    onDateChange?: (from?: Date, to?: Date) => void
-}) => {
-    const shopId = useShopStore(s => s.currentShopId)
-
+}: ExpenseTableProps) => {
     /* -------------------- table state -------------------- */
     const [rowSelection, setRowSelection] = useState({})
     const [sorting, setSorting] = useState<SortingState>([])
@@ -67,13 +57,13 @@ const ExpenseTable = ({
     const debouncedSearch = useDebounce(searchInput, 300)
 
     /* -------------------- drawer -------------------- */
-    const [currentRow, setCurrentRow] = useState<ExpenseItemInterface | null>(null)
+    const [currentRow, setCurrentRow] = useState<Expense | null>(null)
     const [drawerOpen, setDrawerOpen] = useState(false)
 
     /* -------------------- search effect -------------------- */
     useEffect(() => {
         onPageChange(0)
-        onSearchChange?.(debouncedSearch)
+        onSearchChange?.(debouncedSearch || undefined)
     }, [debouncedSearch, onPageChange, onSearchChange])
 
     /* -------------------- table -------------------- */
@@ -111,11 +101,20 @@ const ExpenseTable = ({
         getFacetedRowModel: getFacetedRowModel(),
         getFacetedUniqueValues: getFacetedUniqueValues(),
         globalFilterFn: (row, _columnId, filterValue) => {
-            const id = String(row.index + 1).toLowerCase()
-            const title = String(row.getValue('title')).toLowerCase()
+            const id = String(row.getValue('id')).toLowerCase()
+            const no = String(row.getValue('no') || '').toLowerCase()
+            const workorder = String(row.getValue('workorder') || '').toLowerCase()
+            const purpose = String(row.getValue('purpose') || '').toLowerCase()
+            const details = String(row.getValue('details') || '').toLowerCase()
             const searchValue = String(filterValue).toLowerCase()
 
-            return id.includes(searchValue) || title.includes(searchValue)
+            return (
+                id.includes(searchValue) ||
+                no.includes(searchValue) ||
+                workorder.includes(searchValue) ||
+                purpose.includes(searchValue) ||
+                details.includes(searchValue)
+            )
         },
     })
 
@@ -123,7 +122,7 @@ const ExpenseTable = ({
 
     /* -------------------- safety pagination -------------------- */
     useEffect(() => {
-        if (table.getState().pagination.pageIndex >= pageCount) {
+        if (table.getState().pagination.pageIndex >= pageCount && pageCount > 0) {
             table.setPageIndex(pageCount - 1)
         }
     }, [table, pageCount])
@@ -133,9 +132,8 @@ const ExpenseTable = ({
             {/* Toolbar */}
             <div className="flex flex-1 flex-col-reverse gap-y-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-col gap-2 md:flex-row md:items-center gap-x-2">
-                    <DateRangeSearch onDateChange={onDateChange} />
                     <Input
-                        placeholder="Search expense..."
+                        placeholder="Search by expense no, work order, purpose..."
                         value={searchInput}
                         onChange={e => setSearchInput(e.target.value)}
                         className="h-8 w-[150px] lg:w-[250px]"
@@ -172,12 +170,7 @@ const ExpenseTable = ({
                                     key={row.id}
                                     className="cursor-pointer"
                                     onClick={() => {
-                                        if (!shopId) return
-                                        setCurrentRow({
-                                            ...row.original,
-                                            shopId,
-                                            remarks: row.original.remarks || '',
-                                        })
+                                        setCurrentRow(row.original as Expense)
                                         setDrawerOpen(true)
                                     }}
                                     data-state={row.getIsSelected() && 'selected'}

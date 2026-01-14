@@ -2,20 +2,24 @@ import { useState } from 'react'
 import { type Table } from '@tanstack/react-table'
 import { Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { BulkActionsToolbar } from '@/components/bulk-actions-toolbar'
-import { useDeleteExpense } from '@/hooks/useExpense'
 import { ConfirmDialog } from '../confirm-dialog'
+import { useDeleteWorkOrder } from '@/hooks/useWorkOrder'
 
 export interface DataTableBulkActionsProps<TData extends { id: number | string }> {
     table: Table<TData>
 }
 
-export function ExpenseTableBulkActions<TData extends { id: number | string }>({
+export function DataTableBulkActions<TData extends { id: number | string }>({
     table,
 }: DataTableBulkActionsProps<TData>) {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-    const deleteMutation = useDeleteExpense()
+    const deleteMutation = useDeleteWorkOrder()
 
     const selectedRows = table.getSelectedRowModel().rows
 
@@ -37,7 +41,7 @@ export function ExpenseTableBulkActions<TData extends { id: number | string }>({
 
     return (
         <>
-            <BulkActionsToolbar table={table} entityName='expense'>
+            <BulkActionsToolbar table={table} entityName='work order'>
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <Button
@@ -45,15 +49,15 @@ export function ExpenseTableBulkActions<TData extends { id: number | string }>({
                             size='icon'
                             onClick={() => setShowDeleteConfirm(true)}
                             className='size-8'
-                            aria-label='Delete selected Expenses'
-                            title='Delete selected Expenses'
+                            aria-label='Delete selected Work Orders'
+                            title='Delete selected Work Orders'
                         >
                             <Trash2 />
-                            <span className='sr-only'>Delete selected Expenses</span>
+                            <span className='sr-only'>Delete selected Work Orders</span>
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                        <p>Delete selected Expenses</p>
+                        <p>Delete selected Work Orders</p>
                     </TooltipContent>
                 </Tooltip>
             </BulkActionsToolbar>
@@ -62,11 +66,11 @@ export function ExpenseTableBulkActions<TData extends { id: number | string }>({
                 open={showDeleteConfirm}
                 onOpenChange={setShowDeleteConfirm}
                 destructive
-                title={`Delete ${selectedRows.length} selected expense(s)?`}
+                title={`Delete ${selectedRows.length} selected work order(s)?`}
                 desc={
                     <>
                         You are about to delete{' '}
-                        <strong>{selectedRows.length} expense(s)</strong>. <br />
+                        <strong>{selectedRows.length} work order(s)</strong>. <br />
                         This action cannot be undone.
                     </>
                 }

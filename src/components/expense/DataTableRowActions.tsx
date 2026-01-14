@@ -1,6 +1,6 @@
 import { DotsHorizontalIcon } from '@radix-ui/react-icons'
 import { type Row } from '@tanstack/react-table'
-import { Eye, Pencil, Trash2 } from 'lucide-react'
+import { Eye, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
     DropdownMenu,
@@ -9,9 +9,8 @@ import {
     DropdownMenuShortcut,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import type { ExpenseItemInterface } from '@/interface/expenseInterface'
+import type { Expense } from '@/interface/expenseInterface'
 import { useExpense } from './expense-provider'
-import { expenseSchema } from '@/schema/expenseSchema'
 
 type DataTableRowActionsProps<TData> = {
     row: Row<TData>
@@ -20,17 +19,7 @@ type DataTableRowActionsProps<TData> = {
 export function DataTableRowActions<TData>({
     row,
 }: DataTableRowActionsProps<TData>) {
-    // Parse using Zod
-    const parsed = expenseSchema.parse(row.original)
-
-    // Use full ExpenseItemInterface
-    const expense: ExpenseItemInterface = {
-        ...parsed,
-        remarks: parsed.remarks ?? '',
-        shopId: parsed.shopId ?? '',
-        createdAt: parsed.createdAt ?? new Date().toISOString(),
-    }
-
+    const expense = row.original as Expense
     const { setOpen, setCurrentRow } = useExpense()
 
     return (
@@ -56,17 +45,6 @@ export function DataTableRowActions<TData>({
                 >
                     View
                     <DropdownMenuShortcut><Eye size={16} /></DropdownMenuShortcut>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem
-                    onClick={(e) => {
-                        e.stopPropagation()
-                        setCurrentRow(expense)
-                        setOpen('update')
-                    }}
-                >
-                    Edit
-                    <DropdownMenuShortcut><Pencil size={16} /></DropdownMenuShortcut>
                 </DropdownMenuItem>
 
                 <DropdownMenuItem

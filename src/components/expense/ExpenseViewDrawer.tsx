@@ -5,13 +5,12 @@ import {
     DrawerTitle,
     DrawerDescription,
 } from '@/components/ui/drawer'
-import type { ExpenseItemInterface } from '@/interface/expenseInterface'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import type { Expense } from '@/interface/expenseInterface'
 
 type ExpenseViewDrawerProps = {
     open: boolean
     onOpenChange: (val: boolean) => void
-    currentRow: ExpenseItemInterface | null
+    currentRow: Expense | null
 }
 
 const ExpenseViewDrawer = ({
@@ -23,56 +22,77 @@ const ExpenseViewDrawer = ({
 
     return (
         <Drawer open={open} onOpenChange={onOpenChange}>
-            <DrawerContent className="max-w-xl mx-auto p-6 space-y-6">
+            <DrawerContent className="max-w-xl mx-auto p-6 space-y-6 max-h-[90vh] overflow-y-auto">
                 <DrawerHeader>
                     <DrawerTitle className="text-lg font-semibold">
-                        Details
+                        Expense Details
                     </DrawerTitle>
                     <DrawerDescription className="text-sm text-muted-foreground">
-                        View details for{' '}
-                        <span className="font-medium">{currentRow.title}</span>
+                        View details for expense <span className="font-medium">{currentRow.no}</span>
                     </DrawerDescription>
                 </DrawerHeader>
 
                 {/* Expense Info */}
-                <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+                <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                        <span className="font-medium text-foreground">Title:</span>{' '}
-                        {currentRow.title}
+                        <span className="font-medium text-foreground">Expense No:</span>{' '}
+                        <span className="text-muted-foreground">{currentRow.no}</span>
                     </div>
 
                     <div>
-                        <span className="font-medium text-foreground">Type:</span>{' '}
-                        {currentRow.type.replace(/_/g, ' ')}
+                        <span className="font-medium text-foreground">Work Order:</span>{' '}
+                        <span className="text-muted-foreground">{currentRow.workorder}</span>
                     </div>
 
                     <div>
-                        <span className="font-medium text-foreground">Amount:</span>
-                        {currentRow.amount}
+                        <span className="font-medium text-foreground">Purpose:</span>{' '}
+                        <span className="text-muted-foreground">{currentRow.purpose}</span>
                     </div>
 
                     <div>
-                        <span className="font-medium text-foreground">Created At:</span>{' '}
-                        {new Date(currentRow.createdAt).toLocaleString()}
+                        <span className="font-medium text-foreground">Amount:</span>{' '}
+                        <span className="text-muted-foreground">৳{currentRow.amount.toLocaleString('en-IN')}</span>
                     </div>
 
-                    <div className="col-span-2 flex gap-1">
-                        <span className="font-medium text-foreground">Remarks:</span>
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <div className="max-w-[350px] truncate cursor-help">
-                                        {currentRow.remarks || 'N/A'}
-                                    </div>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p className="max-w-sm wrap-break-word">
-                                        {currentRow.remarks || 'N/A'}
-                                    </p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
+                    <div>
+                        <span className="font-medium text-foreground">Details:</span>{' '}
+                        <span className="text-muted-foreground">{currentRow.details || 'N/A'}</span>
                     </div>
+
+                    <div>
+                        <span className="font-medium text-foreground">Expense Date:</span>{' '}
+                        <span className="text-muted-foreground">
+                            {currentRow.expense_date ? new Date(currentRow.expense_date).toLocaleDateString() : 'N/A'}
+                        </span>
+                    </div>
+
+                    {currentRow.customer && (
+                        <div>
+                            <span className="font-medium text-foreground">Customer:</span>{' '}
+                            <span className="text-muted-foreground">{currentRow.customer}</span>
+                        </div>
+                    )}
+
+                    <div>
+                        <span className="font-medium text-foreground">Cost Paid By:</span>{' '}
+                        <span className="text-muted-foreground">{currentRow.cost_paid_by}</span>
+                    </div>
+
+                    {currentRow.bill_disbursed_date && (
+                        <div>
+                            <span className="font-medium text-foreground">Bill Disbursed Date:</span>{' '}
+                            <span className="text-muted-foreground">
+                                {new Date(currentRow.bill_disbursed_date).toLocaleDateString()}
+                            </span>
+                        </div>
+                    )}
+
+                    {currentRow.remarks && (
+                        <div className="col-span-2">
+                            <span className="font-medium text-foreground">Remarks:</span>{' '}
+                            <span className="text-muted-foreground">{currentRow.remarks}</span>
+                        </div>
+                    )}
                 </div>
             </DrawerContent>
         </Drawer>

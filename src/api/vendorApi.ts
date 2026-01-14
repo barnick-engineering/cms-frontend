@@ -1,6 +1,6 @@
 import { apiEndpoints } from "@/config/api"
 import { axiosInstance } from "./axios"
-import type { VendorFormInterface, VendorListApiResponseInterface, VendorListResponseInterface, VendorTransactionApiResponse } from "@/interface/vendorInterface"
+import type { VendorFormInterface, VendorListApiResponseInterface, VendorListResponseInterface } from "@/interface/vendorInterface"
 
 // vendor list
 export const vendorList = async (
@@ -76,23 +76,5 @@ export const deleteVendor = async ({ id, shopId }: { id: string; shopId: string 
     const res = await axiosInstance.delete<VendorListApiResponseInterface>(
         `${apiEndpoints.vendor.deleteVendor}/${id}?shopId=${shopId}`
     )
-    return res.data
-}
-
-// get vendor transactions by vendorId
-export const getVendorTransactions = async (
-    vendorId: string,
-    page: number = 1,
-    limit: number = 10
-): Promise<VendorTransactionApiResponse> => {
-    if (!vendorId) throw new Error("Vendor ID is required")
-
-    const res = await axiosInstance.get<VendorTransactionApiResponse>(
-        apiEndpoints.vendor.vendorTransactions.replace("id", vendorId),
-        {
-            params: { page, limit },
-        }
-    )
-
     return res.data
 }

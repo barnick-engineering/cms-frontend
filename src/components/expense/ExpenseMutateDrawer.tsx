@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useForm, type SubmitHandler } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
@@ -20,14 +20,16 @@ import {
     SheetTitle,
 } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import type { AxiosError } from "axios"
-import { useCreateExpense, useUpdateExpense } from "@/hooks/useExpense"
-import { useShopStore } from "@/stores/shopStore"
+import { useCreateExpense } from "@/hooks/useExpense"
 import type { ExpenseFormInterface } from "@/interface/expenseInterface"
 import { expenseFormSchema, type ExpenseFormType } from "@/schema/expenseFormSchema"
-import { expenseTypes } from "@/constance/expenseConstance"
+import { Combobox } from "@/components/ui/combobox"
+import { useWorkOrderList } from "@/hooks/useWorkOrder"
+import { useCustomerList } from "@/hooks/useCustomer"
+import { expensePurposes } from "@/constance/expenseConstance"
 
 interface ExpenseMutateDrawerProps {
     open: boolean
@@ -42,105 +44,94 @@ const ExpenseMutateDrawer = ({
     currentRow,
     onSave,
 }: ExpenseMutateDrawerProps) => {
-    const shopId = useShopStore((s) => s.currentShopId)
-    const isUpdate = !!currentRow?.id
+    const createMutation = useCreateExpense()
 
-    const createMutation = useCreateExpense(shopId || "")
-    const updateMutation = useUpdateExpense(shopId || "")
+    // Fetch work orders for combobox
+    const [workOrderSearch, setWorkOrderSearch] = useState("")
+    const { data: workOrdersData } = useWorkOrderList(workOrderSearch || undefined, 100, 0)
+    const workOrderOptions = useMemo(() => {
+        return (workOrdersData?.data || []).map((workOrder) => ({
+            value: String(workOrder.id),
+            label: workOrder.no,
+        }))
+    }, [workOrdersData])
 
-    // Using ExpenseFormType inferred from schema
+    // Fetch customers for combobox
+    const { data: customersData } = useCustomerList(undefined, 100, 0)
+    const customerOptions = useMemo(() => {
+        return (customersData?.data || []).map((customer) => ({
+            value: String(customer.id),
+            label: customer.name,
+        }))
+    }, [customersData])
+
+    // Purpose options
+    const purposeOptions = useMemo(() => {
+        return expensePurposes.map((purpose) => ({
+            value: purpose.value,
+            label: purpose.label,
+        }))
+    }, [])
+
     const form = useForm<ExpenseFormType>({
         resolver: zodResolver(expenseFormSchema),
         defaultValues: {
-            title: "",
-            type: "DAILY_EXPENSE",
+            work_order: "",
+            purpose: "",
+            customer: undefined,
+            details: "",
             amount: 0,
+            expense_date: new Date().toISOString().split("T")[0],
             remarks: "",
-            shopId: shopId || "",
         },
     })
 
     useEffect(() => {
-        if (open) {
-            form.reset(
-                currentRow ?? {
-                    title: "",
-                    type: "DAILY_EXPENSE",
-                    amount: 0,
-                    remarks: "",
-                    shopId: shopId || "",
-                }
-            )
-        }
-    }, [currentRow, open, form, shopId])
-
-    // isDirty is to check any field change or not
-    const {
-        formState: { isDirty },
-    } = form
-
-    const onSubmit: SubmitHandler<ExpenseFormType> = (data) => {
-        if (!shopId) return toast.error("Shop ID not found!")
-
-        // prevent api call if no input field changed
-        if (isUpdate && !isDirty) {
-            toast.info("No changes detected. Please modify something before saving.")
-            return
-        }
-
-        const payload: ExpenseFormInterface = {
-            ...data,
-            title: data.title.trim(),
-            remarks: data.remarks?.trim() || "",
-            amount: data.amount, // amount is already a number from form input
-            shopId,
-        }
-
-        if (isUpdate && currentRow?.id) {
-            // destructure to exclude 'id' from the request body for the PUT request.
-            const { id, ...updateData } = payload
-
-            updateMutation.mutate(
-                { id: currentRow.id, data: updateData },
-                {
-                    onSuccess: () => {
-                        toast.success("Expense updated successfully.")
-                        onOpenChange(false)
-                        onSave?.(payload)
-                        form.reset()
-                    },
-                    onError: (err: unknown) => {
-                        const error = err as AxiosError<{ message: string }>
-                        toast.error(error?.response?.data?.message || "Update failed")
-                    },
-                }
-            )
-        } else {
-            createMutation.mutate(payload, {
-                onSuccess: () => {
-                    toast.success("Expense created successfully.")
-                    onOpenChange(false)
-                    onSave?.(payload)
-                    form.reset()
-                },
-                onError: (err: unknown) => {
-                    const error = err as AxiosError<{ message: string }>
-                    toast.error(error?.response?.data?.message || "Creation failed")
-                },
+        if (!open) {
+            form.reset({
+                work_order: "",
+                purpose: "",
+                customer: undefined,
+                details: "",
+                amount: 0,
+                expense_date: new Date().toISOString().split("T")[0],
+                remarks: "",
             })
         }
+    }, [open, form])
+
+    const onSubmit: SubmitHandler<ExpenseFormType> = (data) => {
+        const payload: ExpenseFormInterface = {
+            work_order: String(data.work_order),
+            purpose: data.purpose.trim(),
+            customer: data.customer ? String(data.customer) : undefined,
+            details: data.details?.trim() || undefined,
+            amount: data.amount || undefined,
+            expense_date: data.expense_date || undefined,
+            remarks: data.remarks || null,
+        }
+
+        createMutation.mutate(payload, {
+            onSuccess: () => {
+                toast.success("Expense created successfully.")
+                onOpenChange(false)
+                onSave?.(payload)
+                form.reset()
+            },
+            onError: (err: unknown) => {
+                const error = err as AxiosError<{ message: string }>
+                toast.error(error?.response?.data?.message || "Creation failed")
+            },
+        })
     }
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent className="flex flex-col">
                 <SheetHeader className="text-start">
-                    <SheetTitle>{isUpdate ? "Update" : "Create"} Expense</SheetTitle>
+                    <SheetTitle>Create Expense</SheetTitle>
                     <SheetDescription>
-                        {isUpdate
-                            ? "Update the expense by providing necessary info."
-                            : "Add a new expense by providing necessary info."}{" "}
-                        Click save when you're done.
+                        Add a new expense by providing necessary info. Click save when you're done.
                     </SheetDescription>
                 </SheetHeader>
 
@@ -152,69 +143,111 @@ const ExpenseMutateDrawer = ({
                     >
                         <FormField
                             control={form.control}
-                            name="title"
+                            name="work_order"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Title</FormLabel>
+                                    <FormLabel>Work Order *</FormLabel>
                                     <FormControl>
-                                        <Input {...field} placeholder="Expense title" />
+                                        <Combobox
+                                            options={workOrderOptions}
+                                            value={typeof field.value === "string" ? field.value : (field.value ? String(field.value) : "")}
+                                            onSelect={(val) => field.onChange(val)}
+                                            onSearch={setWorkOrderSearch}
+                                            placeholder="Select work order..."
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="type"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Expense Type</FormLabel>
-                                        <FormControl>
-                                            <Select value={field.value} onValueChange={field.onChange}>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select type" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {expenseTypes.map((type) => (
-                                                        <SelectItem key={type.value} value={type.value}>
-                                                            {type.label}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                        <FormField
+                            control={form.control}
+                            name="purpose"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Purpose *</FormLabel>
+                                    <FormControl>
+                                        <Combobox
+                                            options={purposeOptions}
+                                            value={field.value || ""}
+                                            onSelect={(val) => field.onChange(val)}
+                                            placeholder="Select purpose..."
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
-                            <FormField
-                                control={form.control}
-                                name="amount"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Amount</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type="number"
-                                                inputMode="decimal"
-                                                step="any"
-                                                min="0"
-                                                placeholder="0.00"
-                                                value={field.value ?? ""}
-                                                onChange={(e) => {
-                                                    const val = e.target.value
-                                                    field.onChange(val === '' ? '' : Number(val))
-                                                }}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
+                        <FormField
+                            control={form.control}
+                            name="customer"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Customer</FormLabel>
+                                    <FormControl>
+                                        <Combobox
+                                            options={customerOptions}
+                                            value={field.value ? (typeof field.value === "string" ? field.value : String(field.value)) : ""}
+                                            onSelect={(val) => field.onChange(val)}
+                                            placeholder="Select customer..."
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="details"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Details</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} value={field.value || ""} placeholder="Expense details..." />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="amount"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Amount</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            type="number"
+                                            {...field}
+                                            value={field.value || ""}
+                                            onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                                            min={0}
+                                            step="0.01"
+                                            placeholder="0.00"
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="expense_date"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Expense Date</FormLabel>
+                                    <FormControl>
+                                        <Input type="date" {...field} value={field.value || ""} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
                         <FormField
                             control={form.control}
@@ -223,7 +256,12 @@ const ExpenseMutateDrawer = ({
                                 <FormItem>
                                     <FormLabel>Remarks</FormLabel>
                                     <FormControl>
-                                        <Input {...field} placeholder="Remarks" />
+                                        <Textarea
+                                            {...field}
+                                            value={field.value || ""}
+                                            placeholder="Additional notes..."
+                                            rows={3}
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

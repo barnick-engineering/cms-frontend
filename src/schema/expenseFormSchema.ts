@@ -1,24 +1,16 @@
 import { z } from "zod"
 
-export const expenseTypesArray = [
-    "DAILY_EXPENSE",
-    "MONTHLY_SALARY",
-    "MONTHLY_RENT",
-    "MONTHLY_UTILITIES",
-    "MONTHLY_OTHER",
-    "OTHER",
-] as const
-
-// Define the schema without the final z.ZodType<ExpenseFormInterface> cast
 export const expenseFormSchema = z.object({
-    // Keep id optional here as it's needed for form reset/default values
-    id: z.string().optional(),
-    title: z.string().min(1, "Title is required"),
-    type: z.enum(expenseTypesArray),
-    amount: z.number().min(0.01, "Amount must be greater than 0"),
-    remarks: z.string().min(1, "Remarks is required"),
-    shopId: z.string().min(1, "Shop ID is required"),
+  work_order: z.union([z.string(), z.number()]).refine(
+    (val) => val !== "" && val !== 0 && val !== undefined && val !== null,
+    { message: "Work order is required" }
+  ),
+  purpose: z.string().min(1, "Purpose is required"),
+  customer: z.union([z.string(), z.number()]).optional(),
+  details: z.string().optional(),
+  amount: z.number().min(0).optional(),
+  expense_date: z.string().optional(),
+  remarks: z.string().optional().nullable(),
 })
 
-// Type inferred from Zod (now correctly compatible with useForm)
 export type ExpenseFormType = z.infer<typeof expenseFormSchema>

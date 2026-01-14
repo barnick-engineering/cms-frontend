@@ -34,7 +34,6 @@ export const apiEndpoints: ApiEndpoints = {
     updateCustomer: '/api/v1/customer/',
     deleteCustomer: '/api/v1/customer/',
     getCustomerById: '/api/v1/customer/',
-    customerTransactions: '/transaction/customer/id',
   },
   vendor: {
     vendorList: '/vendor',
@@ -42,13 +41,13 @@ export const apiEndpoints: ApiEndpoints = {
     updateVendor: '/vendor',
     deleteVendor: '/vendor',
     getVendorById: '/vendor/id',
-    vendorTransactions: '/transaction/vendor/id',
   },
-  transactions: {
-    transactionsList: '/transactions',
-    createTransactions: '/transactions',
-    getTransactionById: '/transactions/{id}',
-    transactionLedger: '/transaction/ledger/{customerOrVendorId}',
+  workOrder: {
+    workOrderList: '/api/v1/work-order',
+    createWorkOrder: '/api/v1/work-order/',
+    updateWorkOrder: '/api/v1/work-order/',
+    deleteWorkOrder: '/api/v1/work-order/',
+    getWorkOrderById: '/api/v1/work-order/',
   },
   inventory: {
     inventoryList: '/inventory',
@@ -59,24 +58,15 @@ export const apiEndpoints: ApiEndpoints = {
     inventoryTrackingById: '/inventory-tracking/{inventoryId}',
   },
   expense: {
-    expenseList: '/expense',
-    createExpense: '/expense',
-    updateExpense: '/expense/{id}',
-    deleteExpense: '/expense/{id}',
-    getExpenseById: '/expense/{id}',
+    expenseList: '/api/v1/expense',
+    createExpense: '/api/v1/expense/',
+    deleteExpense: '/api/v1/expense/',
+  },
+  team: {
+    teamList: '/api/v1/account/',
   },
   user: {
-    userList: '/user/get-users-by-shop-id',
-    allRoles: '/user/role/get-roles',
-    createUser: '/user/add-user-to-shop',
     changePassword: '/user/change-password',
-  },
-  subscriptionPlans: {
-    subscriptionList: '/subscription/plans',
-    createSubscriptionPlan: '/subscription/plans',
-    updateSubscriptionPlan: '/subscription/plans/{id}',
-    getSubscriptionPlanById: '/subscription/plans/{id}',
-    deleteSubscriptionPlan: '/subscription/plans/{id}',
   },
   reports : {
     reportTransactions: '/report/transactions',
