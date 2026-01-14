@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { ArrowRight, Loader2 } from "lucide-react"
 import { useForm } from "react-hook-form"
@@ -22,7 +21,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { useUser } from "@/hooks/useUser"
+// useUser removed - user management endpoints no longer exist
 import type { ChangePasswordFormValues } from "@/schema/changePasswordSchema"
 import { changePasswordSchema } from "@/schema/changePasswordSchema"
 import { signInUser } from "@/api/userAuthApi"
@@ -38,23 +37,9 @@ const ChangePassword = () => {
   })
 
   const { mutate: handleChangePassword, isPending } = useChangePassword()
-  const { data: currentUser } = useUser() // fetch current user
   const navigate = useNavigate()
-  const [userPhone, setUserPhone] = useState<string>("")
-
-  // set the phone from current user once loaded
-  useEffect(() => {
-    if (currentUser?.phone) {
-      setUserPhone(currentUser.phone)
-    }
-  }, [currentUser])
 
   const onSubmit = (data: ChangePasswordFormValues) => {
-    if (!userPhone) {
-      toast.error("Unable to retrieve user phone for auto login.")
-      return
-    }
-
     // prevent using the old password as the new one
     if (data.oldPassword === data.newPassword) {
       toast.error("New password cannot be the same as the old password.")
@@ -64,9 +49,17 @@ const ChangePassword = () => {
     handleChangePassword(data, {
       onSuccess: async () => {
         try {
-          // auto sign in using phone and new password
+          // Get email from localStorage (stored during login)
+          const storedEmail = localStorage.getItem('userEmail')
+          if (!storedEmail) {
+            toast.error("Please sign in again after password change.")
+            navigate("/sign-in")
+            return
+          }
+
+          // auto sign in using email and new password
           await signInUser({
-            phone: userPhone,
+            email: storedEmail,
             password: data.newPassword,
           })
 

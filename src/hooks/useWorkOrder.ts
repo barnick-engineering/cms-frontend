@@ -8,7 +8,6 @@ import {
 import type {
   WorkOrderFormInterface,
   WorkOrderListResponse,
-  WorkOrder,
   WorkOrderDetailResponse,
   WorkOrderUpdatePayload,
 } from "@/interface/workOrderInterface"

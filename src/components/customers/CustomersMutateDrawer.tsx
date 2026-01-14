@@ -25,7 +25,7 @@ import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import { Checkbox } from "../ui/checkbox"
 import type { AxiosError } from "axios"
-import type { CustomerMutateDrawerProps } from "@/interface/customerInterface"
+import type { CustomerMutateDrawerProps, CustomerFormInterface } from "@/interface/customerInterface"
 import { customerFormSchema } from "@/schema/customerFormSchema"
 import { useCreateCustomer, useUpdateCustomer } from "@/hooks/useCustomer"
 

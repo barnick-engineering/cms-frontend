@@ -4,7 +4,6 @@ import {
   YAxis,
   Bar,
   CartesianGrid,
-  Tooltip,
 } from "recharts"
 import {
   ChartContainer,
@@ -85,8 +84,9 @@ const DashboardOverview = ({ data, isLoading }: DashboardOverviewProps) => {
         <ChartTooltip 
           cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
           content={<ChartTooltipContent
-            formatter={(value: number) => {
-              return `৳${value.toLocaleString('en-IN')}`
+            formatter={(value) => {
+              const numValue = typeof value === 'number' ? value : Number(value) || 0
+              return `৳${numValue.toLocaleString('en-IN')}`
             }}
           />} 
         />

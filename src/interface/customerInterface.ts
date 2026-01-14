@@ -21,7 +21,7 @@ export interface Customer {
   id: number;
   created: string;
   status: boolean;
-  created_by: CreatedBy;
+  created_by?: CreatedBy;
   name: string;
   email: string;
   phone: string;

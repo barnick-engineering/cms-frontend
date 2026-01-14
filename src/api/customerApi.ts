@@ -1,6 +1,6 @@
 import { apiEndpoints } from "@/config/api"
 import { axiosInstance } from "./axios"
-import type { CustomerFormInterface, CustomerListInterface, CustomerListResponse, Customer } from "@/interface/customerInterface"
+import type { CustomerFormInterface, CustomerListResponse, Customer } from "@/interface/customerInterface"
 
 // customer list with search params
 export const customerList = async (

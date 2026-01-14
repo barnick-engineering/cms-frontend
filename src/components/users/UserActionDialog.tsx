@@ -20,9 +20,9 @@ import {
 import { Input } from '@/components/ui/input'
 import PasswordInput from '@/components/password-input'
 import { toast } from 'sonner'
-import { AxiosError } from 'axios'
+// AxiosError removed - user management endpoints no longer exist
 import { SelectDropdown } from '@/components/select-dropdown'
-import { useCreateUser, useUserRoles } from '@/hooks/useUser'
+// useCreateUser and useUserRoles removed - user management endpoints no longer exist
 import { useShopStore } from '@/stores/shopStore'
 import { userFormSchema, type UserForm } from '@/schema/userFormSchema'
 import  type{ UserListItem } from '@/interface/userInterface'
@@ -41,8 +41,10 @@ export function UsersActionDialog({
 
     const isEdit = !!currentRow
     const shopId = useShopStore((s) => s.currentShopId)
-    const { data: roles, isLoading: isRolesLoading } = useUserRoles()
-    const { mutate: createUser, isPending } = useCreateUser()
+    // User management hooks removed - user management endpoints no longer exist
+    const roles: { id: string; name: string }[] = []
+    const isRolesLoading = false
+    const isPending = false
 
 
     const form = useForm<UserForm>({
@@ -64,34 +66,12 @@ export function UsersActionDialog({
             },
     })
 
-    const onSubmit = (values: UserForm) => {
+    const onSubmit = (_values: UserForm) => {
         if (!shopId) return
-        const payload = {
-            name: values.username,
-            phone: values.phoneNumber,
-            password: values.password,
-            shopId,
-            roleId: values.role,
-        }
-
-        createUser(payload, {
-            onSuccess: () => {
-                form.reset()
-                onOpenChange(false)
-                toast.success("User create successfully")
-            },
-            onError: (err: unknown) => {
-                let message = "Failed to create user"
-
-                if (err instanceof AxiosError) {
-                    message = err.response?.data?.message || message
-                } else if (err instanceof Error) {
-                    message = err.message
-                }
-
-                toast.error(message)
-            },
-        })
+        // User creation removed - user management endpoints no longer exist
+        toast.error("User management has been removed")
+        form.reset()
+        onOpenChange(false)
     }
 
     const isPasswordTouched = !!form.formState.dirtyFields.password

@@ -14,7 +14,7 @@ import { Card, CardContent } from '../ui/card'
 import { NoDataFound } from '../NoDataFound'
 import { Button } from '../ui/button'
 import { Download } from 'lucide-react'
-import { TransactionLedgerDataTablePagination } from '../customers/TransactionLedgerDataTablePagination'
+import { DataTablePagination } from '../data-table-pagination'
 // import { generateLedgerExcel } from '@/utils/enums/customerOrVendorLedgerExcel'
 
 interface ReportTableProps<TData> {
@@ -150,7 +150,7 @@ export const ReportTable = <TData,>({
                 </Table>
             </div>
 
-            {data.length > 0 && <TransactionLedgerDataTablePagination table={table} />}
+            {data.length > 0 && <DataTablePagination table={table} />}
         </div>
     )
 }

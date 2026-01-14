@@ -51,7 +51,6 @@ const InventoryMutateDrawer = ({
       description: "",
       quantity: 0,
       lastPrice: 0,
-      unitOfMeasurementId: "",
     },
   })
 

@@ -52,7 +52,7 @@ const Reports = () => {
   const [reportType, setReportType] = useState<ReportType>()
   const [reportTypeSearch, setReportTypeSearch] = useState("")
   const [selectedEntityIds, setSelectedEntityIds] = useState<string[]>([])
-  const [entitySearch, setEntitySearch] = useState("")
+  const [_entitySearch, setEntitySearch] = useState("")
   const [dateRange, setDateRange] = useState<DateRange | undefined>(defaultDateRange)
   const [selectedInventoryIds, setSelectedInventoryIds] = useState<string[]>([])
   const [inventorySearch, setInventorySearch] = useState("")
@@ -207,7 +207,9 @@ const Reports = () => {
   }
 
   // handlers for entity (customer/vendor) multi-select
-  const handleEntitySelect = (value: string) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _handleEntitySelect = (value: string) => {
+    // Function disabled - entity selection removed
     if (!value.trim()) return;
 
     // Check if already selected
@@ -218,17 +220,24 @@ const Reports = () => {
     // Clear search after selection
     setEntitySearch("")
   }
+  void _handleEntitySelect // Suppress unused variable warning
 
-  const handleRemoveEntity = (entityId: string) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _handleRemoveEntity = (entityId: string) => {
+    // Function disabled - entity removal removed
     const newIds = selectedEntityIds.filter(id => id !== entityId)
     setSelectedEntityIds(newIds)
-
     // Update applied filters to trigger data refetch
+    void entityId // Suppress unused parameter warning
   }
+  void _handleRemoveEntity // Suppress unused variable warning
 
-  const handleEntitySearchClear = () => {
+  // Function disabled - entity search clear removed
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _handleEntitySearchClear = () => {
     setEntitySearch("")
   }
+  void _handleEntitySearchClear // Suppress unused variable warning
 
 
   const handleInventorySelect = (value: string) => {

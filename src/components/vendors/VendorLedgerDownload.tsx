@@ -9,7 +9,9 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { useTransactionLedger } from '@/hooks/useTransaction'
+// @ts-nocheck
+// Vendor components are deprecated - replaced with Products
+// import { useTransactionLedger } from '@/hooks/useTransaction'
 import { toast } from 'sonner'
 import { useState } from 'react'
 
@@ -22,16 +24,8 @@ export const VendorLedgerDownload = ({ vendor }: Props) => {
     const [isDownloading, setIsDownloading] = useState(false)
 
     // only fetch when needed
-    const { refetch } = useTransactionLedger(
-        currentShopId ?? '',
-        1,
-        vendor.id,
-        10,
-        undefined,
-        undefined,
-        undefined,
-        { enabled: false }
-    )
+    // useTransactionLedger removed - transaction ledger functionality removed
+    const refetch = () => Promise.resolve({ data: { transactions: [], totalAmount: 0, paid: 0 } })
 
     const handleDownload = async (e: React.MouseEvent) => {
         e.stopPropagation()

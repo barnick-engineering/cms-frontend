@@ -23,14 +23,9 @@ export function CustomersMultiDeleteDialog<TData extends { id: string }>({
 }: CustomerMultiDeleteDialogProps<TData>) {
   const [value, setValue] = useState('')
 
-  const shopId = localStorage.getItem('shop-storage')
-    ? JSON.parse(localStorage.getItem('shop-storage')!).state?.currentShopId
-    : null
-
   const selectedRows = table.getFilteredSelectedRowModel().rows
 
-  // passing shopId dynamically
-  const deleteMutation = useDeleteCustomer(shopId)
+  const deleteMutation = useDeleteCustomer()
 
   const handleDelete = async () => {
     if (value.trim() !== CONFIRM_WORD) {
@@ -43,7 +38,7 @@ export function CustomersMultiDeleteDialog<TData extends { id: string }>({
     toast.promise(
       Promise.all(
         selectedRows.map((row) =>
-          deleteMutation.mutateAsync({ id: row.original.id })
+          deleteMutation.mutateAsync(row.original.id)
         )
       ),
       {

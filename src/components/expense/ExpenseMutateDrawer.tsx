@@ -41,7 +41,7 @@ interface ExpenseMutateDrawerProps {
 const ExpenseMutateDrawer = ({
     open,
     onOpenChange,
-    currentRow,
+    currentRow: _currentRow,
     onSave,
 }: ExpenseMutateDrawerProps) => {
     const createMutation = useCreateExpense()
