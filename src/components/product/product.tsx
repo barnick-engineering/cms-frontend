@@ -125,7 +125,7 @@ export default function Product() {
     fetchProducts(0, pagination.limit, null);
   }, []);
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: unknown) => {
     e.preventDefault();
 
     // Build product data object, omitting optional fields if they're not set
@@ -392,6 +392,7 @@ export default function Product() {
                         >
                           <PencilIcon />
                         </button>
+                        
                         <button
                           type="button"
                           onClick={() => handleDelete(product?.id)}

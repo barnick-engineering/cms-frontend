@@ -19,9 +19,9 @@ export default function UserDropdown() {
         onClick={toggleDropdown}
         className="flex items-center text-gray-700 dropdown-toggle dark:text-gray-400"
       >
-        <span className="block mr-1 font-medium text-theme-sm border border-black-200 dark:border-white-900 rounded-full w-10 h-10 pt-2 ">
-          {JSON.parse(localStorage.getItem("user")).short_name || null}
-        </span>
+        {/* <span className="block mr-1 font-medium text-theme-sm border border-black-200 dark:border-white-900 rounded-full w-10 h-10 pt-2 ">
+          {JSON.parse(localStorage.getItem("user")).short_name || "n/a"}
+        </span> */}
       </button>
 
       <Dropdown
