@@ -18,8 +18,8 @@ export function TeamSwitcher({ teams }: TeamSwitcherProps) {
           className='cursor-default'
         >
           {ShopLogo && (
-            <div className='bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg'>
-              <ShopLogo className='size-4' />
+            <div className='flex items-center justify-center'>
+              <ShopLogo className='size-8' />
             </div>
           )}
           <div className='grid flex-1 text-start text-sm leading-tight'>
