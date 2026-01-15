@@ -32,12 +32,29 @@ const chartConfig = {
 } satisfies ChartConfig
 
 const DashboardOverview = ({ data, isLoading }: DashboardOverviewProps) => {
-  // Map monthly_sales array to chart data
-  // monthly_sales is an array of 12 numbers representing Jan-Dec
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  // Generate last 12 months dynamically (going backwards from current month)
+  const getLast12Months = () => {
+    const months = []
+    const monthAbbr = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    const now = new Date()
+    
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const monthIndex = date.getMonth()
+      const year = date.getFullYear()
+      const twoDigitYear = year.toString().slice(-2)
+      months.push(`${monthAbbr[monthIndex]}'${twoDigitYear}`)
+    }
+    
+    return months.reverse() // Reverse to show oldest to newest (left to right)
+  }
   
+  const monthLabels = getLast12Months()
+  
+  // Map monthly_sales array to chart data
+  // monthly_sales is an array of 12 numbers representing last 12 months
   const chartData = data?.monthly_sales?.map((sales, index) => ({
-    name: monthNames[index] || `Month ${index + 1}`,
+    name: monthLabels[index] || `Month ${index + 1}`,
     sales: sales || 0,
   })) || []
 

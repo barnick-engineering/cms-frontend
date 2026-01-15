@@ -15,9 +15,19 @@ import { ProfileDropdown } from '../profile-dropdown'
 import { NavGroup } from './nav-group'
 import { NavUser } from './nav-user'
 import { sidebarData as staticSidebarData } from '../../constance/sidebarConstances'
-import { Command } from 'lucide-react'
 import type { AuthenticatedLayoutProps } from '@/interface/sidebarDataInerface'
 import { useDrawerStore } from '@/stores/drawerStore'
+
+// Favicon logo component for sidebar
+const FaviconLogo = ({ className }: { className?: string }) => {
+  return (
+    <img 
+      src="/images/favicon.svg" 
+      alt="Barnick Pracharani" 
+      className={className}
+    />
+  )
+}
 
 export default function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
   // global drawer state apply blur while any drawer open to view
@@ -27,7 +37,7 @@ export default function AuthenticatedLayout({ children }: AuthenticatedLayoutPro
   const dynamicTeams = [{
     id: 'barnick-pracharani',
     name: 'Barnick Pracharani',
-    logo: Command,
+    logo: FaviconLogo,
   }]
 
   return (
