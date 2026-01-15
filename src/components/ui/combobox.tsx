@@ -11,6 +11,7 @@ import {
   CommandList,
 } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { useDebounce } from "@/hooks/useDebounce"
 
 export type ComboboxOption = { value: string; label: string }
 
@@ -48,9 +49,18 @@ export function Combobox({
 
   const currentValue = controlledValue || ""
 
+  // Debounce search query for API calls (300ms delay)
+  const debouncedSearchQuery = useDebounce(searchQuery, 300)
+
+  // Call onSearch only when debounced value changes (after user stops typing)
+  React.useEffect(() => {
+    if (onSearch && open) {
+      onSearch(debouncedSearchQuery)
+    }
+  }, [debouncedSearchQuery, onSearch, open])
+
   const handleSearch = (query: string) => {
-    setSearchQuery(query)
-    onSearch?.(query)
+    setSearchQuery(query) // Update UI immediately for responsiveness
 
     // if allowing custom values, update the parent value immediately as user types
     if (allowCustomValue) {
@@ -71,6 +81,11 @@ export function Combobox({
     if (!isOpen) {
       // When closing, clear the search query immediately
       setSearchQuery("")
+      
+      // Clear the search on parent component immediately when closing
+      if (onSearch) {
+        onSearch("")
+      }
 
       // If there was a search query and custom values are allowed, ensure it's set as the value
       if (allowCustomValue && searchQuery && searchQuery !== currentValue) {

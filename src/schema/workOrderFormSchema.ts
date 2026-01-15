@@ -2,7 +2,6 @@ import z from "zod"
 
 export const workOrderFormSchema = z.object({
   customer: z.number().optional(),
-  workorder: z.number().optional(),
   items: z
     .array(
       z.object({
@@ -15,12 +14,6 @@ export const workOrderFormSchema = z.object({
   date: z.string().optional(),
   total_paid: z.number().min(0).optional(),
   remarks: z.string().optional().nullable(),
-}).refine(
-  (data) => data.customer || data.workorder,
-  {
-    message: "Either customer or work order must be provided",
-    path: ["customer"],
-  }
-)
+})
 
 export type WorkOrderFormSchema = z.infer<typeof workOrderFormSchema>

@@ -56,8 +56,9 @@ const ExpenseMutateDrawer = ({
         }))
     }, [workOrdersData])
 
-    // Fetch customers for combobox
-    const { data: customersData } = useCustomerList(undefined, 100, 0)
+    // Fetch customers for combobox with search functionality
+    const [customerSearch, setCustomerSearch] = useState("")
+    const { data: customersData, isLoading: customersLoading } = useCustomerList(customerSearch || undefined, 100, 0)
     const customerOptions = useMemo(() => {
         return (customersData?.data || []).map((customer) => ({
             value: String(customer.id),
@@ -97,6 +98,8 @@ const ExpenseMutateDrawer = ({
                 expense_date: new Date().toISOString().split("T")[0],
                 remarks: "",
             })
+            setWorkOrderSearch("")
+            setCustomerSearch("")
         }
     }, [open, form])
 
@@ -191,7 +194,9 @@ const ExpenseMutateDrawer = ({
                                             options={customerOptions}
                                             value={field.value ? (typeof field.value === "string" ? field.value : String(field.value)) : ""}
                                             onSelect={(val) => field.onChange(val)}
-                                            placeholder="Select customer..."
+                                            onSearch={setCustomerSearch}
+                                            loading={customersLoading}
+                                            placeholder="Search and select customer..."
                                         />
                                     </FormControl>
                                     <FormMessage />
