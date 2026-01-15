@@ -231,9 +231,6 @@ const WorkOrderMutateDrawer = ({
                               onChange={(e) => {
                                 const value = Number(e.target.value) || 0
                                 field.onChange(value)
-                                // Force re-render by updating the items array reference
-                                const currentItems = form.getValues("items")
-                                form.setValue("items", [...currentItems], { shouldValidate: false, shouldDirty: true })
                               }}
                               min={1}
                               placeholder="0"
@@ -258,9 +255,6 @@ const WorkOrderMutateDrawer = ({
                               onChange={(e) => {
                                 const value = Number(e.target.value) || 0
                                 field.onChange(value)
-                                // Force re-render by updating the items array reference
-                                const currentItems = form.getValues("items")
-                                form.setValue("items", [...currentItems], { shouldValidate: false, shouldDirty: true })
                               }}
                               min={0}
                               step="0.01"
