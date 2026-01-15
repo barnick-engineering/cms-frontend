@@ -9,7 +9,7 @@ import { Main } from '@/components/layout/main'
 import DashboardOverview from '@/components/dashboard/DashboardOverview'
 import RecentWorkordersTable from '@/components/dashboard/RecentWorkordersTable'
 import { useDashboardData } from '@/hooks/useDashboard'
-import { TrendingUp, TrendingDown, Users, Package, FileText, ShoppingBag, DollarSign, CreditCard, AlertCircle } from 'lucide-react'
+import { TrendingUp, TrendingDown, Users, Package, FileText, DollarSign, CreditCard, AlertCircle } from 'lucide-react'
 
 const Dashboard = () => {
   const { data, isLoading, isError, error } = useDashboardData()
@@ -105,7 +105,7 @@ const Dashboard = () => {
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Customers</CardTitle>
@@ -113,16 +113,6 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{isLoading ? '...' : dashboardData?.total_customer ?? 0}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Vendors</CardTitle>
-              <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{isLoading ? '...' : dashboardData?.total_vendor ?? 0}</div>
             </CardContent>
           </Card>
 

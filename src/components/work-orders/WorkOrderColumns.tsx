@@ -81,6 +81,18 @@ export const WorkOrderColumns: ColumnDef<WorkOrderListInterface>[] = [
     },
   },
   {
+    id: 'pending',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Pending' />
+    ),
+    cell: ({ row }) => {
+      const amount = row.getValue<number>('amount')
+      const totalPaid = row.getValue<number>('total_paid')
+      const pending = (amount || 0) - (totalPaid || 0)
+      return `৳${pending.toLocaleString('en-IN')}`
+    },
+  },
+  {
     accessorKey: 'is_delivered',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Status' />
