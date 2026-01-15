@@ -27,7 +27,7 @@ import { toast } from "sonner"
 import type { AxiosError } from "axios"
 import type { WorkOrderMutateDrawerProps, WorkOrderFormInterface } from "@/interface/workOrderInterface"
 import { workOrderFormSchema } from "@/schema/workOrderFormSchema"
-import { useCreateWorkOrder, useWorkOrderList } from "@/hooks/useWorkOrder"
+import { useCreateWorkOrder } from "@/hooks/useWorkOrder"
 import { useCustomerList } from "@/hooks/useCustomer"
 import { Combobox } from "@/components/ui/combobox"
 import { Plus, Minus } from "lucide-react"
@@ -42,8 +42,9 @@ const WorkOrderMutateDrawer = ({
 }: WorkOrderMutateDrawerProps) => {
   const createMutation = useCreateWorkOrder()
 
-  // Fetch customers for combobox
-  const { data: customersData } = useCustomerList(undefined, 100, 0)
+  // Fetch customers for combobox with search functionality
+  const [customerSearch, setCustomerSearch] = useState("")
+  const { data: customersData, isLoading: customersLoading } = useCustomerList(customerSearch || undefined, 100, 0)
   const customerOptions = useMemo(() => {
     return (customersData?.data || []).map((customer) => ({
       value: String(customer.id),
@@ -51,21 +52,10 @@ const WorkOrderMutateDrawer = ({
     }))
   }, [customersData])
 
-  // Fetch work orders for combobox
-  const [workOrderSearch, setWorkOrderSearch] = useState("")
-  const { data: workOrdersData } = useWorkOrderList(workOrderSearch || undefined, 100, 0)
-  const workOrderOptions = useMemo(() => {
-    return (workOrdersData?.data || []).map((workOrder) => ({
-      value: String(workOrder.id),
-      label: workOrder.no,
-    }))
-  }, [workOrdersData])
-
   const form = useForm<WorkOrderFormSchema>({
     resolver: zodResolver(workOrderFormSchema),
     defaultValues: {
       customer: undefined,
-      workorder: undefined,
       items: [{ item: "", total_order: 0, unit_price: 0 }],
       date: new Date().toISOString().split("T")[0],
       total_paid: 0,
@@ -82,12 +72,12 @@ const WorkOrderMutateDrawer = ({
     if (!open) {
       form.reset({
         customer: undefined,
-        workorder: undefined,
         items: [{ item: "", total_order: 0, unit_price: 0 }],
         date: new Date().toISOString().split("T")[0],
         total_paid: 0,
         remarks: "",
       })
+      setCustomerSearch("")
     }
   }, [open, form])
 
@@ -107,7 +97,6 @@ const WorkOrderMutateDrawer = ({
   const onSubmit: SubmitHandler<WorkOrderFormSchema> = (data) => {
     const normalizedData: WorkOrderFormInterface = {
       customer: data.customer || undefined,
-      workorder: data.workorder || undefined,
       items: data.items.map((item) => ({
         item: item.item.trim(),
         total_order: item.total_order,
@@ -148,46 +137,26 @@ const WorkOrderMutateDrawer = ({
             onSubmit={form.handleSubmit(onSubmit)}
             className="flex-1 space-y-6 overflow-y-auto px-4"
           >
-            <div className="grid grid-cols-2 gap-3">
-              <FormField
-                control={form.control}
-                name="customer"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Customer</FormLabel>
-                    <FormControl>
-                      <Combobox
-                        options={customerOptions}
-                        value={field.value ? String(field.value) : ""}
-                        onSelect={(val) => field.onChange(Number(val))}
-                        placeholder="Select customer..."
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="workorder"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Work Order</FormLabel>
-                    <FormControl>
-                      <Combobox
-                        options={workOrderOptions}
-                        value={field.value ? String(field.value) : ""}
-                        onSelect={(val) => field.onChange(Number(val))}
-                        onSearch={setWorkOrderSearch}
-                        placeholder="Select work order..."
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="customer"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Customer</FormLabel>
+                  <FormControl>
+                    <Combobox
+                      options={customerOptions}
+                      value={field.value ? String(field.value) : ""}
+                      onSelect={(val) => field.onChange(Number(val))}
+                      onSearch={setCustomerSearch}
+                      loading={customersLoading}
+                      placeholder="Search and select customer..."
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}

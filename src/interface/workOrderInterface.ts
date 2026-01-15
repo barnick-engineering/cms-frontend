@@ -6,7 +6,6 @@ export interface WorkOrderItem {
 
 export interface WorkOrderFormInterface {
   customer?: number
-  workorder?: number
   items: WorkOrderItem[]
   date?: string
   total_paid?: number
