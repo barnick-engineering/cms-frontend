@@ -33,10 +33,6 @@ export const ExpenseColumns: ColumnDef<Expense>[] = [
         enableHiding: false,
     },
     {
-        accessorKey: 'id',
-        header: ({ column }) => <DataTableColumnHeader column={column} title='ID' />,
-    },
-    {
         accessorKey: 'no',
         header: ({ column }) => <DataTableColumnHeader column={column} title='Expense No' />,
     },
