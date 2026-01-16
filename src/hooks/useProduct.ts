@@ -40,7 +40,10 @@ export const useCreateProduct = () => {
     const queryClient = useQueryClient()
     return useMutation({
         mutationFn: (data: ProductFormInterface) => createProduct(data),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: PRODUCT_KEYS.all }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: PRODUCT_KEYS.all })
+            queryClient.invalidateQueries({ queryKey: ["dashboard"] })
+        },
     })
 }
 
@@ -53,6 +56,7 @@ export const useUpdateProduct = () => {
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: PRODUCT_KEYS.all })
             queryClient.invalidateQueries({ queryKey: PRODUCT_KEYS.detail(variables.id) })
+            queryClient.invalidateQueries({ queryKey: ["dashboard"] })
         },
     })
 }
@@ -62,6 +66,9 @@ export const useDeleteProduct = () => {
     const queryClient = useQueryClient()
     return useMutation({
         mutationFn: (id: string | number) => deleteProduct(id),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: PRODUCT_KEYS.all }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: PRODUCT_KEYS.all })
+            queryClient.invalidateQueries({ queryKey: ["dashboard"] })
+        },
     })
 }

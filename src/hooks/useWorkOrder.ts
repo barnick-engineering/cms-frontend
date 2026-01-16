@@ -8,7 +8,7 @@ import {
 import type {
   WorkOrderFormInterface,
   WorkOrderListResponse,
-  WorkOrderDetailResponse,
+  WorkOrderDetailData,
   WorkOrderUpdatePayload,
 } from "@/interface/workOrderInterface"
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
@@ -36,9 +36,9 @@ export const useWorkOrderList = (
 // get work order by id
 export const useWorkOrderById = (
   id: string | number,
-  options?: Partial<UseQueryOptions<WorkOrderDetailResponse, Error>>
-): UseQueryResult<WorkOrderDetailResponse, Error> => {
-  return useQuery<WorkOrderDetailResponse>({
+  options?: Partial<UseQueryOptions<WorkOrderDetailData, Error>>
+): UseQueryResult<WorkOrderDetailData, Error> => {
+  return useQuery<WorkOrderDetailData>({
     queryKey: WORK_ORDER_KEYS.detail(id),
     queryFn: () => getWorkOrderById(id),
     enabled: !!id && (options?.enabled ?? true),
@@ -51,7 +51,10 @@ export const useCreateWorkOrder = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (data: WorkOrderFormInterface) => createWorkOrder(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: WORK_ORDER_KEYS.all }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: WORK_ORDER_KEYS.all })
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] })
+    },
   })
 }
 
@@ -69,6 +72,7 @@ export const useUpdateWorkOrder = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: WORK_ORDER_KEYS.all })
       queryClient.invalidateQueries({ queryKey: WORK_ORDER_KEYS.detail(variables.id) })
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] })
     },
   })
 }
@@ -78,6 +82,9 @@ export const useDeleteWorkOrder = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: string | number) => deleteWorkOrder(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: WORK_ORDER_KEYS.all }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: WORK_ORDER_KEYS.all })
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] })
+    },
   })
 }

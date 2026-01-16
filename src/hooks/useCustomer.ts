@@ -40,7 +40,10 @@ export const useCreateCustomer = () => {
     const queryClient = useQueryClient()
     return useMutation({
         mutationFn: (data: CustomerFormInterface) => createCustomer(data),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: CUSTOMER_KEYS.all }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: CUSTOMER_KEYS.all })
+            queryClient.invalidateQueries({ queryKey: ["dashboard"] })
+        },
     })
 }
 
@@ -53,6 +56,7 @@ export const useUpdateCustomer = () => {
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: CUSTOMER_KEYS.all })
             queryClient.invalidateQueries({ queryKey: CUSTOMER_KEYS.detail(variables.id) })
+            queryClient.invalidateQueries({ queryKey: ["dashboard"] })
         },
     })
 }
@@ -62,6 +66,9 @@ export const useDeleteCustomer = () => {
     const queryClient = useQueryClient()
     return useMutation({
         mutationFn: (id: string | number) => deleteCustomer(id),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: CUSTOMER_KEYS.all }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: CUSTOMER_KEYS.all })
+            queryClient.invalidateQueries({ queryKey: ["dashboard"] })
+        },
     })
 }

@@ -40,23 +40,42 @@ export interface WorkOrderListResponse {
 export interface WorkOrderDetailItem {
   id: number
   item: string
+  details: string | null
   total_order: number
   unit_price: number
   created?: string
   updated?: string
 }
 
-export interface WorkOrderDetailResponse {
+export interface WorkOrderDetailExpenseItem {
+  id: number
+  no: string
+  amount: number
+  purpose: string
+  details: string | null
+  paid_by: string
+  expense_date: string
+  bill_disbursed_date: string | null
+}
+
+export interface WorkOrderDetailExpense {
+  total: number
+  details: WorkOrderDetailExpenseItem[]
+}
+
+export interface WorkOrderDetailData {
   id: number
   no: string
   customer: {
     id: number
     name: string
-    email?: string
     phone?: string
     address?: string
+    contact_person_name?: string
   }
   items: WorkOrderDetailItem[]
+  total_items: number
+  expense: WorkOrderDetailExpense[]
   amount: number
   total_paid: number
   date: string
@@ -65,6 +84,12 @@ export interface WorkOrderDetailResponse {
   is_delivered: boolean
   remarks: string | null
   created_by: number
+}
+
+export interface WorkOrderDetailResponse {
+  data: WorkOrderDetailData
+  response_message: string
+  response_code: number
 }
 
 export interface WorkOrderUpdatePayload {
