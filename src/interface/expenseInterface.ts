@@ -32,6 +32,7 @@ export interface ExpenseFormInterface {
   work_order?: string
   purpose: string
   customer?: string
+  paid_by?: string
   details?: string
   amount?: number
   expense_date?: string

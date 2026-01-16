@@ -29,6 +29,7 @@ import { expenseFormSchema, type ExpenseFormType } from "@/schema/expenseFormSch
 import { Combobox } from "@/components/ui/combobox"
 import { useWorkOrderList } from "@/hooks/useWorkOrder"
 import { useCustomerList } from "@/hooks/useCustomer"
+import { useTeamList } from "@/hooks/useTeam"
 import { expensePurposes } from "@/constance/expenseConstance"
 
 interface ExpenseMutateDrawerProps {
@@ -74,12 +75,38 @@ const ExpenseMutateDrawer = ({
         }))
     }, [])
 
+    // Fetch team members (users) for paid_by combobox
+    const [paidBySearch, setPaidBySearch] = useState("")
+    const { data: teamData, isLoading: teamLoading } = useTeamList()
+    const paidByOptions = useMemo(() => {
+        // Handle both array and response object formats
+        const members = Array.isArray(teamData) ? teamData : (teamData?.data || [])
+        if (!members || members.length === 0) return []
+        
+        const searchLower = paidBySearch.toLowerCase()
+        return members
+            .filter((member) => {
+                if (!paidBySearch) return true
+                const fullName = `${member.first_name || ''} ${member.last_name || ''}`.toLowerCase().trim()
+                return (
+                    fullName.includes(searchLower) ||
+                    (member.email && member.email.toLowerCase().includes(searchLower)) ||
+                    (member.designation && member.designation.toLowerCase().includes(searchLower))
+                )
+            })
+            .map((member) => ({
+                value: String(member.id),
+                label: `${member.first_name || ''} ${member.last_name || ''}${member.designation ? ` (${member.designation})` : ''}`.trim(),
+            }))
+    }, [teamData, paidBySearch])
+
     const form = useForm<ExpenseFormType>({
         resolver: zodResolver(expenseFormSchema),
         defaultValues: {
             work_order: "",
             purpose: "",
             customer: undefined,
+            paid_by: undefined,
             details: "",
             amount: 0,
             expense_date: new Date().toISOString().split("T")[0],
@@ -93,6 +120,7 @@ const ExpenseMutateDrawer = ({
                 work_order: "",
                 purpose: "",
                 customer: undefined,
+                paid_by: undefined,
                 details: "",
                 amount: 0,
                 expense_date: new Date().toISOString().split("T")[0],
@@ -100,6 +128,7 @@ const ExpenseMutateDrawer = ({
             })
             setWorkOrderSearch("")
             setCustomerSearch("")
+            setPaidBySearch("")
         }
     }, [open, form])
 
@@ -108,6 +137,7 @@ const ExpenseMutateDrawer = ({
             work_order: data.work_order ? String(data.work_order) : undefined,
             purpose: data.purpose.trim(),
             customer: data.customer ? String(data.customer) : undefined,
+            paid_by: data.paid_by ? String(data.paid_by) : undefined,
             details: data.details?.trim() || undefined,
             amount: data.amount || undefined,
             expense_date: data.expense_date || undefined,
@@ -197,6 +227,27 @@ const ExpenseMutateDrawer = ({
                                             onSearch={setCustomerSearch}
                                             loading={customersLoading}
                                             placeholder="Search and select customer..."
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="paid_by"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Paid By</FormLabel>
+                                    <FormControl>
+                                        <Combobox
+                                            options={paidByOptions}
+                                            value={field.value ? (typeof field.value === "string" ? field.value : String(field.value)) : ""}
+                                            onSelect={(val) => field.onChange(val || undefined)}
+                                            onSearch={setPaidBySearch}
+                                            loading={teamLoading}
+                                            placeholder="Search and select user..."
                                         />
                                     </FormControl>
                                     <FormMessage />
