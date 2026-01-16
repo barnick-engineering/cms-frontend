@@ -43,6 +43,15 @@ export const WorkOrderColumns: ColumnDef<WorkOrderListInterface>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Customer' />
     ),
+    cell: ({ row }) => {
+      const customer = row.getValue<string>('customer')
+      const totalItems = row.original.total_items || 0
+      return (
+        <span>
+          {customer || 'N/A'} <span className="text-muted-foreground">({totalItems})</span>
+        </span>
+      )
+    },
   },
   {
     accessorKey: 'date',
@@ -92,10 +101,12 @@ export const WorkOrderColumns: ColumnDef<WorkOrderListInterface>[] = [
       <DataTableColumnHeader column={column} title='Status' />
     ),
     cell: ({ row }) => {
-      const isDelivered = row.getValue<boolean>('is_delivered')
+      const amount = row.getValue<number>('amount') || 0
+      const totalPaid = row.getValue<number>('total_paid') || 0
+      const isPaid = amount <= totalPaid
       return (
-        <Badge variant={isDelivered ? 'default' : 'secondary'}>
-          {isDelivered ? 'Delivered' : 'Pending'}
+        <Badge variant={isPaid ? 'default' : 'secondary'}>
+          {isPaid ? 'Paid' : 'Pending'}
         </Badge>
       )
     },

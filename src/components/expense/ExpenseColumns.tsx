@@ -41,6 +41,14 @@ export const ExpenseColumns: ColumnDef<Expense>[] = [
         header: ({ column }) => <DataTableColumnHeader column={column} title='Work Order' />,
     },
     {
+        accessorKey: 'client',
+        header: ({ column }) => <DataTableColumnHeader column={column} title='Customer' />,
+        cell: ({ row }) => {
+            const client = row.getValue<string | null>('client')
+            return client || '-'
+        },
+    },
+    {
         accessorKey: 'purpose',
         header: ({ column }) => <DataTableColumnHeader column={column} title='Purpose' />,
         cell: ({ row }) => {

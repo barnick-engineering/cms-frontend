@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { DatePicker } from "@/components/date-picker"
 import { toast } from "sonner"
 import type { AxiosError } from "axios"
 import type { WorkOrderMutateDrawerProps, WorkOrderFormInterface } from "@/interface/workOrderInterface"
@@ -161,15 +162,37 @@ const WorkOrderMutateDrawer = ({
             <FormField
               control={form.control}
               name="date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Date</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={({ field }) => {
+                // Convert date string (YYYY-MM-DD) to local Date object
+                const parseDateString = (dateString: string): Date => {
+                  const [year, month, day] = dateString.split('-').map(Number)
+                  return new Date(year, month - 1, day)
+                }
+                
+                // Convert Date object to date string (YYYY-MM-DD) in local timezone
+                const formatDateToString = (date: Date): string => {
+                  const year = date.getFullYear()
+                  const month = String(date.getMonth() + 1).padStart(2, '0')
+                  const day = String(date.getDate()).padStart(2, '0')
+                  return `${year}-${month}-${day}`
+                }
+                
+                return (
+                  <FormItem>
+                    <FormLabel>Date</FormLabel>
+                    <FormControl>
+                      <DatePicker
+                        selected={field.value ? parseDateString(field.value) : undefined}
+                        onSelect={(date) => {
+                          field.onChange(date ? formatDateToString(date) : undefined)
+                        }}
+                        placeholder="Pick a date"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )
+              }}
             />
 
             <div className="space-y-4">

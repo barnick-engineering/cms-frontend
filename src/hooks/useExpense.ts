@@ -33,6 +33,7 @@ export const useCreateExpense = () => {
         queryKey: EXPENSE_KEYS.all,
         exact: false,
       })
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] })
     },
   })
 }
@@ -49,6 +50,7 @@ export const useDeleteExpense = () => {
         queryKey: EXPENSE_KEYS.all,
         exact: false,
       })
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] })
     },
   })
 }

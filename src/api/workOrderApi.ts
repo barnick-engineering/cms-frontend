@@ -32,14 +32,14 @@ export const workOrderList = async (
 // get work order by id
 export const getWorkOrderById = async (
   id: string | number
-): Promise<WorkOrderDetailResponse> => {
+): Promise<WorkOrderDetailData> => {
   if (!id) throw new Error("Work Order ID is required")
 
   const res = await axiosInstance.get<WorkOrderDetailResponse>(
     `${apiEndpoints.workOrder.getWorkOrderById}${id}/`
   )
 
-  return res.data
+  return res.data.data
 }
 
 // create work order
