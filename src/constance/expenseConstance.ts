@@ -1,6 +1,7 @@
 // Expense purpose options
 export const expensePurposes: { label: string; value: string }[] = [
   { label: "food & other", value: "food & other" },
+  { label: "transportation", value: "transportation" },
   { label: "color print", value: "color print" },
   { label: "press bill", value: "press bill" },
   { label: "paper/ board", value: "paper/ board" },
