@@ -5,6 +5,7 @@ import type {
   WorkOrderListResponse,
   WorkOrder,
   WorkOrderDetailResponse,
+  WorkOrderDetailData,
   WorkOrderUpdatePayload,
 } from "@/interface/workOrderInterface"
 
