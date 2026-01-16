@@ -33,12 +33,6 @@ export const WorkOrderColumns: ColumnDef<WorkOrderListInterface>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: 'id',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='ID' />
-    ),
-  },
-  {
     accessorKey: 'no',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Work Order No' />
