@@ -30,6 +30,7 @@ import { Combobox } from "@/components/ui/combobox"
 import { useWorkOrderList } from "@/hooks/useWorkOrder"
 import { useCustomerList } from "@/hooks/useCustomer"
 import { useTeamList } from "@/hooks/useTeam"
+import type { TeamMember } from "@/interface/teamInterface"
 import { expensePurposes } from "@/constance/expenseConstance"
 
 interface ExpenseMutateDrawerProps {
@@ -79,13 +80,11 @@ const ExpenseMutateDrawer = ({
     const [paidBySearch, setPaidBySearch] = useState("")
     const { data: teamData, isLoading: teamLoading } = useTeamList()
     const paidByOptions = useMemo(() => {
-        // Handle both array and response object formats
-        const members = Array.isArray(teamData) ? teamData : (teamData?.data || [])
-        if (!members || members.length === 0) return []
+        if (!teamData || !Array.isArray(teamData) || teamData.length === 0) return []
         
         const searchLower = paidBySearch.toLowerCase()
-        return members
-            .filter((member) => {
+        return teamData
+            .filter((member: TeamMember) => {
                 if (!paidBySearch) return true
                 const fullName = `${member.first_name || ''} ${member.last_name || ''}`.toLowerCase().trim()
                 return (
@@ -94,7 +93,7 @@ const ExpenseMutateDrawer = ({
                     (member.designation && member.designation.toLowerCase().includes(searchLower))
                 )
             })
-            .map((member) => ({
+            .map((member: TeamMember) => ({
                 value: String(member.id),
                 label: `${member.first_name || ''} ${member.last_name || ''}${member.designation ? ` (${member.designation})` : ''}`.trim(),
             }))
