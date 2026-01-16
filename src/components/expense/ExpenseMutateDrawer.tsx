@@ -105,7 +105,7 @@ const ExpenseMutateDrawer = ({
 
     const onSubmit: SubmitHandler<ExpenseFormType> = (data) => {
         const payload: ExpenseFormInterface = {
-            work_order: String(data.work_order),
+            work_order: data.work_order ? String(data.work_order) : undefined,
             purpose: data.purpose.trim(),
             customer: data.customer ? String(data.customer) : undefined,
             details: data.details?.trim() || undefined,
@@ -149,12 +149,12 @@ const ExpenseMutateDrawer = ({
                             name="work_order"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Work Order *</FormLabel>
+                                    <FormLabel>Work Order</FormLabel>
                                     <FormControl>
                                         <Combobox
                                             options={workOrderOptions}
                                             value={typeof field.value === "string" ? field.value : (field.value ? String(field.value) : "")}
-                                            onSelect={(val) => field.onChange(val)}
+                                            onSelect={(val) => field.onChange(val || undefined)}
                                             onSearch={setWorkOrderSearch}
                                             placeholder="Select work order..."
                                         />
