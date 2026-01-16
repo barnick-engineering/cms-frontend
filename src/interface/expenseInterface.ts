@@ -29,7 +29,7 @@ export interface ExpenseListResponse {
 
 // Expense form interface (for create)
 export interface ExpenseFormInterface {
-  work_order: string
+  work_order?: string
   purpose: string
   customer?: string
   details?: string

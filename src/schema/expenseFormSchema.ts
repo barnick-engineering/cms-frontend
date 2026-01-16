@@ -1,10 +1,7 @@
 import { z } from "zod"
 
 export const expenseFormSchema = z.object({
-  work_order: z.union([z.string(), z.number()]).refine(
-    (val) => val !== "" && val !== 0 && val !== undefined && val !== null,
-    { message: "Work order is required" }
-  ),
+  work_order: z.union([z.string(), z.number()]).optional(),
   purpose: z.string().min(1, "Purpose is required"),
   customer: z.union([z.string(), z.number()]).optional(),
   details: z.string().optional(),
