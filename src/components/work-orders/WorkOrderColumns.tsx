@@ -74,6 +74,28 @@ export const WorkOrderColumns: ColumnDef<WorkOrderListInterface>[] = [
     },
   },
   {
+    accessorKey: 'total_expense',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Expenses' />
+    ),
+    cell: ({ row }) => {
+      const totalExpense = row.getValue<number>('total_expense') || row.original.total_expense || 0
+      return `৳${totalExpense.toLocaleString('en-IN')}`
+    },
+  },
+  {
+    id: 'net',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Net' />
+    ),
+    cell: ({ row }) => {
+      const amount = row.getValue<number>('amount') || 0
+      const totalExpense = row.getValue<number>('total_expense') || row.original.total_expense || 0
+      const net = amount - totalExpense
+      return `৳${net.toLocaleString('en-IN')}`
+    },
+  },
+  {
     accessorKey: 'total_paid',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Total Paid' />

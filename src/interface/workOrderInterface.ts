@@ -22,6 +22,7 @@ export interface WorkOrder {
   is_delivered: boolean
   amount: number
   total_paid: number
+  total_expense?: number
   remarks: string | null
   date: string
   created_by: number
