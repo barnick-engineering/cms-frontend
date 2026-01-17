@@ -42,7 +42,7 @@ const RecentWorkordersTable = ({ data, isLoading }: RecentWorkordersTableProps) 
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="grid grid-cols-[2fr_1fr_1fr_100px] gap-4 text-sm font-semibold text-muted-foreground pb-2 border-b">
+      <div className="hidden sm:grid grid-cols-[2fr_1fr_1fr_100px] gap-2 sm:gap-4 text-xs sm:text-sm font-semibold text-muted-foreground pb-2 border-b">
         <div>Work Order</div>
         <div className="text-right">Amount</div>
         <div className="text-right">Paid</div>
@@ -51,34 +51,45 @@ const RecentWorkordersTable = ({ data, isLoading }: RecentWorkordersTableProps) 
 
       {/* Data Rows */}
       {workorders.map((wo, index) => (
-        <div key={index} className="grid grid-cols-[2fr_1fr_1fr_100px] gap-4 items-center py-2 border-b last:border-0">
+        <div key={index} className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr_100px] gap-2 sm:gap-4 items-start sm:items-center py-2 border-b last:border-0">
           <div className="space-y-1">
-            <p className="text-sm leading-none font-medium">
+            <p className="text-xs sm:text-sm leading-none font-medium">
               {wo.no}
             </p>
             <p className="text-muted-foreground text-xs">{wo.customer}</p>
           </div>
 
-          <div className="font-medium text-right">
-            ৳{wo.amount.toLocaleString('en-IN')}
+          <div className="flex justify-between sm:justify-end items-center">
+            <span className="text-xs sm:hidden text-muted-foreground font-medium">Amount:</span>
+            <span className="font-medium text-right text-xs sm:text-sm">
+              ৳{wo.amount.toLocaleString('en-IN')}
+            </span>
           </div>
 
-          <div className="font-medium text-right">
-            ৳{wo.paid.toLocaleString('en-IN')}
+          <div className="flex justify-between sm:justify-end items-center">
+            <span className="text-xs sm:hidden text-muted-foreground font-medium">Paid:</span>
+            <span className="font-medium text-right text-xs sm:text-sm">
+              ৳{wo.paid.toLocaleString('en-IN')}
+            </span>
           </div>
 
-          <div className="flex justify-center">
-            {wo.is_delivered ? (
-              <Badge variant="default" className="gap-1">
-                <CheckCircle2 className="h-3 w-3" />
-                Delivered
-              </Badge>
-            ) : (
-              <Badge variant="secondary" className="gap-1">
-                <XCircle className="h-3 w-3" />
-                Pending
-              </Badge>
-            )}
+          <div className="flex justify-between sm:justify-center items-center">
+            <span className="text-xs sm:hidden text-muted-foreground font-medium">Status:</span>
+            <div className="flex sm:justify-center">
+              {wo.is_delivered ? (
+                <Badge variant="default" className="gap-1 text-xs">
+                  <CheckCircle2 className="h-3 w-3" />
+                  <span className="hidden sm:inline">Delivered</span>
+                  <span className="sm:hidden">Del</span>
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="gap-1 text-xs">
+                  <XCircle className="h-3 w-3" />
+                  <span className="hidden sm:inline">Pending</span>
+                  <span className="sm:hidden">Pen</span>
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
       ))}

@@ -80,23 +80,35 @@ const DashboardOverview = ({ data, isLoading }: DashboardOverviewProps) => {
   }
 
   return (
-    <ChartContainer config={chartConfig} className="min-h-64 w-full">
+    <ChartContainer config={chartConfig} className="min-h-[200px] sm:min-h-64 w-full">
       <RechartsBarChart 
         accessibilityLayer 
         data={chartData}
-        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+        margin={{ top: 10, right: 10, left: 0, bottom: 40 }}
       >
         <CartesianGrid vertical={false} strokeDasharray="3 3" />
         <XAxis
           dataKey="name"
           tickLine={false}
-          tickMargin={10}
+          tickMargin={5}
           axisLine={false}
+          tick={{ fontSize: 10 }}
+          angle={-45}
+          textAnchor="end"
+          height={60}
         />
         <YAxis
           tickLine={false}
           axisLine={false}
-          tickFormatter={(value) => `৳${value.toLocaleString('en-IN')}`}
+          tickFormatter={(value) => {
+            // Shorten currency format on mobile for large values
+            if (value >= 1000) {
+              return `৳${(value / 1000).toFixed(1)}k`
+            }
+            return `৳${value.toLocaleString('en-IN')}`
+          }}
+          tick={{ fontSize: 10 }}
+          width={50}
         />
         <ChartTooltip 
           cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}

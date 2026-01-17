@@ -117,14 +117,14 @@ const BusinessAnalytics = () => {
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Work Value</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Total Work Value</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl sm:text-2xl font-bold">
               {formatCurrency(analyticsData.totalWorkValue)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Total work order value</p>
@@ -133,11 +133,11 @@ const BusinessAnalytics = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Paid</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Paid</CardTitle>
+            <CreditCard className="h-4 w-4 text-muted-foreground shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl sm:text-2xl font-bold">
               {formatCurrency(analyticsData.paidAmount)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Amount received</p>
@@ -146,11 +146,11 @@ const BusinessAnalytics = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Pending</CardTitle>
+            <AlertCircle className="h-4 w-4 text-muted-foreground shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl sm:text-2xl font-bold">
               {formatCurrency(analyticsData.pendingAmount)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Outstanding amount</p>
@@ -159,11 +159,11 @@ const BusinessAnalytics = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Net Profit</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Net Profit</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl sm:text-2xl font-bold">
               {formatCurrency(analyticsData.netProfit)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">After expenses</p>
@@ -172,15 +172,15 @@ const BusinessAnalytics = () => {
       </div>
 
       {/* Charts Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {/* Donut Chart - Paid vs Pending */}
         <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle>Payment Status</CardTitle>
-            <CardDescription>Paid vs Pending amounts</CardDescription>
+            <CardTitle className="text-base sm:text-lg">Payment Status</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Paid vs Pending amounts</CardDescription>
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={paymentChartConfig} className="min-h-[300px] w-full">
+          <CardContent className="overflow-x-auto">
+            <ChartContainer config={paymentChartConfig} className="min-h-[250px] sm:min-h-[300px] w-full">
               <RechartsPieChart>
                 <ChartTooltip
                   content={
@@ -193,11 +193,12 @@ const BusinessAnalytics = () => {
                   data={paymentData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
+                  innerRadius="40%"
+                  outerRadius="70%"
                   paddingAngle={2}
                   dataKey="value"
                   label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                  labelLine={false}
                 >
                   {paymentData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -211,21 +212,37 @@ const BusinessAnalytics = () => {
         {/* Bar Chart - Expenses vs Net Profit */}
         <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle>Financial Overview</CardTitle>
-            <CardDescription>Expenses vs Net Profit</CardDescription>
+            <CardTitle className="text-base sm:text-lg">Financial Overview</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Expenses vs Net Profit</CardDescription>
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={financialChartConfig} className="min-h-[300px] w-full">
+          <CardContent className="overflow-x-auto">
+            <ChartContainer config={financialChartConfig} className="min-h-[250px] sm:min-h-[300px] w-full">
               <RechartsBarChart
                 data={financialData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                margin={{ top: 10, right: 10, left: 0, bottom: 40 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" tickLine={false} axisLine={false} />
+                <XAxis 
+                  dataKey="name" 
+                  tickLine={false} 
+                  axisLine={false}
+                  tick={{ fontSize: 10 }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={60}
+                />
                 <YAxis
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(value) => formatCurrency(value)}
+                  tickFormatter={(value) => {
+                    // Shorten currency format on mobile
+                    if (value >= 1000) {
+                      return `৳${(value / 1000).toFixed(1)}k`
+                    }
+                    return formatCurrency(value)
+                  }}
+                  tick={{ fontSize: 10 }}
+                  width={50}
                 />
                 <ChartTooltip
                   content={
@@ -255,18 +272,31 @@ const BusinessAnalytics = () => {
         {/* Bar Chart - Customers vs Work Orders */}
         <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle>Business Metrics</CardTitle>
-            <CardDescription>Customers vs Work Orders</CardDescription>
+            <CardTitle className="text-base sm:text-lg">Business Metrics</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Customers vs Work Orders</CardDescription>
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={businessChartConfig} className="min-h-[300px] w-full">
+          <CardContent className="overflow-x-auto">
+            <ChartContainer config={businessChartConfig} className="min-h-[250px] sm:min-h-[300px] w-full">
               <RechartsBarChart
                 data={businessData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                margin={{ top: 10, right: 10, left: 0, bottom: 40 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" tickLine={false} axisLine={false} />
-                <YAxis tickLine={false} axisLine={false} />
+                <XAxis 
+                  dataKey="name" 
+                  tickLine={false} 
+                  axisLine={false}
+                  tick={{ fontSize: 10 }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={60}
+                />
+                <YAxis 
+                  tickLine={false} 
+                  axisLine={false}
+                  tick={{ fontSize: 10 }}
+                  width={40}
+                />
                 <ChartTooltip
                   content={<ChartTooltipContent />}
                 />

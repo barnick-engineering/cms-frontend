@@ -44,9 +44,9 @@ const Dashboard = () => {
 
   return (
     <Main>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Overview of your business performance</p>
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground mt-1 text-sm sm:text-base">Overview of your business performance</p>
       </div>
 
       <div className="space-y-6">
@@ -102,22 +102,22 @@ const Dashboard = () => {
         <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
           <Card className="lg:col-span-4">
             <CardHeader>
-              <CardTitle>Monthly Sales</CardTitle>
-              <CardDescription>Sales performance over the last 12 months</CardDescription>
+              <CardTitle className="text-base sm:text-lg">Monthly Sales</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">Sales performance over the last 12 months</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="overflow-x-auto">
               <DashboardOverview data={dashboardData} isLoading={isLoading} />
             </CardContent>
           </Card>
 
           <Card className="lg:col-span-3">
             <CardHeader>
-              <CardTitle>Recent Work Orders</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-base sm:text-lg">Recent Work Orders</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
                 {dashboardData?.recent_workorders?.length ?? 0} recent work orders
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="overflow-x-auto">
               <RecentWorkordersTable data={dashboardData} isLoading={isLoading} />
             </CardContent>
           </Card>
