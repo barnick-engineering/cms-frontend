@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import type { ExpenseFormInterface, ExpenseListResponse } from "@/interface/expenseInterface"
-import { createExpense, deleteExpense, expenseList } from "@/api/expenseApi"
+import { createExpense, updateExpense, deleteExpense, expenseList } from "@/api/expenseApi"
 
 // query keys
 const EXPENSE_KEYS = {
@@ -27,6 +27,29 @@ export const useCreateExpense = () => {
 
   return useMutation({
     mutationFn: (data: ExpenseFormInterface) => createExpense(data),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: EXPENSE_KEYS.all,
+        exact: false,
+      })
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] })
+    },
+  })
+}
+
+// update expense
+export const useUpdateExpense = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string | number
+      data: ExpenseFormInterface
+    }) => updateExpense(id, data),
 
     onSuccess: () => {
       queryClient.invalidateQueries({

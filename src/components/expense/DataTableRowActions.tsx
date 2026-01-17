@@ -1,6 +1,6 @@
 import { DotsHorizontalIcon } from '@radix-ui/react-icons'
 import { type Row } from '@tanstack/react-table'
-import { Eye, Trash2 } from 'lucide-react'
+import { Eye, Trash2, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
     DropdownMenu,
@@ -45,6 +45,17 @@ export function DataTableRowActions<TData>({
                 >
                     View
                     <DropdownMenuShortcut><Eye size={16} /></DropdownMenuShortcut>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        setCurrentRow(expense)
+                        setOpen('update')
+                    }}
+                >
+                    Edit
+                    <DropdownMenuShortcut><Pencil size={16} /></DropdownMenuShortcut>
                 </DropdownMenuItem>
 
                 <DropdownMenuItem

@@ -60,6 +60,7 @@ export const apiEndpoints: ApiEndpoints = {
   expense: {
     expenseList: '/api/v1/expense',
     createExpense: '/api/v1/expense/',
+    updateExpense: '/api/v1/expense/',
     deleteExpense: '/api/v1/expense/',
   },
   team: {
