@@ -24,15 +24,17 @@ import {
 } from 'recharts'
 import { DollarSign, CreditCard, AlertCircle, TrendingUp } from 'lucide-react'
 
-// Static data
-const analyticsData = {
-  totalWorkValue: 236500,
-  paidAmount: 124200,
-  pendingAmount: 112300,
-  expenses: 119000,
-  netProfit: 5200,
-  customers: 16,
-  workOrders: 5,
+interface BusinessAnalyticsProps {
+  data?: {
+    worked?: number
+    paid?: number
+    total_pending?: number
+    total_regular_expense?: number
+    total_net_profit?: number
+    total_customer?: number
+    total_workorder?: number
+  }
+  isLoading?: boolean
 }
 
 // Chart configurations
@@ -87,26 +89,35 @@ const businessChartConfig = {
   },
 } satisfies ChartConfig
 
-const BusinessAnalytics = () => {
+const BusinessAnalytics = ({ data, isLoading }: BusinessAnalyticsProps) => {
+  // Get data from API or use defaults
+  const totalWorkValue = data?.worked || 0
+  const paidAmount = data?.paid || 0
+  const pendingAmount = data?.total_pending || 0
+  const expenses = data?.total_regular_expense || 0
+  const netProfit = data?.total_net_profit || 0
+  const customers = data?.total_customer || 0
+  const workOrders = data?.total_workorder || 0
+
   // Prepare data for charts
   const paymentData = [
-    { name: 'Paid', value: analyticsData.paidAmount, fill: 'var(--color-paid)' },
-    { name: 'Pending', value: analyticsData.pendingAmount, fill: 'var(--color-pending)' },
+    { name: 'Paid', value: paidAmount, fill: 'var(--color-paid)' },
+    { name: 'Pending', value: pendingAmount, fill: 'var(--color-pending)' },
   ]
 
   const financialData = [
     {
       name: 'Financial Overview',
-      expenses: analyticsData.expenses,
-      netProfit: analyticsData.netProfit,
+      expenses: expenses,
+      netProfit: netProfit,
     },
   ]
 
   const businessData = [
     {
       name: 'Business Metrics',
-      customers: analyticsData.customers,
-      workOrders: analyticsData.workOrders,
+      customers: customers,
+      workOrders: workOrders,
     },
   ]
 
@@ -125,7 +136,7 @@ const BusinessAnalytics = () => {
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold">
-              {formatCurrency(analyticsData.totalWorkValue)}
+              {isLoading ? '...' : formatCurrency(totalWorkValue)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Total work order value</p>
           </CardContent>
@@ -138,7 +149,7 @@ const BusinessAnalytics = () => {
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold">
-              {formatCurrency(analyticsData.paidAmount)}
+              {isLoading ? '...' : formatCurrency(paidAmount)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Amount received</p>
           </CardContent>
@@ -151,7 +162,7 @@ const BusinessAnalytics = () => {
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold">
-              {formatCurrency(analyticsData.pendingAmount)}
+              {isLoading ? '...' : formatCurrency(pendingAmount)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Outstanding amount</p>
           </CardContent>
@@ -164,7 +175,7 @@ const BusinessAnalytics = () => {
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold">
-              {formatCurrency(analyticsData.netProfit)}
+              {isLoading ? '...' : formatCurrency(netProfit)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">After expenses</p>
           </CardContent>
@@ -219,17 +230,14 @@ const BusinessAnalytics = () => {
             <ChartContainer config={financialChartConfig} className="min-h-[250px] sm:min-h-[300px] w-full">
               <RechartsBarChart
                 data={financialData}
-                margin={{ top: 10, right: 10, left: 0, bottom: 40 }}
+                margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis 
                   dataKey="name" 
                   tickLine={false} 
                   axisLine={false}
-                  tick={{ fontSize: 10 }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={60}
+                  hide={true}
                 />
                 <YAxis
                   tickLine={false}
@@ -279,17 +287,14 @@ const BusinessAnalytics = () => {
             <ChartContainer config={businessChartConfig} className="min-h-[250px] sm:min-h-[300px] w-full">
               <RechartsBarChart
                 data={businessData}
-                margin={{ top: 10, right: 10, left: 0, bottom: 40 }}
+                margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis 
                   dataKey="name" 
                   tickLine={false} 
                   axisLine={false}
-                  tick={{ fontSize: 10 }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={60}
+                  hide={true}
                 />
                 <YAxis 
                   tickLine={false} 

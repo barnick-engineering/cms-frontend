@@ -51,7 +51,7 @@ const Dashboard = () => {
 
       <div className="space-y-6">
         {/* Business Analytics Dashboard */}
-        <BusinessAnalytics />
+        <BusinessAnalytics data={dashboardData} isLoading={isLoading} />
 
         {/* Statistics Cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
