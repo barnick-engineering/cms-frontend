@@ -24,7 +24,7 @@ export default function ExpenseDialogs() {
                 onSave={() => setOpen(null)}
             />
 
-            {/* View / Delete */}
+            {/* View / Update / Delete */}
             {currentRow && (
                 <>
                     {/* View drawer */}
@@ -36,6 +36,15 @@ export default function ExpenseDialogs() {
                             setDrawerOpen(val)
                         }}
                         currentRow={currentRow}
+                    />
+
+                    {/* Update drawer */}
+                    <ExpenseMutateDrawer
+                        key={`expense-update-${currentRow.id}`}
+                        open={open === "update"}
+                        onOpenChange={(val) => setOpen(val ? "update" : null)}
+                        currentRow={currentRow}
+                        onSave={() => setOpen(null)}
                     />
 
                     {/* Delete dialog */}

@@ -49,6 +49,7 @@ export interface ApiEndpoints {
   expense: {
     expenseList: string
     createExpense: string
+    updateExpense: string
     deleteExpense: string
   }
   team: {

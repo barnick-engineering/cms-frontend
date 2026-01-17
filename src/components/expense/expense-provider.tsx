@@ -3,7 +3,7 @@ import { createContext, useContext, useState, type ReactNode } from "react"
 import type { Expense } from "@/interface/expenseInterface"
 
 // Types
-type ExpenseDrawerState = "view" | "delete" | "create" | null
+type ExpenseDrawerState = "view" | "delete" | "create" | "update" | null
 
 interface ExpenseContextType {
     open: ExpenseDrawerState

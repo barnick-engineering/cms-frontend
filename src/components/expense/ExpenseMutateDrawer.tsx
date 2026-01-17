@@ -24,8 +24,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/date-picker"
 import { toast } from "sonner"
 import type { AxiosError } from "axios"
-import { useCreateExpense } from "@/hooks/useExpense"
-import type { ExpenseFormInterface } from "@/interface/expenseInterface"
+import { useCreateExpense, useUpdateExpense } from "@/hooks/useExpense"
+import type { ExpenseFormInterface, Expense } from "@/interface/expenseInterface"
 import { expenseFormSchema, type ExpenseFormType } from "@/schema/expenseFormSchema"
 import { Combobox } from "@/components/ui/combobox"
 import { useWorkOrderList } from "@/hooks/useWorkOrder"
@@ -37,17 +37,19 @@ import { expensePurposes } from "@/constance/expenseConstance"
 interface ExpenseMutateDrawerProps {
     open: boolean
     onOpenChange: (open: boolean) => void
-    currentRow?: ExpenseFormInterface & { id?: string }
+    currentRow?: Expense | null
     onSave?: (data: ExpenseFormInterface) => void
 }
 
 const ExpenseMutateDrawer = ({
     open,
     onOpenChange,
-    currentRow: _currentRow,
+    currentRow,
     onSave,
 }: ExpenseMutateDrawerProps) => {
     const createMutation = useCreateExpense()
+    const updateMutation = useUpdateExpense()
+    const isUpdate = !!currentRow?.id
 
     // Fetch work orders for combobox
     const [workOrderSearch, setWorkOrderSearch] = useState("")
@@ -115,7 +117,20 @@ const ExpenseMutateDrawer = ({
     })
 
     useEffect(() => {
-        if (!open) {
+        if (open && currentRow && isUpdate) {
+            // Populate form with current row data for update
+            form.reset({
+                work_order: currentRow.work_order ? String(currentRow.work_order) : "",
+                purpose: currentRow.purpose || "",
+                customer: currentRow.customer ? String(currentRow.customer) : undefined,
+                paid_by: currentRow.paid_by ? String(currentRow.paid_by) : undefined,
+                details: currentRow.details || "",
+                amount: currentRow.amount || 0,
+                expense_date: currentRow.expense_date || new Date().toISOString().split("T")[0],
+                remarks: currentRow.remarks || "",
+            })
+        } else if (!open) {
+            // Reset form when closing
             form.reset({
                 work_order: "",
                 purpose: "",
@@ -130,7 +145,7 @@ const ExpenseMutateDrawer = ({
             setCustomerSearch("")
             setPaidBySearch("")
         }
-    }, [open, form])
+    }, [open, currentRow, isUpdate, form])
 
     const onSubmit: SubmitHandler<ExpenseFormType> = (data) => {
         const payload: ExpenseFormInterface = {
@@ -144,27 +159,47 @@ const ExpenseMutateDrawer = ({
             remarks: data.remarks || null,
         }
 
-        createMutation.mutate(payload, {
-            onSuccess: () => {
-                toast.success("Expense created successfully.")
-                onOpenChange(false)
-                onSave?.(payload)
-                form.reset()
-            },
-            onError: (err: unknown) => {
-                const error = err as AxiosError<{ message: string }>
-                toast.error(error?.response?.data?.message || "Creation failed")
-            },
-        })
+        if (isUpdate && currentRow?.id) {
+            updateMutation.mutate(
+                { id: currentRow.id, data: payload },
+                {
+                    onSuccess: () => {
+                        toast.success("Expense updated successfully.")
+                        onOpenChange(false)
+                        onSave?.(payload)
+                        form.reset()
+                    },
+                    onError: (err: unknown) => {
+                        const error = err as AxiosError<{ message: string }>
+                        toast.error(error?.response?.data?.message || "Update failed")
+                    },
+                }
+            )
+        } else {
+            createMutation.mutate(payload, {
+                onSuccess: () => {
+                    toast.success("Expense created successfully.")
+                    onOpenChange(false)
+                    onSave?.(payload)
+                    form.reset()
+                },
+                onError: (err: unknown) => {
+                    const error = err as AxiosError<{ message: string }>
+                    toast.error(error?.response?.data?.message || "Creation failed")
+                },
+            })
+        }
     }
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent className="flex flex-col">
                 <SheetHeader className="text-start">
-                    <SheetTitle>Create Expense</SheetTitle>
+                    <SheetTitle>{isUpdate ? "Update Expense" : "Create Expense"}</SheetTitle>
                     <SheetDescription>
-                        Add a new expense by providing necessary info. Click save when you're done.
+                        {isUpdate
+                            ? `Update expense ${currentRow?.no || ""} by modifying the fields below. Click save when you're done.`
+                            : "Add a new expense by providing necessary info. Click save when you're done."}
                     </SheetDescription>
                 </SheetHeader>
 
@@ -352,8 +387,12 @@ const ExpenseMutateDrawer = ({
                     <SheetClose asChild>
                         <Button variant="outline">Close</Button>
                     </SheetClose>
-                    <Button form="expense-form" type="submit">
-                        Save changes
+                    <Button form="expense-form" type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                        {createMutation.isPending || updateMutation.isPending
+                            ? "Saving..."
+                            : isUpdate
+                            ? "Update Expense"
+                            : "Create Expense"}
                     </Button>
                 </SheetFooter>
             </SheetContent>

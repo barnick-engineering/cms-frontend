@@ -14,7 +14,11 @@ export const expenseList = async (
 ): Promise<ExpenseListResponse> => {
   const params = new URLSearchParams()
 
+  // Search parameter for text search across all fields
+  // Backend searches: no, details, amount, paid_by, work_order__no, customer__name, purpose, expense_date
   if (search) params.append("search", search)
+  
+  // Pagination parameters
   if (limit) params.append("limit", String(limit))
   if (offset) params.append("offset", String(offset))
 
@@ -33,6 +37,21 @@ export const createExpense = async (data: ExpenseFormInterface) => {
     apiEndpoints.expense.createExpense,
     data
   )
+  return res.data
+}
+
+// update expense
+export const updateExpense = async (
+  id: string | number,
+  data: ExpenseFormInterface
+): Promise<Expense> => {
+  if (!id) throw new Error("Expense ID is required")
+
+  const res = await axiosInstance.put<Expense>(
+    `${apiEndpoints.expense.updateExpense}${id}/`,
+    data
+  )
+
   return res.data
 }
 
