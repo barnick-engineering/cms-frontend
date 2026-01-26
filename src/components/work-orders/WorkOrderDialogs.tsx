@@ -23,6 +23,14 @@ const WorkOrderDialogs = () => {
 
       {currentRow && (
         <>
+          <WorkOrderMutateDrawer
+            key={`work-order-edit-${currentRow.id}`}
+            open={open === 'edit'}
+            onOpenChange={(val) => setOpen(val ? 'edit' : null)}
+            currentRow={currentRow}
+            onSave={() => setOpen(null)}
+          />
+
           <WorkOrderViewDrawer
             key={`work-order-view-${currentRow.id}`}
             open={open === 'view'}

@@ -1,4 +1,5 @@
 export interface WorkOrderItem {
+  id?: number
   item: string
   total_order: number
   unit_price: number
@@ -8,6 +9,8 @@ export interface WorkOrderFormInterface {
   customer?: number
   items: WorkOrderItem[]
   date?: string
+  amount?: number
+  delivery_charge?: number
   total_paid?: number
   remarks?: string | null
 }
@@ -23,6 +26,7 @@ export interface WorkOrder {
   amount: number
   total_paid: number
   total_expense?: number
+  delivery_charge?: number
   remarks: string | null
   date: string
   created_by: number
@@ -79,6 +83,7 @@ export interface WorkOrderDetailData {
   expense: WorkOrderDetailExpense[]
   amount: number
   total_paid: number
+  delivery_charge?: number
   date: string
   created: string
   status: boolean

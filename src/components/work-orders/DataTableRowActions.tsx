@@ -1,6 +1,6 @@
 import { DotsHorizontalIcon } from '@radix-ui/react-icons'
 import { type Row } from '@tanstack/react-table'
-import { Eye, DollarSign, Trash2 } from 'lucide-react'
+import { Eye, DollarSign, Trash2, Pencil, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useWorkOrders } from './work-order-provider'
 import type { WorkOrder } from '@/interface/workOrderInterface'
+import { useWorkOrderInvoice } from '@/hooks/useWorkOrderInvoice'
 
 type DataTableRowActionsProps<TData> = {
   row: Row<TData>
@@ -21,6 +22,12 @@ export function DataTableRowActions<TData>({
 }: DataTableRowActionsProps<TData>) {
   const workOrder = row.original as WorkOrder
   const { setOpen, setCurrentRow } = useWorkOrders()
+  const { generateInvoice } = useWorkOrderInvoice()
+
+  const handleDownloadInvoice = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    await generateInvoice(workOrder.id)
+  }
 
   return (
     <DropdownMenu modal={false}>
@@ -54,12 +61,36 @@ export function DataTableRowActions<TData>({
           onClick={(e) => {
             e.stopPropagation()
             setCurrentRow(workOrder)
+            setOpen('edit')
+          }}
+        >
+          Edit
+          <DropdownMenuShortcut>
+            <Pencil size={16} />
+          </DropdownMenuShortcut>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          className='cursor-pointer'
+          onClick={(e) => {
+            e.stopPropagation()
+            setCurrentRow(workOrder)
             setOpen('update')
           }}
         >
           Add Payment
           <DropdownMenuShortcut>
             <DollarSign size={16} />
+          </DropdownMenuShortcut>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          className='cursor-pointer'
+          onClick={handleDownloadInvoice}
+        >
+          Download Invoice
+          <DropdownMenuShortcut>
+            <Download size={16} />
           </DropdownMenuShortcut>
         </DropdownMenuItem>
 
