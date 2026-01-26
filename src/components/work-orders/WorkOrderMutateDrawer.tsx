@@ -28,7 +28,7 @@ import { toast } from "sonner"
 import type { AxiosError } from "axios"
 import type { WorkOrderMutateDrawerProps, WorkOrderFormInterface } from "@/interface/workOrderInterface"
 import { workOrderFormSchema } from "@/schema/workOrderFormSchema"
-import { useCreateWorkOrder } from "@/hooks/useWorkOrder"
+import { useCreateWorkOrder, useUpdateWorkOrderFull, useWorkOrderById } from "@/hooks/useWorkOrder"
 import { useCustomerList } from "@/hooks/useCustomer"
 import { Combobox } from "@/components/ui/combobox"
 import { Plus, Minus } from "lucide-react"
@@ -38,10 +38,18 @@ type WorkOrderFormSchema = z.infer<typeof workOrderFormSchema>
 const WorkOrderMutateDrawer = ({
   open,
   onOpenChange,
-  currentRow: _currentRow,
+  currentRow,
   onSave,
 }: WorkOrderMutateDrawerProps) => {
   const createMutation = useCreateWorkOrder()
+  const updateMutation = useUpdateWorkOrderFull()
+  const isUpdate = !!currentRow?.id
+
+  // Fetch work order details when in update mode
+  const { data: workOrderDetails, isLoading: isLoadingDetails } = useWorkOrderById(
+    currentRow?.id || 0,
+    { enabled: isUpdate && open && !!currentRow?.id }
+  )
 
   // Fetch customers for combobox with search functionality
   const [customerSearch, setCustomerSearch] = useState("")
@@ -60,6 +68,7 @@ const WorkOrderMutateDrawer = ({
       items: [{ item: "", total_order: 0, unit_price: 0 }],
       date: new Date().toISOString().split("T")[0],
       total_paid: 0,
+      delivery_charge: 0,
       remarks: "",
     },
   })
@@ -69,18 +78,34 @@ const WorkOrderMutateDrawer = ({
     name: "items",
   })
 
+  // Populate form when editing
   useEffect(() => {
-    if (!open) {
+    if (open && isUpdate && workOrderDetails) {
+      form.reset({
+        customer: workOrderDetails.customer.id,
+        items: workOrderDetails.items.map((item) => ({
+          id: item.id,
+          item: item.item,
+          total_order: item.total_order,
+          unit_price: item.unit_price,
+        })),
+        date: workOrderDetails.date,
+        total_paid: workOrderDetails.total_paid || 0,
+        delivery_charge: workOrderDetails.delivery_charge || 0,
+        remarks: workOrderDetails.remarks || "",
+      })
+    } else if (!open) {
       form.reset({
         customer: undefined,
         items: [{ item: "", total_order: 0, unit_price: 0 }],
         date: new Date().toISOString().split("T")[0],
         total_paid: 0,
+        delivery_charge: 0,
         remarks: "",
       })
       setCustomerSearch("")
     }
-  }, [open, form])
+  }, [open, isUpdate, workOrderDetails, form])
 
   // Watch items array for real-time calculation
   const watchedItems = form.watch("items")
@@ -96,39 +121,81 @@ const WorkOrderMutateDrawer = ({
   }, [watchedItems])
 
   const onSubmit: SubmitHandler<WorkOrderFormSchema> = (data) => {
+    const calculatedAmount = data.items.reduce((sum, item) => {
+      const quantity = Number(item.total_order) || 0
+      const price = Number(item.unit_price) || 0
+      return sum + (quantity * price)
+    }, 0)
+
     const normalizedData: WorkOrderFormInterface = {
       customer: data.customer || undefined,
       items: data.items.map((item) => ({
+        ...(item.id && { id: item.id }),
         item: item.item.trim(),
         total_order: item.total_order,
         unit_price: item.unit_price,
       })),
       date: data.date || new Date().toISOString().split("T")[0],
+      amount: calculatedAmount,
+      delivery_charge: data.delivery_charge || 0,
       total_paid: data.total_paid || 0,
       remarks: data.remarks || null,
     }
 
-    createMutation.mutate(normalizedData, {
-      onSuccess: () => {
-        onOpenChange(false)
-        onSave?.(normalizedData)
-        form.reset()
-        toast.success("Work order created successfully.")
-      },
-      onError: (err: unknown) => {
-        const error = err as AxiosError<{ message: string }>
-        toast.error(error?.response?.data?.message || "Creation failed")
-      },
-    })
+    if (isUpdate && currentRow?.id) {
+      // For full updates, calculate the difference for total_paid since backend adds to existing value
+      // If we want to set a specific value, we need to send the difference
+      const currentTotalPaid = workOrderDetails?.total_paid || 0
+      const newTotalPaid = data.total_paid || 0
+      const totalPaidDifference = newTotalPaid - currentTotalPaid
+      
+      const updatePayload: WorkOrderFormInterface = {
+        ...normalizedData,
+        amount: calculatedAmount,
+        // Only include total_paid if it's different, and send the difference
+        ...(totalPaidDifference !== 0 && { total_paid: totalPaidDifference }),
+      }
+      
+      updateMutation.mutate(
+        { id: currentRow.id, data: updatePayload },
+        {
+          onSuccess: () => {
+            onOpenChange(false)
+            onSave?.(normalizedData)
+            form.reset()
+            toast.success("Work order updated successfully.")
+          },
+          onError: (err: unknown) => {
+            const error = err as AxiosError<{ message: string }>
+            toast.error(error?.response?.data?.message || "Update failed")
+          },
+        }
+      )
+    } else {
+      createMutation.mutate(normalizedData, {
+        onSuccess: () => {
+          onOpenChange(false)
+          onSave?.(normalizedData)
+          form.reset()
+          toast.success("Work order created successfully.")
+        },
+        onError: (err: unknown) => {
+          const error = err as AxiosError<{ message: string }>
+          toast.error(error?.response?.data?.message || "Creation failed")
+        },
+      })
+    }
   }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="flex flex-col overflow-y-auto">
         <SheetHeader className="text-start">
-          <SheetTitle>Create Work Order</SheetTitle>
+          <SheetTitle>{isUpdate ? "Edit Work Order" : "Create Work Order"}</SheetTitle>
           <SheetDescription>
-            Add a new work order by providing necessary info. Click save when you're done.
+            {isUpdate
+              ? "Update the work order information. Click save when you're done."
+              : "Add a new work order by providing necessary info. Click save when you're done."}
           </SheetDescription>
         </SheetHeader>
 
@@ -328,6 +395,28 @@ const WorkOrderMutateDrawer = ({
 
             <FormField
               control={form.control}
+              name="delivery_charge"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Delivery Charge</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      {...field}
+                      value={field.value || ""}
+                      onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                      min={0}
+                      step="0.01"
+                      placeholder="0.00"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="remarks"
               render={({ field }) => (
                 <FormItem>
@@ -351,8 +440,12 @@ const WorkOrderMutateDrawer = ({
           <SheetClose asChild>
             <Button variant="outline">Close</Button>
           </SheetClose>
-          <Button form="work-order-form" type="submit">
-            Save changes
+          <Button 
+            form="work-order-form" 
+            type="submit"
+            disabled={isUpdate && isLoadingDetails}
+          >
+            {isUpdate ? "Update" : "Create"}
           </Button>
         </SheetFooter>
       </SheetContent>

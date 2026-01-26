@@ -67,6 +67,21 @@ export const updateWorkOrder = async (
   return res.data
 }
 
+// update work order (full update - all fields)
+export const updateWorkOrderFull = async (
+  id: string | number,
+  data: WorkOrderFormInterface
+): Promise<WorkOrder> => {
+  if (!id) throw new Error("Work Order ID is required")
+
+  const res = await axiosInstance.put<WorkOrder>(
+    `${apiEndpoints.workOrder.updateWorkOrder}${id}/`,
+    data
+  )
+
+  return res.data
+}
+
 // delete work order
 export const deleteWorkOrder = async (id: string | number) => {
   if (!id) throw new Error("Work Order ID is required")

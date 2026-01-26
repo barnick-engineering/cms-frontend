@@ -125,11 +125,11 @@ const WorkOrderViewDrawer = ({ open, onOpenChange, currentRow }: WorkOrderViewDr
                                     </div>
                                     <div className="flex justify-between items-center py-2 border-b">
                                         <span className="text-base font-medium">Total Expenses</span>
-                                        <p className="text-lg font-semibold text-red-600">- ৳{totalExpenses.toLocaleString('en-IN')}</p>
+                                        <p className="text-lg font-semibold text-destructive">- ৳{totalExpenses.toLocaleString('en-IN')}</p>
                                     </div>
                                     <div className="flex justify-between items-center py-2 border-b-2 border-primary">
                                         <span className="text-base font-semibold">Net Profit</span>
-                                        <p className={`text-xl font-bold ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                        <p className={`text-xl font-bold ${netProfit >= 0 ? 'text-foreground' : 'text-destructive'}`}>
                                             ৳{netProfit.toLocaleString('en-IN')}
                                         </p>
                                     </div>
@@ -142,11 +142,11 @@ const WorkOrderViewDrawer = ({ open, onOpenChange, currentRow }: WorkOrderViewDr
                                     </div>
                                     <div>
                                         <span className="text-sm font-medium text-muted-foreground">Total Paid</span>
-                                        <p className="text-xl font-bold text-green-600">৳{(workOrderDetail.total_paid || 0).toLocaleString('en-IN')}</p>
+                                        <p className="text-xl font-bold text-foreground">৳{(workOrderDetail.total_paid || 0).toLocaleString('en-IN')}</p>
                                     </div>
                                     <div>
                                         <span className="text-sm font-medium text-muted-foreground">Pending</span>
-                                        <p className={`text-xl font-bold ${pendingAmount > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                                        <p className={`text-xl font-bold ${pendingAmount > 0 ? 'text-muted-foreground' : 'text-foreground'}`}>
                                             ৳{pendingAmount.toLocaleString('en-IN')}
                                         </p>
                                     </div>

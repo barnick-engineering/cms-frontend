@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import useDialogState from '@/hooks/use-dialog-state'
 import type { WorkOrder } from '@/interface/workOrderInterface'
 
-type WorkOrderDialogType = 'create' | 'update' | 'delete' | 'view'
+type WorkOrderDialogType = 'create' | 'update' | 'edit' | 'delete' | 'view'
 
 type WorkOrderContextType = {
   open: WorkOrderDialogType | null
