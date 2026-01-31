@@ -82,7 +82,6 @@ const Dashboard = () => {
           <p className="text-muted-foreground mt-1 text-sm sm:text-base">Overview of your business performance</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground whitespace-nowrap">Date range:</span>
           <DateRangeSearch value={dateRange} onDateChange={handleDateChange} />
         </div>
       </div>
