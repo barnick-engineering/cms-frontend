@@ -447,7 +447,6 @@ const Reports = () => {
       <div className="flex items-end gap-4 flex-wrap p-4">
         {/* date range input */}
         <div>
-          <label className="text-sm font-medium mb-1 block">Date Range</label>
           <DateRangeSearch
             value={dateRange}
             onDateChange={(from, to) => setDateRange(from && to ? { from, to } : undefined)}
