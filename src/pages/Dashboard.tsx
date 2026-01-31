@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react'
 import {
   Card,
   CardContent,
@@ -10,10 +11,33 @@ import DashboardOverview from '@/components/dashboard/DashboardOverview'
 import RecentWorkordersTable from '@/components/dashboard/RecentWorkordersTable'
 import BusinessAnalytics from '@/components/dashboard/BusinessAnalytics'
 import { useDashboardData } from '@/hooks/useDashboard'
+import DateRangeSearch from '@/components/DateRangeSearch'
+import { format, subDays } from 'date-fns'
+import type { DateRange } from 'react-day-picker'
 import { TrendingDown, Users, Package, FileText } from 'lucide-react'
 
+const getDefaultDateRange = (): DateRange => {
+  const end = new Date()
+  const start = subDays(end, 30)
+  return { from: start, to: end }
+}
+
 const Dashboard = () => {
-  const { data, isLoading, isError, error } = useDashboardData()
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(getDefaultDateRange)
+
+  const dashboardParams = useMemo(() => {
+    const from = dateRange?.from
+    const to = dateRange?.to
+    if (from && to) {
+      return {
+        start_date: format(from, 'yyyy-MM-dd'),
+        end_date: format(to, 'yyyy-MM-dd'),
+      }
+    }
+    return undefined
+  }, [dateRange])
+
+  const { data, isLoading, isError, error } = useDashboardData(dashboardParams)
 
   if (isError) {
     return (
@@ -42,11 +66,25 @@ const Dashboard = () => {
 
   const dashboardData = data?.data
 
+  const handleDateChange = (from?: Date, to?: Date) => {
+    if (from && to) {
+      setDateRange({ from, to })
+    } else {
+      setDateRange(getDefaultDateRange())
+    }
+  }
+
   return (
     <Main>
-      <div className="mb-4 sm:mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground mt-1 text-sm sm:text-base">Overview of your business performance</p>
+      <div className="mb-4 sm:mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">Overview of your business performance</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground whitespace-nowrap">Date range:</span>
+          <DateRangeSearch value={dateRange} onDateChange={handleDateChange} />
+        </div>
       </div>
 
       <div className="space-y-6">

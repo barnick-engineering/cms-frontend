@@ -26,7 +26,14 @@ export interface DashboardResponse {
 }
 
 // dashboard api
-export const fetchDashboardData = async () => {
-    const res = await axiosInstance.get<DashboardResponse>(apiEndpoints.dashbaord.dashboardReport)
+export interface DashboardParams {
+    start_date?: string // YYYY-MM-DD
+    end_date?: string // YYYY-MM-DD
+}
+
+export const fetchDashboardData = async (params?: DashboardParams) => {
+    const res = await axiosInstance.get<DashboardResponse>(apiEndpoints.dashbaord.dashboardReport, {
+        params: params,
+    })
     return res.data
 }

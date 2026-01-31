@@ -2,7 +2,19 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { WorkOrderDetailData } from "@/interface/workOrderInterface";
 
-// Helper function to load image as base64
+// Design colors (RGB 0-255)
+const COLORS = {
+    textDark: [51, 51, 51] as [number, number, number],
+    textMuted: [153, 153, 153] as [number, number, number],
+    dueDateRed: [220, 53, 69] as [number, number, number],
+    totalBlue: [0, 123, 255] as [number, number, number],
+    billToBg: [224, 242, 247] as [number, number, number], // light blue
+    tableHeader: [52, 58, 64] as [number, number, number], // dark gray
+    totalBoxBg: [248, 249, 250] as [number, number, number],
+    notesLine: [255, 215, 0] as [number, number, number], // yellow
+    border: [220, 220, 220] as [number, number, number],
+};
+
 const loadImageAsBase64 = async (imagePath: string): Promise<string> => {
     try {
         const response = await fetch(imagePath);
@@ -19,343 +31,269 @@ const loadImageAsBase64 = async (imagePath: string): Promise<string> => {
     }
 };
 
-export const generateWorkOrderInvoicePDF = async (workOrderDetail: WorkOrderDetailData) => {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const COMPANY_NAME = "Barnick Pracharani";
-
-    // Try to load logo
-    let logoBase64 = "";
-    try {
-        logoBase64 = await loadImageAsBase64("/images/favicon.png");
-    } catch (error) {
-        console.warn("Could not load logo, continuing without it");
-    }
-
-    // --- Header Section with Logo and Company Name (Centered Group) ---
-    const headerY = 15;
-    const logoSize = 18; // Smaller logo
-    const centerX = pageWidth / 2; // Center of the page
-    const spacing = 10; // Space between logo and company name
-
-    // Calculate text width for company name to position correctly
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    const companyNameText = COMPANY_NAME.toUpperCase();
-    const companyNameWidth = doc.getTextWidth(companyNameText);
-
-    // Calculate the total width of logo + spacing + company name
-    const totalWidth = logoSize + spacing + companyNameWidth;
-    const groupStartX = centerX - totalWidth / 2; // Start position to center the group
-
-    // Add logo on the left (within centered group)
-    if (logoBase64) {
-        try {
-            const logoX = groupStartX;
-            doc.addImage(logoBase64, "PNG", logoX, headerY, logoSize, logoSize);
-        } catch (error) {
-            console.warn("Could not add logo image:", error);
-        }
-    }
-
-    // Company name on the right of logo (same line)
-    const companyNameX = logoBase64 ? groupStartX + logoSize + spacing : centerX;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.text(companyNameText, companyNameX, headerY + 8);
-
-    // Invoice text on the next line, centered (reduced spacing)
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.text("INVOICE", centerX, headerY + 16, { align: "center" });
-
-    // --- Divider Line ---
-    doc.setLineWidth(0.5);
-    doc.setDrawColor(0, 0, 0);
-    const dividerY = headerY + 25;
-    doc.line(14, dividerY, pageWidth - 14, dividerY);
-
-    let currentY = dividerY + 15;
-
-    // --- Work Order Info Section with Bill To (Extended Box) ---
-    const infoBoxY = currentY;
-    
-    // Calculate height needed for Bill To section
-    let billToHeight = 0;
-    if (workOrderDetail.customer) {
-        billToHeight = 8; // "Bill To:" header
-        billToHeight += 7; // Client Name line
-        billToHeight += 7; // Phone line
-        const addressText = workOrderDetail.customer.address || "N/A";
-        const addressLines = doc.splitTextToSize(addressText, pageWidth - 60);
-        const maxLines = Math.max(1, addressLines.length);
-        billToHeight += maxLines * 6 + 4; // Address lines + spacing
-        if (workOrderDetail.customer.contact_person_name) {
-            billToHeight += 10; // Contact person line + spacing
-        }
-    }
-    
-    const infoBoxHeight = 25 + billToHeight; // Work Order Info height + Bill To height
-    
-    // Draw extended box background
-    doc.setFillColor(250, 250, 250);
-    doc.rect(14, infoBoxY, pageWidth - 28, infoBoxHeight, "F");
-    doc.setDrawColor(220, 220, 220);
-    doc.rect(14, infoBoxY, pageWidth - 28, infoBoxHeight, "S");
-
-    // Work Order Info Section
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.text("Work Order No:", 18, infoBoxY + 8);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.text(workOrderDetail.no || "N/A", 18, infoBoxY + 15);
-
-    doc.setFont("helvetica", "bold");
-    doc.text("Date:", 80, infoBoxY + 8);
-    doc.setFont("helvetica", "normal");
-    const orderDate = workOrderDetail.date
-        ? new Date(workOrderDetail.date).toLocaleDateString("en-GB", {
+const formatDate = (dateStr: string | null | undefined) =>
+    dateStr
+        ? new Date(dateStr).toLocaleDateString("en-GB", {
               day: "2-digit",
               month: "short",
               year: "numeric",
           })
         : "N/A";
-    doc.text(orderDate, 80, infoBoxY + 15);
 
-    doc.setFont("helvetica", "bold");
-    doc.text("Generated On:", pageWidth - 18, infoBoxY + 8, { align: "right" });
-    doc.setFont("helvetica", "normal");
-    const generatedDate = new Date().toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-    });
-    doc.text(generatedDate, pageWidth - 18, infoBoxY + 15, { align: "right" });
+export const generateWorkOrderInvoicePDF = async (workOrderDetail: WorkOrderDetailData) => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 14;
+    const COMPANY_NAME = "Barnick Pracharani";
 
-    // Bill To Section (inside the same box) - Vertical list format
-    let billToY = infoBoxY + 25; // Start after Work Order Info
-    if (workOrderDetail.customer) {
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(11);
-        doc.text("Bill To:", 18, billToY);
-        billToY += 8;
+    let logoBase64 = "";
+    try {
+        logoBase64 = await loadImageAsBase64("/images/favicon.png");
+    } catch {
+        // continue without logo
+    }
 
-        // Client Name with label
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(10);
-        doc.text("Client Name:", 18, billToY);
-        const customerName = workOrderDetail.customer.name || "N/A";
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(12);
-        doc.text(customerName, 18 + 35, billToY); // Position after label
-        billToY += 7;
-
-        // Phone with label
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(10);
-        doc.text("Phone:", 18, billToY);
-        const phoneText = workOrderDetail.customer.phone || "N/A";
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(10);
-        doc.text(phoneText, 18 + 35, billToY); // Position after label
-        billToY += 7;
-
-        // Address with label
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(10);
-        doc.text("Address:", 18, billToY);
-        const addressText = workOrderDetail.customer.address || "N/A";
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(10);
-        const addressLines = doc.splitTextToSize(addressText, pageWidth - 60);
-        doc.text(addressLines, 18 + 35, billToY); // Position after label
-        billToY += addressLines.length * 6;
-
-        // Contact Person (if exists)
-        if (workOrderDetail.customer.contact_person_name) {
-            billToY += 4;
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(9);
-            doc.text(
-                `Contact Person: ${workOrderDetail.customer.contact_person_name}`,
-                18,
-                billToY
-            );
+    let currentY = margin;
+    const logoSize = 16;
+    let headerLeftX = margin;
+    if (logoBase64) {
+        try {
+            doc.addImage(logoBase64, "PNG", margin, currentY, logoSize, logoSize);
+            headerLeftX = margin + logoSize + 8;
+        } catch {
+            // continue without logo
         }
     }
 
-    currentY = infoBoxY + infoBoxHeight + 12;
+    // ---------- HEADER: Barnick Pracharani left, Invoice below; Invoice Date / Phone right ----------
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.setTextColor(...COLORS.textDark);
+    doc.text(COMPANY_NAME, headerLeftX, currentY + 6);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(...COLORS.textMuted);
+    doc.text("Invoice", headerLeftX, currentY + 12);
 
-    // --- Items Table (Improved Styling) ---
+    const orderDate = formatDate(workOrderDetail.date);
+    const rightX = pageWidth - margin;
+    const PHONE = "+8801712347097";
+    doc.setFontSize(9);
+    doc.setTextColor(...COLORS.textMuted);
+    doc.text("Invoice Date", rightX, currentY + 4, { align: "right" });
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(...COLORS.textDark);
+    doc.text(orderDate, rightX, currentY + 10, { align: "right" });
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(...COLORS.textMuted);
+    doc.text("Phone", rightX, currentY + 16, { align: "right" });
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(...COLORS.textDark);
+    doc.text(PHONE, rightX, currentY + 22, { align: "right" });
+
+    currentY += 28;
+
+    // ---------- Divider ----------
+    doc.setDrawColor(...COLORS.border);
+    doc.setLineWidth(0.5);
+    doc.line(margin, currentY, pageWidth - margin, currentY);
+    currentY += 12;
+
+    // ---------- FROM (left) and BILL TO (right) side by side ----------
+    const colWidth = (pageWidth - 2 * margin - 10) / 2;
+    const fromX = margin;
+    const billToX = margin + colWidth + 10;
+    const sectionStartY = currentY;
+
+    // FROM section (left) - Work Order No
+    doc.setFontSize(9);
+    doc.setTextColor(...COLORS.textMuted);
+    doc.text("Work Order No", fromX, sectionStartY);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(...COLORS.textDark);
+    doc.text(workOrderDetail.no || "N/A", fromX, sectionStartY + 6);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    const fromBlockBottom = sectionStartY + 22;
+
+    // BILL TO section (right, light blue background)
+    const billToBoxHeight = 44;
+    doc.setFillColor(...COLORS.billToBg);
+    doc.roundedRect(billToX, sectionStartY - 2, colWidth + 2, billToBoxHeight, 2, 2, "F");
+    doc.setDrawColor(...COLORS.border);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(billToX, sectionStartY - 2, colWidth + 2, billToBoxHeight, 2, 2, "S");
+
+    let billToY = sectionStartY + 4;
+    doc.setFontSize(9);
+    doc.setTextColor(0, 0, 0);
+    doc.text("BILL TO", billToX + 8, billToY);
+    billToY += 6;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(...COLORS.textDark);
+    const customerName = workOrderDetail.customer?.name || "N/A";
+    doc.text(customerName, billToX + 8, billToY);
+    billToY += 6;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    const phoneText = workOrderDetail.customer?.phone || "N/A";
+    doc.text(phoneText, billToX + 8, billToY);
+    billToY += 6;
+    const addressText = workOrderDetail.customer?.address || "N/A";
+    const addressLines = doc.splitTextToSize(addressText, colWidth - 12);
+    doc.text(addressLines, billToX + 8, billToY);
+    billToY += addressLines.length * 5;
+    if (workOrderDetail.customer?.contact_person_name) {
+        doc.text(`Contact: ${workOrderDetail.customer.contact_person_name}`, billToX + 8, billToY);
+    }
+    doc.setTextColor(...COLORS.textDark);
+
+    currentY = Math.max(fromBlockBottom, sectionStartY + billToBoxHeight) + 14;
+
+    // ---------- Items Table (dark header, white text) ----------
     if (workOrderDetail.items && workOrderDetail.items.length > 0) {
         const itemsTableRows = workOrderDetail.items.map((item) => [
-            item.item || "N/A",
-            item.details || "-",
+            `${item.item || "N/A"}${item.details ? ` - ${item.details}` : ""}`,
             (item.total_order || 0).toString(),
-            `${(item.unit_price || 0).toLocaleString("en-IN")}`,
-            `${((item.total_order || 0) * (item.unit_price || 0)).toLocaleString("en-IN")}`,
+            (item.unit_price || 0).toLocaleString("en-IN"),
+            ((item.total_order || 0) * (item.unit_price || 0)).toLocaleString("en-IN"),
         ]);
-
-        // Calculate items subtotal
-        const itemsSubtotal = workOrderDetail.items.reduce((sum, item) => {
-            return sum + ((item.total_order || 0) * (item.unit_price || 0));
-        }, 0);
-
-        // Add subtotal row
-        itemsTableRows.push([
-            "",
-            "",
-            "",
-            "Subtotal:",
-            `${itemsSubtotal.toLocaleString("en-IN")}`,
-        ]);
+        const itemsSubtotal = workOrderDetail.items.reduce(
+            (sum, item) => sum + (item.total_order || 0) * (item.unit_price || 0),
+            0
+        );
+        itemsTableRows.push(["", "", "Subtotal", itemsSubtotal.toLocaleString("en-IN")]);
 
         autoTable(doc, {
             startY: currentY,
-            head: [["Item", "Details", "Quantity", "Unit Price", "Total"]],
+            head: [["Item Description", "Quantity", "Unit Price", "Total"]],
             body: itemsTableRows,
-            theme: "striped",
+            theme: "plain",
             headStyles: {
-                fillColor: [51, 65, 85],
-                textColor: 255,
-                halign: "center",
+                fillColor: COLORS.tableHeader,
+                textColor: [255, 255, 255],
                 fontStyle: "bold",
                 fontSize: 10,
+                cellPadding: 5,
             },
             columnStyles: {
-                0: { cellWidth: 55, fontStyle: "bold" },
-                1: { cellWidth: 55 },
-                2: { halign: "right", cellWidth: 25 },
-                3: { halign: "right", cellWidth: 30 },
-                4: { halign: "right", cellWidth: 30, fontStyle: "bold" },
+                0: { cellWidth: "auto" },
+                1: { halign: "center", cellWidth: 28 },
+                2: { halign: "right", cellWidth: 32 },
+                3: { halign: "right", cellWidth: 32 },
             },
-            styles: { fontSize: 9, cellPadding: 3 },
-            didParseCell: (dataCell) => {
-                // Bold the subtotal row
-                if (dataCell.row.index === itemsTableRows.length - 1) {
-                    dataCell.cell.styles.fontStyle = "bold";
-                    dataCell.cell.styles.fillColor = [240, 240, 240];
-                    dataCell.cell.styles.textColor = [0, 0, 0];
+            styles: {
+                fontSize: 10,
+                cellPadding: 4,
+                textColor: COLORS.textDark,
+            },
+            didParseCell: (data) => {
+                if (data.row.index === itemsTableRows.length - 1) {
+                    data.cell.styles.fontStyle = "bold";
+                    data.cell.styles.fillColor = [248, 249, 250];
                 }
             },
         });
-
-        currentY = (doc as any).lastAutoTable.finalY + 15;
+        currentY = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 14;
     }
 
-    // --- Financial Summary (Improved Design) ---
-    const itemsSubtotal = workOrderDetail.items?.reduce((sum, item) => {
-        return sum + ((item.total_order || 0) * (item.unit_price || 0));
-    }, 0) || 0;
-
+    // ---------- Financial Summary (right-aligned, Total in blue box) ----------
+    const itemsSubtotal =
+        workOrderDetail.items?.reduce(
+            (sum, item) => sum + (item.total_order || 0) * (item.unit_price || 0),
+            0
+        ) || 0;
     const deliveryCharge = workOrderDetail.delivery_charge || 0;
     const totalAmount = workOrderDetail.amount || 0;
     const totalPaid = workOrderDetail.total_paid || 0;
     const pendingBalance = totalAmount - totalPaid;
 
-    const summaryX = pageWidth - 95;
-    const summaryWidth = 81;
-    const lineHeight = 8;
-    let summaryHeight = 45; // Base height
-    
-    if (deliveryCharge > 0) {
-        summaryHeight += lineHeight;
-    }
-    
-    // Add space for pending balance (divider + line)
-    summaryHeight += lineHeight + lineHeight; // Divider line + Pending Balance line
+    const summaryWidth = 80;
+    const summaryX = pageWidth - margin - summaryWidth;
+    const lineH = 8;
+    let summaryY = currentY;
 
-    // Summary box with better styling
-    doc.setFillColor(245, 245, 245);
-    doc.rect(summaryX, currentY, summaryWidth, summaryHeight, "F");
-    doc.setDrawColor(200, 200, 200);
-    doc.setLineWidth(0.5);
-    doc.rect(summaryX, currentY, summaryWidth, summaryHeight, "S");
-
-    let summaryY = currentY + 10;
-    const paddingX = 5;
-
-    // Subtotal (Items)
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.text("Subtotal (Items):", summaryX + paddingX, summaryY);
-    doc.text(`${itemsSubtotal.toLocaleString("en-IN")}`, summaryX + summaryWidth - paddingX, summaryY, {
-        align: "right",
-    });
-    summaryY += lineHeight;
+    doc.setFontSize(10);
+    doc.setTextColor(...COLORS.textDark);
+    doc.text("Subtotal", summaryX, summaryY);
+    doc.text(`${itemsSubtotal.toLocaleString("en-IN")}`, summaryX + summaryWidth, summaryY, { align: "right" });
+    summaryY += lineH;
 
-    // Delivery Charge (if applicable)
     if (deliveryCharge > 0) {
-        doc.text("Delivery Charge:", summaryX + paddingX, summaryY);
-        doc.text(`${deliveryCharge.toLocaleString("en-IN")}`, summaryX + summaryWidth - paddingX, summaryY, {
+        doc.text("Delivery Charge", summaryX, summaryY);
+        doc.text(`${deliveryCharge.toLocaleString("en-IN")}`, summaryX + summaryWidth, summaryY, {
             align: "right",
         });
-        summaryY += lineHeight;
+        summaryY += lineH;
     }
 
-    // Divider line
+    doc.setDrawColor(...COLORS.border);
     doc.setLineWidth(0.5);
-    doc.setDrawColor(180, 180, 180);
-    doc.line(summaryX + paddingX, summaryY, summaryX + summaryWidth - paddingX, summaryY);
-    summaryY += lineHeight;
+    doc.line(summaryX, summaryY, summaryX + summaryWidth, summaryY);
+    summaryY += lineH;
 
-    // Total Amount
+    doc.setFont("helvetica", "bold");
+    doc.text("Total Amount", summaryX, summaryY);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${totalAmount.toLocaleString("en-IN")}`, summaryX + summaryWidth, summaryY, { align: "right" });
+    summaryY += lineH;
+
+    doc.text("Total Paid", summaryX, summaryY);
+    doc.text(`${totalPaid.toLocaleString("en-IN")}`, summaryX + summaryWidth, summaryY, { align: "right" });
+    summaryY += lineH;
+
+    doc.setDrawColor(...COLORS.border);
+    doc.line(summaryX, summaryY, summaryX + summaryWidth, summaryY);
+    summaryY += lineH;
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Pending Balance", summaryX, summaryY);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${pendingBalance.toLocaleString("en-IN")}`, summaryX + summaryWidth, summaryY, { align: "right" });
+    doc.setTextColor(...COLORS.textDark);
+
+    currentY = summaryY + 16;
+
+    // ---------- NOTES (bottom left, yellow separator) ----------
+    doc.setDrawColor(...COLORS.notesLine);
+    doc.setLineWidth(0.8);
+    doc.line(margin, currentY, margin + 60, currentY);
+    currentY += 8;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
-    doc.text("Total Amount:", summaryX + paddingX, summaryY);
-    doc.text(`${totalAmount.toLocaleString("en-IN")}`, summaryX + summaryWidth - paddingX, summaryY, {
-        align: "right",
-    });
-    summaryY += lineHeight;
-
-    // Total Paid
+    doc.text("NOTES", margin, currentY);
+    currentY += 6;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.text("Total Paid:", summaryX + paddingX, summaryY);
-    doc.text(`${totalPaid.toLocaleString("en-IN")}`, summaryX + summaryWidth - paddingX, summaryY, {
-        align: "right",
-    });
-    summaryY += lineHeight;
+    doc.setTextColor(...COLORS.textMuted);
+    const notesText =
+        workOrderDetail.remarks && workOrderDetail.remarks.trim()
+            ? workOrderDetail.remarks
+            : "Thank you for your business!";
+    const notesLines = doc.splitTextToSize(notesText, pageWidth - 2 * margin - 80);
+    doc.text(notesLines, margin, currentY);
+    doc.setTextColor(...COLORS.textDark);
 
-    // Divider line
-    doc.setLineWidth(0.5);
-    doc.setDrawColor(180, 180, 180);
-    doc.line(summaryX + paddingX, summaryY, summaryX + summaryWidth - paddingX, summaryY);
-    summaryY += lineHeight;
-
-    // Pending Balance (highlighted)
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text("Pending Balance:", summaryX + paddingX, summaryY);
-    doc.text(`${pendingBalance.toLocaleString("en-IN")}`, summaryX + summaryWidth - paddingX, summaryY, {
-        align: "right",
-    });
-
-    // --- Footer ---
-    const pageCount = (doc as any).internal.getNumberOfPages();
+    // ---------- Footer ----------
+    const WEBSITE = "https://barnickpracharani.com";
+    const pageCount = doc.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(8);
         doc.setFont("helvetica", "italic");
-        doc.setTextColor(120, 120, 120);
-        doc.text(
-            `Powered by ${COMPANY_NAME}`,
-            pageWidth / 2,
-            pageHeight - 8,
-            { align: "center" }
-        );
-        doc.text(
-            `Page ${i} of ${pageCount}`,
-            pageWidth - 14,
-            pageHeight - 8,
-            { align: "right" }
-        );
-        doc.setTextColor(0, 0, 0); // Reset text color
+        doc.setTextColor(...COLORS.textMuted);
+        doc.text(`${COMPANY_NAME} | ${WEBSITE}`, pageWidth / 2, pageHeight - 10, { align: "center" });
+        doc.text(`Page ${i} of ${pageCount}`, pageWidth - margin, pageHeight - 10, { align: "right" });
+        doc.setTextColor(...COLORS.textDark);
     }
 
-    // --- Save PDF ---
     const fileName = `Invoice_${workOrderDetail.no.replace(/\//g, "_")}_${Date.now()}.pdf`;
     doc.save(fileName);
 };
