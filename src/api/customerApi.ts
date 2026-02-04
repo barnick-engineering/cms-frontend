@@ -23,15 +23,15 @@ export const customerList = async (
     return res.data
 }
 
-// get customer by id
+// get customer by id (backend returns { data: Customer, response_message, response_code })
 export const getCustomerById = async (id: string | number): Promise<Customer> => {
     if (!id) throw new Error("Customer ID is required")
 
-    const res = await axiosInstance.get<Customer>(
+    const res = await axiosInstance.get<{ data: Customer; response_message: string; response_code: number }>(
         `${apiEndpoints.customer.getCustomerById}${id}/`
     )
 
-    return res.data
+    return res.data.data
 }
 
 // create customer

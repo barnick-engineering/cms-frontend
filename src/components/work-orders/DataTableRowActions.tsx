@@ -1,6 +1,7 @@
 import { DotsHorizontalIcon } from '@radix-ui/react-icons'
 import { type Row } from '@tanstack/react-table'
 import { Eye, DollarSign, Trash2, Pencil, Download } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -21,6 +22,7 @@ export function DataTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
   const workOrder = row.original as WorkOrder
+  const navigate = useNavigate()
   const { setOpen, setCurrentRow } = useWorkOrders()
   const { generateInvoice } = useWorkOrderInvoice()
 
@@ -46,8 +48,7 @@ export function DataTableRowActions<TData>({
           className='cursor-pointer'
           onClick={(e) => {
             e.stopPropagation()
-            setCurrentRow(workOrder)
-            setOpen('view')
+            navigate(`/work-orders/${workOrder.id}`)
           }}
         >
           View

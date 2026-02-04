@@ -25,7 +25,6 @@ import type { ColumnFiltersState } from '@tanstack/react-table'
 import { DataTableViewOptions } from '@/features/users/components/data-table-view-options'
 import { DataTablePagination } from '@/features/users/components/data-table-pagination'
 import type { DataTablePropsInterface } from '@/interface/workOrderInterface'
-import { DataTableBulkActions } from './DataTableBulkActions'
 import { useDebounce } from '../../hooks/useDebounce'
 import { NoDataFound } from '../NoDataFound'
 import { Card, CardContent } from '../ui/card'
@@ -40,7 +39,6 @@ const WorkOrderTable = ({
   onPageChange,
   onSearchChange,
 }: WorkOrderTableProps) => {
-  const [rowSelection, setRowSelection] = useState({})
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [globalFilter, setGlobalFilter] = useState('')
@@ -64,15 +62,12 @@ const WorkOrderTable = ({
     state: {
       sorting,
       columnVisibility,
-      rowSelection,
       columnFilters,
       globalFilter,
       pagination: { pageIndex, pageSize },
     },
     manualPagination: true,
     pageCount: Math.ceil(total / pageSize),
-    enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnVisibilityChange: setColumnVisibility,
     onGlobalFilterChange: setGlobalFilter,
@@ -117,7 +112,7 @@ const WorkOrderTable = ({
   }, [table, pageCount])
 
   return (
-    <div className='space-y-4 max-sm:has-[div[role="toolbar"]]:mb-16'>
+    <div className='space-y-4'>
       <div className='flex items-center justify-between'>
         <div className="flex flex-1 flex-col-reverse gap-y-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-2 md:flex-row md:items-center gap-x-2">
@@ -152,10 +147,7 @@ const WorkOrderTable = ({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
-                >
+                <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -181,7 +173,6 @@ const WorkOrderTable = ({
         </Table>
       </div>
       {data.length > 0 && <DataTablePagination table={table} />}
-      <DataTableBulkActions table={table} />
     </div>
   )
 }

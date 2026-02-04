@@ -20,16 +20,17 @@ const WORK_ORDER_KEYS = {
   detail: (id: string | number) => [...WORK_ORDER_KEYS.all, id] as const,
 }
 
-// work order list
+// work order list (optional customer_id to filter by customer)
 export const useWorkOrderList = (
   search?: string,
   limit?: number,
   offset?: number,
+  customer_id?: string | number,
   options?: { enabled?: boolean }
 ): UseQueryResult<WorkOrderListResponse, Error> =>
   useQuery({
-    queryKey: [...WORK_ORDER_KEYS.all, search, limit, offset],
-    queryFn: () => workOrderList(search, limit, offset),
+    queryKey: [...WORK_ORDER_KEYS.all, search, limit, offset, customer_id],
+    queryFn: () => workOrderList(search, limit, offset, customer_id),
     enabled: options?.enabled !== false,
     placeholderData: keepPreviousData,
   })
