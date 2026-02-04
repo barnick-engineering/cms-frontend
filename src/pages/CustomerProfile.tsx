@@ -40,7 +40,7 @@ const CustomerProfile = () => {
   const workOrderPageCount = Math.ceil(workOrdersTotal / WORK_ORDERS_PAGE_SIZE) || 1
 
   const handleWorkOrderPageChange = useCallback((newPage: number) => {
-    setWorkOrderPage((p) => Math.max(0, Math.min(newPage, workOrderPageCount - 1)))
+    setWorkOrderPage((_prev) => Math.max(0, Math.min(newPage, workOrderPageCount - 1)))
   }, [workOrderPageCount])
 
   useEffect(() => {
