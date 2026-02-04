@@ -9,9 +9,11 @@ import Loader from "@/components/layout/Loader"
 const SignIn = lazy(() => import("@/pages/SignIn"))
 const Dashboard = lazy(() => import("@/pages/Dashboard"))
 const Customers = lazy(() => import("@/pages/Customers"))
+const CustomerProfile = lazy(() => import("@/pages/CustomerProfile"))
 const Products = lazy(() => import("@/pages/Products"))
 const Inventory = lazy(() => import("@/pages/Inventory"))
 const WorkOrders = lazy(() => import("@/pages/WorkOrders"))
+const WorkOrderDetail = lazy(() => import("@/pages/WorkOrderDetail"))
 const Expense = lazy(() => import("@/pages/Expense"))
 const Reports = lazy(() => import("@/pages/Reports"))
 const Teams = lazy(() => import("@/pages/Teams"))
@@ -33,10 +35,12 @@ const AppRoutes = () => {
                         <Route element={<AuthenticatedLayout />}>
                             <Route path="/" element={<Dashboard />} />
                             <Route path="/customers" element={<Customers />} />
+                            <Route path="/customers/:id" element={<CustomerProfile />} />
                             <Route path="/products" element={<Products />} />
                             <Route path="/reports" element={<Reports />} />
                             <Route path="/inventory" element={<Inventory />} />
                             <Route path="/work-orders" element={<WorkOrders />} />
+                            <Route path="/work-orders/:id" element={<WorkOrderDetail />} />
                             <Route path="/expense" element={<Expense />} />
                             <Route path="/teams" element={<Teams />} />
                             <Route path="/settings" element={<Settings />} />

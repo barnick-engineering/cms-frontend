@@ -1,5 +1,5 @@
+import { Link } from 'react-router-dom'
 import { type ColumnDef } from '@tanstack/react-table'
-import { Checkbox } from '@/components/ui/checkbox'
 import { DataTableColumnHeader } from '../customers/DataTableColumnHeader'
 import { DataTableRowActions } from './DataTableRowActions'
 import type { WorkOrderListInterface } from '@/interface/workOrderInterface'
@@ -7,36 +7,23 @@ import { Badge } from '../ui/badge'
 
 export const WorkOrderColumns: ColumnDef<WorkOrderListInterface>[] = [
   {
-    id: 'select',
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && 'indeterminate')
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        onClick={(e) => e.stopPropagation()}
-        aria-label='Select all'
-        className='translate-y-0.5'
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        onClick={(e) => e.stopPropagation()}
-        aria-label='Select row'
-        className='translate-y-0.5'
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
     accessorKey: 'no',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Work Order No' />
     ),
+    cell: ({ row }) => {
+      const no = row.getValue<string>('no')
+      const id = row.original.id
+      return (
+        <Link
+          to={`/work-orders/${id}`}
+          className="font-medium text-primary hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {no || 'N/A'}
+        </Link>
+      )
+    },
   },
   {
     accessorKey: 'customer',

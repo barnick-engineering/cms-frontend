@@ -9,17 +9,19 @@ import type {
   WorkOrderUpdatePayload,
 } from "@/interface/workOrderInterface"
 
-// work order list with search params
+// work order list with search params and optional customer_id
 export const workOrderList = async (
   search?: string,
   limit?: number,
-  offset?: number
+  offset?: number,
+  customer_id?: string | number
 ): Promise<WorkOrderListResponse> => {
   const params = new URLSearchParams()
 
   if (search) params.append("search", search)
   if (limit) params.append("limit", String(limit))
   if (offset) params.append("offset", String(offset))
+  if (customer_id != null && customer_id !== "") params.append("customer_id", String(customer_id))
 
   const queryString = params.toString()
   const url = queryString

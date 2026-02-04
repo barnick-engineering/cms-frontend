@@ -26,8 +26,8 @@ import { DataTableViewOptions } from '@/features/users/components/data-table-vie
 import { DataTablePagination } from '@/features/users/components/data-table-pagination'
 
 import type { DataTablePropsInterface } from '@/interface/customerInterface'
-import { DataTableBulkActions } from './DataTableBulkActions'
 import { useDebounce } from '../../hooks/useDebounce'
+import { useNavigate } from 'react-router-dom'
 import { NoDataFound } from '../NoDataFound'
 import { Card, CardContent } from '../ui/card'
 
@@ -41,8 +41,8 @@ const CustomerTable = ({
   onPageChange,
   onSearchChange,
 }: CustomerTableProps) => {
+  const navigate = useNavigate()
   // table states
-  const [rowSelection, setRowSelection] = useState({})
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
     contact_person_name: false,
@@ -73,7 +73,6 @@ const CustomerTable = ({
     state: {
       sorting,
       columnVisibility,
-      rowSelection,
       columnFilters,
       globalFilter,
       pagination: { pageIndex, pageSize },
@@ -82,8 +81,6 @@ const CustomerTable = ({
     manualPagination: true,
     pageCount: Math.ceil(total / pageSize),
 
-    enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnVisibilityChange: setColumnVisibility,
     onGlobalFilterChange: setGlobalFilter,
@@ -126,7 +123,7 @@ const CustomerTable = ({
   }, [table, pageCount])
 
   return (
-    <div className='space-y-4 max-sm:has-[div[role="toolbar"]]:mb-16'>
+    <div className='space-y-4'>
       <div className='flex items-center justify-between'>
         <div className="flex flex-1 flex-col-reverse gap-y-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-2 md:flex-row md:items-center gap-x-2">
@@ -164,10 +161,14 @@ const CustomerTable = ({
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => navigate(`/customers/${row.original.id}`)}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell
+                      key={cell.id}
+                      onClick={cell.column.id === 'actions' ? (e) => e.stopPropagation() : undefined}
+                    >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -191,7 +192,6 @@ const CustomerTable = ({
         </Table>
       </div>
       {data.length > 0 && <DataTablePagination table={table} />}
-      <DataTableBulkActions table={table} />
     </div>
   )
 }
