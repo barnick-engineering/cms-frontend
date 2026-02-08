@@ -22,13 +22,15 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
 import type { AxiosError } from "axios"
 import type { WorkOrder } from "@/interface/workOrderInterface"
 import { useUpdateWorkOrder } from "@/hooks/useWorkOrder"
 
 const updateWorkOrderSchema = z.object({
-  total_paid: z.number().min(0, "Amount must be positive"),
+  total_paid: z.number().min(0, "Amount must be 0 or more"),
+  paid: z.boolean().optional(),
 })
 
 type UpdateWorkOrderSchema = z.infer<typeof updateWorkOrderSchema>
@@ -48,24 +50,32 @@ const WorkOrderUpdateDrawer = ({
 }: WorkOrderUpdateDrawerProps) => {
   const updateMutation = useUpdateWorkOrder()
 
+  const currentTotalPaid = currentRow?.total_paid || 0
+  const currentAmount = currentRow?.amount || 0
+  const pendingAmount = currentAmount - currentTotalPaid
+
   const form = useForm<UpdateWorkOrderSchema>({
     resolver: zodResolver(updateWorkOrderSchema),
     defaultValues: {
       total_paid: 0,
+      paid: false,
     },
   })
 
   useEffect(() => {
     if (!open) {
-      form.reset({ total_paid: 0 })
+      form.reset({ total_paid: 0, paid: false })
     }
   }, [open, form])
 
   const onSubmit: SubmitHandler<UpdateWorkOrderSchema> = (data) => {
     if (!currentRow) return
+    // When Paid is checked: mark order fully paid (send remainder so total_paid = amount, status Paid, pending 0).
+    // Amount received (data.total_paid) is not sent in that case—e.g. receive 70000, waive 500, mark paid.
+    const additionalAmount = data.paid ? pendingAmount : data.total_paid
 
     updateMutation.mutate(
-      { id: currentRow.id, data: { total_paid: data.total_paid } },
+      { id: currentRow.id, data: { total_paid: additionalAmount } },
       {
         onSuccess: () => {
           onOpenChange(false)
@@ -80,10 +90,6 @@ const WorkOrderUpdateDrawer = ({
       }
     )
   }
-
-  const currentTotalPaid = currentRow?.total_paid || 0
-  const currentAmount = currentRow?.amount || 0
-  const pendingAmount = currentAmount - currentTotalPaid
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -116,17 +122,40 @@ const WorkOrderUpdateDrawer = ({
               </div>
             </div>
 
+            {pendingAmount > 0 && (
+              <FormField
+                control={form.control}
+                name="paid"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value ?? false}
+                        onCheckedChange={(checked) => field.onChange(!!checked)}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="cursor-pointer font-medium">Paid</FormLabel>
+                      <p className="text-xs text-muted-foreground">
+                        Mark this work order as fully paid (status Paid, pending ৳0). You can receive less than the full amount and still mark it paid—e.g. receive ৳70,000, waive ৳500, tick Paid.
+                      </p>
+                    </div>
+                  </FormItem>
+                )}
+              />
+            )}
+
             <FormField
               control={form.control}
               name="total_paid"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Additional Payment Amount *</FormLabel>
+                  <FormLabel>Amount received (optional when marking as paid)</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
                       {...field}
-                      value={field.value || ""}
+                      value={field.value ?? ""}
                       onChange={(e) => field.onChange(Number(e.target.value) || 0)}
                       min={0}
                       step="0.01"
@@ -136,7 +165,9 @@ const WorkOrderUpdateDrawer = ({
                   </FormControl>
                   <FormMessage />
                   <p className="text-xs text-muted-foreground">
-                    Maximum: ৳{pendingAmount.toLocaleString('en-IN')}
+                    {form.watch("paid")
+                      ? "When Paid is checked, the order will be marked fully paid regardless of this amount."
+                      : `Maximum: ৳${pendingAmount.toLocaleString('en-IN')}`}
                   </p>
                 </FormItem>
               )}
