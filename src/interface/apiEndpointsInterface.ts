@@ -64,6 +64,11 @@ export interface ApiEndpoints {
     reportStockTrack: string
     reportExpenses: string
     reportBalanceSheet: string
+    customerWorkOrders: string
+    balanceSheet: string
+    workOrderDetails: string
+    expenses: string
+    trending: string
   }
   product: {
     productList: string
