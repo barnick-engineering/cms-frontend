@@ -69,12 +69,17 @@ export const apiEndpoints: ApiEndpoints = {
   user: {
     changePassword: '/user/change-password',
   },
-  reports : {
+  reports: {
     reportTransactions: '/report/transactions',
     reportStocks: '/report/stocks',
     reportStockTrack: '/report/stocks/track',
     reportExpenses: '/report/expenses',
     reportBalanceSheet: '/report/balance-sheet',
+    customerWorkOrders: '/api/v1/reports/customer-workorders/',
+    balanceSheet: '/api/v1/reports/balance-sheet/',
+    workOrderDetails: '/api/v1/reports/workorder-details/',
+    expenses: '/api/v1/reports/expenses/',
+    trending: '/api/v1/reports/trending/',
   },
   product: {
     productList: '/api/v1/product',
