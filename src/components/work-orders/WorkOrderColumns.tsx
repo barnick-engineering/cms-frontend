@@ -35,7 +35,7 @@ export const WorkOrderColumns: ColumnDef<WorkOrderListInterface>[] = [
       const totalItems = row.original.total_items || 0
       return (
         <span>
-          {customer || 'N/A'} <span className="text-muted-foreground">({totalItems})</span>
+          {customer || 'N/A'} <span className="text-muted-foreground">({totalItems}) items</span>
         </span>
       )
     },
