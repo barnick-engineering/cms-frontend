@@ -1,6 +1,6 @@
 import { DotsHorizontalIcon } from '@radix-ui/react-icons'
 import { type Row } from '@tanstack/react-table'
-import { Eye, DollarSign, Trash2, Pencil, Download } from 'lucide-react'
+import { Eye, DollarSign, Trash2, Pencil, Download, FileText } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import {
@@ -13,6 +13,7 @@ import {
 import { useWorkOrders } from './work-order-provider'
 import type { WorkOrder } from '@/interface/workOrderInterface'
 import { useWorkOrderInvoice } from '@/hooks/useWorkOrderInvoice'
+import { useWorkOrderDeliveryChallan } from '@/hooks/useWorkOrderDeliveryChallan'
 
 type DataTableRowActionsProps<TData> = {
   row: Row<TData>
@@ -25,10 +26,16 @@ export function DataTableRowActions<TData>({
   const navigate = useNavigate()
   const { setOpen, setCurrentRow } = useWorkOrders()
   const { generateInvoice } = useWorkOrderInvoice()
+  const { generateDeliveryChallan } = useWorkOrderDeliveryChallan()
 
   const handleDownloadInvoice = async (e: React.MouseEvent) => {
     e.stopPropagation()
     await generateInvoice(workOrder.id)
+  }
+
+  const handleDownloadDeliveryChallan = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    await generateDeliveryChallan(workOrder.id)
   }
 
   return (
@@ -92,6 +99,16 @@ export function DataTableRowActions<TData>({
           Download Invoice
           <DropdownMenuShortcut>
             <Download size={16} />
+          </DropdownMenuShortcut>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          className='cursor-pointer'
+          onClick={handleDownloadDeliveryChallan}
+        >
+          Download Delivery Challan
+          <DropdownMenuShortcut>
+            <FileText size={16} />
           </DropdownMenuShortcut>
         </DropdownMenuItem>
 
