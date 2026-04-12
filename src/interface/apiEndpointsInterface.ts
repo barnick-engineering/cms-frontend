@@ -77,4 +77,7 @@ export interface ApiEndpoints {
     deleteProduct: string
     getProductById: string
   }
+  aiAgent: {
+    chat: string
+  }
 }
