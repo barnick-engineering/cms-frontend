@@ -87,5 +87,8 @@ export const apiEndpoints: ApiEndpoints = {
     updateProduct: '/api/v1/product/',
     deleteProduct: '/api/v1/product/',
     getProductById: '/api/v1/product/',
-  }
+  },
+  aiAgent: {
+    chat: '/api/v1/ai-agent/chat/',
+  },
 }
