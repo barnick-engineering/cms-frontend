@@ -33,6 +33,7 @@ const ChangePassword = () => {
     defaultValues: {
       oldPassword: "",
       newPassword: "",
+      confirmPassword: "",
     },
   })
 
@@ -135,6 +136,23 @@ const ChangePassword = () => {
                 )}
               />
 
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="Enter new password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <Button type="submit" className="mt-2" disabled={isPending}>
                 {isPending ? (
                   <>

@@ -96,9 +96,9 @@ export function GlobalAiChat() {
                 <Bot className='size-4' aria-hidden />
               </div>
               <div className='min-w-0'>
-                <p className='truncate text-sm font-semibold'>Assistant</p>
+                <p className='truncate text-sm font-semibold'>Barnick AI</p>
                 <p className='truncate text-xs text-muted-foreground'>
-                  Barnick AI
+                  ask anything
                 </p>
               </div>
             </div>
