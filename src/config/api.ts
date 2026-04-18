@@ -12,7 +12,10 @@ export const BASE_URL = envBaseUrl || ''
 export const apiEndpoints: ApiEndpoints = {
   auth: {
     signIn: '/api/v1/account/login/',
-    refresh: '/auth/refresh',
+    refresh: '/api/v1/account/token/refresh/',
+    register: '/api/v1/account/registration/',
+    forgotPassword: '/api/v1/account/password/forgot/',
+    resetPassword: '/api/v1/account/password/reset/',
   },
   dashbaord: {
     dashboardReport: '/api/v1/dashboard',
@@ -67,7 +70,7 @@ export const apiEndpoints: ApiEndpoints = {
     teamList: '/api/v1/account/',
   },
   user: {
-    changePassword: '/user/change-password',
+    changePassword: '/api/v1/account/password/change/',
   },
   reports: {
     reportTransactions: '/report/transactions',

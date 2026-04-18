@@ -7,6 +7,9 @@ import Loader from "@/components/layout/Loader"
 
 // Lazy load pages
 const SignIn = lazy(() => import("@/pages/SignIn"))
+const Register = lazy(() => import("@/pages/Register"))
+const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"))
+const ResetPassword = lazy(() => import("@/pages/ResetPassword"))
 const Dashboard = lazy(() => import("@/pages/Dashboard"))
 const Customers = lazy(() => import("@/pages/Customers"))
 const CustomerProfile = lazy(() => import("@/pages/CustomerProfile"))
@@ -29,6 +32,9 @@ const AppRoutes = () => {
             <Suspense fallback={<Loader />}>
                 <Routes>
                     <Route path="/sign-in" element={<SignIn />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
 
                     <Route element={<ProtectedRoute />}>
                         <Route path="/change-password" element={<ChangePassword />} />

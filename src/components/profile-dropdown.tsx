@@ -72,8 +72,10 @@ export function ProfileDropdown() {
             </Link>
           </DropdownMenuItem>
 
-          <DropdownMenuItem>
-            <Link to="/change-password">Change Password</Link>
+          <DropdownMenuItem asChild>
+            <Link to="/change-password" className="cursor-pointer">
+              Change Password
+            </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
 

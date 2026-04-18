@@ -24,7 +24,8 @@ import { Input } from "@/components/ui/input"
 // useUser removed - user management endpoints no longer exist
 import type { ChangePasswordFormValues } from "@/schema/changePasswordSchema"
 import { changePasswordSchema } from "@/schema/changePasswordSchema"
-import { signInUser } from "@/api/userAuthApi"
+import { signInUser, extractTokensFromAuthResponse } from "@/api/userAuthApi"
+import { useAuthStore } from "@/stores/authStore"
 import { useChangePassword } from "@/hooks/useAuth"
 
 const ChangePassword = () => {
@@ -38,6 +39,7 @@ const ChangePassword = () => {
   })
 
   const { mutate: handleChangePassword, isPending } = useChangePassword()
+  const { setTokens } = useAuthStore()
   const navigate = useNavigate()
 
   const onSubmit = (data: ChangePasswordFormValues) => {
@@ -50,7 +52,6 @@ const ChangePassword = () => {
     handleChangePassword(data, {
       onSuccess: async () => {
         try {
-          // Get email from localStorage (stored during login)
           const storedEmail = localStorage.getItem('userEmail')
           if (!storedEmail) {
             toast.error("Please sign in again after password change.")
@@ -58,15 +59,23 @@ const ChangePassword = () => {
             return
           }
 
-          // auto sign in using email and new password
-          await signInUser({
+          const authRes = await signInUser({
             email: storedEmail,
             password: data.newPassword,
           })
+          const tokens = extractTokensFromAuthResponse(authRes)
+          if (!tokens) {
+            toast.error("Password changed. Please sign in with your new password.")
+            navigate("/sign-in")
+            return
+          }
+
+          setTokens(tokens.access, tokens.refresh)
+          localStorage.setItem("userEmail", storedEmail)
 
           toast.success("Password changed successfully!")
           form.reset()
-          navigate("/dashboard")
+          navigate("/", { replace: true })
         } catch (err: unknown) {
           const errorMessage =
             err instanceof Error

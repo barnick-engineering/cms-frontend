@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import type { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -75,12 +76,12 @@ const SignInForm = ({ className, ...props }: React.HTMLAttributes<HTMLFormElemen
                 <PasswordInput placeholder='********' {...field} />
               </FormControl>
               <FormMessage />
-              {/* <Link
-                to='#'
+              <Link
+                to='/forgot-password'
                 className='text-muted-foreground absolute end-0 -top-0.5 text-sm font-medium hover:opacity-75'
               >
                 Forgot password?
-              </Link> */}
+              </Link>
             </FormItem>
           )}
         />
@@ -88,6 +89,15 @@ const SignInForm = ({ className, ...props }: React.HTMLAttributes<HTMLFormElemen
         <Button type='submit' className='mt-2' disabled={isLoading}>
           {isLoading ? 'Logging in...' : 'Login'}
         </Button>
+        <p className='text-muted-foreground text-center text-sm'>
+          Don&apos;t have an account?{' '}
+          <Link
+            to='/register'
+            className='text-primary font-medium underline underline-offset-4'
+          >
+            Register
+          </Link>
+        </p>
       </form>
     </Form>
   )

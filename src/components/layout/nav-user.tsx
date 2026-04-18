@@ -1,9 +1,9 @@
 import { Link, useNavigate } from 'react-router-dom'
 import {
-  BadgeCheck,
   Bell,
   ChevronsUpDown,
   CreditCard,
+  KeyRound,
   LogOut,
   Sparkles,
 } from 'lucide-react'
@@ -108,9 +108,9 @@ export function NavUser({ user }: NavUserProps) {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
-                <Link to='#' className='cursor-pointer'>
-                  <BadgeCheck />
-                  Account
+                <Link to='/change-password' className='cursor-pointer'>
+                  <KeyRound />
+                  Change password
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>

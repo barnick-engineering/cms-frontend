@@ -45,9 +45,17 @@ axiosInstance.interceptors.response.use(
       try {
         console.log('moved into try')
         const res = await axiosInstance.post(apiEndpoints.auth.refresh, {
-          refreshToken: refreshToken,
+          refresh: refreshToken,
         })
-        const { access_token, refresh_token } = res.data
+        const body = res.data as Record<string, unknown>
+        const access_token =
+          (body.access_token as string | undefined) ?? (body.access as string | undefined)
+        const refresh_token =
+          (body.refresh_token as string | undefined) ?? (body.refresh as string | undefined)
+
+        if (!access_token || !refresh_token) {
+          throw new Error('Invalid token refresh response')
+        }
 
         localStorage.setItem('access_token', access_token)
         localStorage.setItem('refresh_token', refresh_token)

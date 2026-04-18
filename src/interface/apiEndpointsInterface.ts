@@ -2,6 +2,9 @@ export interface ApiEndpoints {
   auth: {
     signIn: string
     refresh: string
+    register: string
+    forgotPassword: string
+    resetPassword: string
   }
   shop: {
     createShop: string
