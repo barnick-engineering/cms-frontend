@@ -1,9 +1,13 @@
 import { useState, useCallback } from 'react'
+import { UserPlus } from 'lucide-react'
 import { Main } from '@/components/layout/main'
+import { Button } from '@/components/ui/button'
 import { useTeamList } from '@/hooks/useTeam'
 import { TeamsTable } from '@/components/teams/TeamsTable'
+import AddUserDrawer from '@/components/teams/AddUserDrawer'
 
 const Teams = () => {
+  const [addUserOpen, setAddUserOpen] = useState(false)
   const [pageIndex, setPageIndex] = useState(0)
   const [searchBy, setSearchBy] = useState('')
   const pageSize = 10
@@ -52,7 +56,13 @@ const Teams = () => {
             View all team members and their details.
           </p>
         </div>
+        <Button type="button" onClick={() => setAddUserOpen(true)}>
+          <UserPlus className="me-2 size-4" />
+          Add member
+        </Button>
       </div>
+
+      <AddUserDrawer open={addUserOpen} onOpenChange={setAddUserOpen} />
 
       <div className="-mx-4 flex-1 overflow-auto px-4 py-1 lg:flex-row lg:space-y-0 lg:space-x-12">
         {isLoading ? (

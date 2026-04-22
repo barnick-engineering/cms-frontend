@@ -68,6 +68,7 @@ export const apiEndpoints: ApiEndpoints = {
   },
   user: {
     changePassword: '/user/change-password',
+    createUser: '/api/v1/account/users/create/',
   },
   reports: {
     reportTransactions: '/report/transactions',

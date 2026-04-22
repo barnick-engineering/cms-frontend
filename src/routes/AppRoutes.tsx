@@ -43,6 +43,10 @@ const AppRoutes = () => {
                             <Route path="/work-orders/:id" element={<WorkOrderDetail />} />
                             <Route path="/expense" element={<Expense />} />
                             <Route path="/teams" element={<Teams />} />
+                            <Route
+                                path="/teams/add-user"
+                                element={<Navigate to="/teams" replace />}
+                            />
                             <Route path="/settings" element={<Settings />} />
                             <Route path="/help-center" element={<ComingSoon />} />
                             <Route path="*" element={<Navigate to="/" replace />} />
