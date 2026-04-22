@@ -57,6 +57,7 @@ export interface ApiEndpoints {
   }
   user: {
     changePassword: string
+    createUser: string
   }
   reports: {
     reportTransactions: string

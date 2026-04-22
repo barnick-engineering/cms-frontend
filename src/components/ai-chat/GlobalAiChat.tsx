@@ -19,6 +19,14 @@ function toHistoryEntries(messages: ChatMessage[]): AiAgentHistoryEntry[] {
   return messages.map((m) => ({ role: m.role, content: m.content }))
 }
 
+const SAMPLE_QUERIES = [
+  'Who are my top 5 customers by total order value?',
+  'Show me the balance sheet for this month',
+  'Show all unpaid work orders',
+  'Revenue trend for the last 6 months',
+  'Create a work order for Rahman Traders, 100 visiting card at 15 taka each',
+] as const
+
 export function GlobalAiChat() {
   const queryClient = useQueryClient()
   const [expanded, setExpanded] = useState(false)
@@ -41,40 +49,43 @@ export function GlobalAiChat() {
     }
   }, [expanded])
 
-  const send = useCallback(async () => {
-    const text = input.trim()
-    if (!text || isLoading) return
+  const send = useCallback(
+    async (overrideMessage?: string) => {
+      const text = (overrideMessage ?? input).trim()
+      if (!text || isLoading) return
 
-    const userMsg: ChatMessage = {
-      id: `u-${Date.now()}`,
-      role: 'user',
-      content: text,
-    }
-    setInput('')
-    setMessages((prev) => [...prev, userMsg])
-    setIsLoading(true)
+      const userMsg: ChatMessage = {
+        id: `u-${Date.now()}`,
+        role: 'user',
+        content: text,
+      }
+      setInput('')
+      setMessages((prev) => [...prev, userMsg])
+      setIsLoading(true)
 
-    try {
-      const history = toHistoryEntries(messages)
-      const reply = await postAiAgentChat({ message: text, history })
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `a-${Date.now()}`,
-          role: 'assistant',
-          content: reply || '(Empty response)',
-        },
-      ])
-      toast.success('Reply received')
-      await queryClient.invalidateQueries()
-    } catch (e) {
-      console.error(e)
-      toast.error('Could not reach the assistant. Try again.')
-      setMessages((prev) => prev.filter((m) => m.id !== userMsg.id))
-    } finally {
-      setIsLoading(false)
-    }
-  }, [input, isLoading, messages, queryClient])
+      try {
+        const history = toHistoryEntries(messages)
+        const reply = await postAiAgentChat({ message: text, history })
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `a-${Date.now()}`,
+            role: 'assistant',
+            content: reply || '(Empty response)',
+          },
+        ])
+        toast.success('Reply received')
+        await queryClient.invalidateQueries()
+      } catch (e) {
+        console.error(e)
+        toast.error('Could not reach the assistant. Try again.')
+        setMessages((prev) => prev.filter((m) => m.id !== userMsg.id))
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [input, isLoading, messages, queryClient]
+  )
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -117,9 +128,26 @@ export function GlobalAiChat() {
           <ScrollArea className='h-[min(50vh,320px)]'>
             <div className='space-y-3 p-3'>
               {messages.length === 0 && (
-                <p className='text-center text-sm text-muted-foreground'>
-                  Ask anything about the app or your data.
-                </p>
+                <div className='space-y-3'>
+                  <p className='text-sm text-muted-foreground'>
+                    Ask anything about the app or your data. Here are some
+                    examples you can try:
+                  </p>
+                  <ul className='space-y-2'>
+                    {SAMPLE_QUERIES.map((query) => (
+                      <li key={query}>
+                        <button
+                          type='button'
+                          disabled={isLoading}
+                          onClick={() => void send(query)}
+                          className='w-full rounded-lg border border-border bg-muted/30 px-3 py-2 text-left text-xs leading-snug text-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50'
+                        >
+                          {query}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
               {messages.map((m) => (
                 <div
