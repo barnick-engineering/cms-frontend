@@ -86,6 +86,7 @@ const WorkOrderMutateDrawer = ({
         items: workOrderDetails.items.map((item) => ({
           id: item.id,
           item: item.item,
+          details: item.details || null,
           total_order: item.total_order,
           unit_price: item.unit_price,
         })),
@@ -93,16 +94,16 @@ const WorkOrderMutateDrawer = ({
         total_paid: workOrderDetails.total_paid || 0,
         delivery_charge: workOrderDetails.delivery_charge || 0,
         remarks: workOrderDetails.remarks || "",
-      })
+      });
     } else if (!open) {
       form.reset({
         customer: undefined,
-        items: [{ item: "", total_order: 0, unit_price: 0 }],
+        items: [{ item: "", details: null, total_order: 0, unit_price: 0 }],
         date: new Date().toISOString().split("T")[0],
         total_paid: 0,
         delivery_charge: 0,
         remarks: "",
-      })
+      });
       setCustomerSearch("")
     }
   }, [open, isUpdate, workOrderDetails, form])
@@ -132,6 +133,7 @@ const WorkOrderMutateDrawer = ({
       items: data.items.map((item) => ({
         ...(item.id && { id: item.id }),
         item: item.item.trim(),
+        details: item.details || null,
         total_order: item.total_order,
         unit_price: item.unit_price,
       })),
@@ -140,7 +142,7 @@ const WorkOrderMutateDrawer = ({
       delivery_charge: data.delivery_charge || 0,
       total_paid: data.total_paid || 0,
       remarks: data.remarks || null,
-    }
+    };
 
     if (isUpdate && currentRow?.id) {
       // For full updates, calculate the difference for total_paid since backend adds to existing value
@@ -191,7 +193,9 @@ const WorkOrderMutateDrawer = ({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="flex flex-col overflow-y-auto">
         <SheetHeader className="text-start">
-          <SheetTitle>{isUpdate ? "Edit Work Order" : "Create Work Order"}</SheetTitle>
+          <SheetTitle>
+            {isUpdate ? "Edit Work Order" : "Create Work Order"}
+          </SheetTitle>
           <SheetDescription>
             {isUpdate
               ? "Update the work order information. Click save when you're done."
@@ -232,33 +236,37 @@ const WorkOrderMutateDrawer = ({
               render={({ field }) => {
                 // Convert date string (YYYY-MM-DD) to local Date object
                 const parseDateString = (dateString: string): Date => {
-                  const [year, month, day] = dateString.split('-').map(Number)
-                  return new Date(year, month - 1, day)
-                }
-                
+                  const [year, month, day] = dateString.split("-").map(Number);
+                  return new Date(year, month - 1, day);
+                };
+
                 // Convert Date object to date string (YYYY-MM-DD) in local timezone
                 const formatDateToString = (date: Date): string => {
-                  const year = date.getFullYear()
-                  const month = String(date.getMonth() + 1).padStart(2, '0')
-                  const day = String(date.getDate()).padStart(2, '0')
-                  return `${year}-${month}-${day}`
-                }
-                
+                  const year = date.getFullYear();
+                  const month = String(date.getMonth() + 1).padStart(2, "0");
+                  const day = String(date.getDate()).padStart(2, "0");
+                  return `${year}-${month}-${day}`;
+                };
+
                 return (
                   <FormItem>
                     <FormLabel>Date</FormLabel>
                     <FormControl>
                       <DatePicker
-                        selected={field.value ? parseDateString(field.value) : undefined}
+                        selected={
+                          field.value ? parseDateString(field.value) : undefined
+                        }
                         onSelect={(date) => {
-                          field.onChange(date ? formatDateToString(date) : undefined)
+                          field.onChange(
+                            date ? formatDateToString(date) : undefined,
+                          );
                         }}
                         placeholder="Pick a date"
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
-                )
+                );
               }}
             />
 
@@ -269,7 +277,9 @@ const WorkOrderMutateDrawer = ({
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => append({ item: "", total_order: 0, unit_price: 0 })}
+                  onClick={() =>
+                    append({ item: "", total_order: 0, unit_price: 0 })
+                  }
                 >
                   <Plus className="h-4 w-4 mr-1" />
                   Add Item
@@ -279,7 +289,9 @@ const WorkOrderMutateDrawer = ({
               {fields.map((field, index) => (
                 <div key={field.id} className="border rounded-lg p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Item {index + 1}</span>
+                    <span className="text-sm font-medium">
+                      Item {index + 1}
+                    </span>
                     {fields.length > 1 && (
                       <Button
                         type="button"
@@ -305,6 +317,29 @@ const WorkOrderMutateDrawer = ({
                       </FormItem>
                     )}
                   />
+                  <FormField
+                    control={form.control}
+                    name={`items.${index}.details`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Details</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            {...field}
+                            value={field.value || ""}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              field.onChange(value);
+                            }}
+                            placeholder="Item details"
+                            rows={4}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormMessage />
 
                   <div className="grid grid-cols-2 gap-3">
                     <FormField
@@ -319,8 +354,8 @@ const WorkOrderMutateDrawer = ({
                               {...field}
                               value={field.value || ""}
                               onChange={(e) => {
-                                const value = Number(e.target.value) || 0
-                                field.onChange(value)
+                                const value = Number(e.target.value) || 0;
+                                field.onChange(value);
                               }}
                               min={1}
                               placeholder="0"
@@ -343,8 +378,8 @@ const WorkOrderMutateDrawer = ({
                               {...field}
                               value={field.value || ""}
                               onChange={(e) => {
-                                const value = Number(e.target.value) || 0
-                                field.onChange(value)
+                                const value = Number(e.target.value) || 0;
+                                field.onChange(value);
                               }}
                               min={0}
                               step="0.01"
@@ -358,7 +393,11 @@ const WorkOrderMutateDrawer = ({
                   </div>
 
                   <div className="text-sm text-muted-foreground">
-                    Subtotal: ৳{((watchedItems[index]?.total_order || 0) * (watchedItems[index]?.unit_price || 0)).toLocaleString('en-IN')}
+                    Subtotal: ৳
+                    {(
+                      (watchedItems[index]?.total_order || 0) *
+                      (watchedItems[index]?.unit_price || 0)
+                    ).toLocaleString("en-IN")}
                   </div>
                 </div>
               ))}
@@ -367,7 +406,9 @@ const WorkOrderMutateDrawer = ({
             <div className="border rounded-lg p-4 bg-muted/50">
               <div className="flex justify-between items-center">
                 <span className="font-semibold">Total Amount:</span>
-                <span className="text-lg font-bold">৳{totalAmount.toLocaleString('en-IN')}</span>
+                <span className="text-lg font-bold">
+                  ৳{totalAmount.toLocaleString("en-IN")}
+                </span>
               </div>
             </div>
 
@@ -382,7 +423,9 @@ const WorkOrderMutateDrawer = ({
                       type="number"
                       {...field}
                       value={field.value || ""}
-                      onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                      onChange={(e) =>
+                        field.onChange(Number(e.target.value) || 0)
+                      }
                       min={0}
                       step="0.01"
                       placeholder="0.00"
@@ -404,7 +447,9 @@ const WorkOrderMutateDrawer = ({
                       type="number"
                       {...field}
                       value={field.value || ""}
-                      onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                      onChange={(e) =>
+                        field.onChange(Number(e.target.value) || 0)
+                      }
                       min={0}
                       step="0.01"
                       placeholder="0.00"
@@ -440,8 +485,8 @@ const WorkOrderMutateDrawer = ({
           <SheetClose asChild>
             <Button variant="outline">Close</Button>
           </SheetClose>
-          <Button 
-            form="work-order-form" 
+          <Button
+            form="work-order-form"
             type="submit"
             disabled={isUpdate && isLoadingDetails}
           >
@@ -450,7 +495,7 @@ const WorkOrderMutateDrawer = ({
         </SheetFooter>
       </SheetContent>
     </Sheet>
-  )
+  );
 }
 
 export default WorkOrderMutateDrawer
