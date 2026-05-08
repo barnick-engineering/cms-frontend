@@ -7,6 +7,7 @@ import WorkOrderTable from '@/components/work-orders/WorkOrderTable'
 import WorkOrderDialogs from '@/components/work-orders/WorkOrderDialogs'
 import { useQueries } from '@tanstack/react-query'
 import { getWorkOrderById } from '@/api/workOrderApi'
+import type { WorkOrderDetailData } from '@/interface/workOrderInterface'
 
 const WorkOrders = () => {
   const [pageIndex, setPageIndex] = useState(0)
@@ -43,7 +44,7 @@ const WorkOrders = () => {
     const detailsById = new Map(
       workOrderDetailsQueries
         .map((query) => query.data)
-        .filter(Boolean)
+        .filter((detail): detail is WorkOrderDetailData => Boolean(detail))
         .map((detail) => {
           const totalExpense =
             detail.expense?.reduce((sum, expenseGroup) => sum + (expenseGroup.total || 0), 0) ?? 0
