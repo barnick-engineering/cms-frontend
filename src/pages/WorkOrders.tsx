@@ -1,10 +1,12 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Main } from '@/components/layout/main'
 import { WorkOrdersProvider } from '@/components/work-orders/work-order-provider'
 import { useWorkOrderList } from '@/hooks/useWorkOrder'
 import WorkOrderCreateButton from '@/components/work-orders/WorkOrderCreateButton'
 import WorkOrderTable from '@/components/work-orders/WorkOrderTable'
 import WorkOrderDialogs from '@/components/work-orders/WorkOrderDialogs'
+import { useQueries } from '@tanstack/react-query'
+import { getWorkOrderById } from '@/api/workOrderApi'
 
 const WorkOrders = () => {
   const [pageIndex, setPageIndex] = useState(0)
@@ -29,6 +31,31 @@ const WorkOrders = () => {
 
   const workOrders = data?.data || []
   const total = data?.total || 0
+  const workOrderDetailsQueries = useQueries({
+    queries: workOrders.map((workOrder) => ({
+      queryKey: ['workOrders', 'detail-expense-total', workOrder.id],
+      queryFn: () => getWorkOrderById(workOrder.id),
+      enabled: !!workOrder.id,
+    })),
+  })
+
+  const normalizedWorkOrders = useMemo(() => {
+    const detailsById = new Map(
+      workOrderDetailsQueries
+        .map((query) => query.data)
+        .filter(Boolean)
+        .map((detail) => {
+          const totalExpense =
+            detail.expense?.reduce((sum, expenseGroup) => sum + (expenseGroup.total || 0), 0) ?? 0
+          return [detail.id, totalExpense]
+        })
+    )
+
+    return workOrders.map((workOrder) => ({
+      ...workOrder,
+      total_expense: detailsById.get(workOrder.id) ?? workOrder.total_expense ?? 0,
+    }))
+  }, [workOrders, workOrderDetailsQueries])
 
   return (
     <WorkOrdersProvider>
@@ -47,7 +74,7 @@ const WorkOrders = () => {
             <p>Error loading work orders.</p>
           ) : (
             <WorkOrderTable
-              data={workOrders}
+              data={normalizedWorkOrders}
               pageIndex={pageIndex}
               pageSize={pageSize}
               total={total}

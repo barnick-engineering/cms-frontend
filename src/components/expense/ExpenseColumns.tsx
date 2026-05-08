@@ -65,7 +65,7 @@ export const ExpenseColumns: ColumnDef<Expense>[] = [
         header: ({ column }) => <DataTableColumnHeader column={column} title='Amount' />,
         cell: ({ row }) => {
             const amount = row.getValue<number>('amount')
-            return `৳${amount.toLocaleString('en-IN')}`
+            return `৳${(amount ?? 0).toLocaleString("en-IN")}`;
         },
     },
     {
