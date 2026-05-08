@@ -261,25 +261,21 @@ export const generateWorkOrderInvoicePDF = async (workOrderDetail: WorkOrderDeta
 
     currentY = summaryY + 16;
 
-    // ---------- NOTES (bottom left, yellow separator) ----------
-    doc.setDrawColor(...COLORS.notesLine);
-    doc.setLineWidth(0.8);
-    doc.line(margin, currentY, margin + 60, currentY);
-    currentY += 8;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.text("NOTES", margin, currentY);
-    currentY += 6;
-    doc.setFont("helvetica", "normal");
+    // ---------- Signature section: On behalf of Barnick Pracharani ----------
+    const signatureX = margin;
+    // Keep signature near the bottom area of the page (above footer).
+    const signatureY = pageHeight - 34;
+    doc.setDrawColor(...COLORS.border);
+    doc.setLineWidth(0.3);
+    doc.line(signatureX, signatureY - 2, signatureX + 60, signatureY - 2);
+    doc.setFont("helvetica", "italic");
     doc.setFontSize(9);
     doc.setTextColor(...COLORS.textMuted);
-    const notesText =
-        workOrderDetail.remarks && workOrderDetail.remarks.trim()
-            ? workOrderDetail.remarks
-            : "Thank you for your business!";
-    const notesLines = doc.splitTextToSize(notesText, pageWidth - 2 * margin - 80);
-    doc.text(notesLines, margin, currentY);
+    doc.text("Signature", signatureX, signatureY + 4);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
     doc.setTextColor(...COLORS.textDark);
+    doc.text("On behalf of Barnick Pracharani", signatureX, signatureY + 12);
 
     // ---------- Footer ----------
     const WEBSITE = "https://barnickpracharani.com";
