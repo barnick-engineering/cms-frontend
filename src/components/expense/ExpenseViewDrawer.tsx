@@ -19,6 +19,7 @@ const ExpenseViewDrawer = ({
     currentRow,
 }: ExpenseViewDrawerProps) => {
     if (!currentRow) return null
+    const safeAmount = Number(currentRow.amount ?? 0)
 
     return (
         <Drawer open={open} onOpenChange={onOpenChange}>
@@ -51,7 +52,7 @@ const ExpenseViewDrawer = ({
 
                     <div>
                         <span className="font-medium text-foreground">Amount:</span>{' '}
-                        <span className="text-muted-foreground">৳{currentRow.amount.toLocaleString('en-IN')}</span>
+                        <span className="text-muted-foreground">৳{safeAmount.toLocaleString('en-IN')}</span>
                     </div>
 
                     <div>
