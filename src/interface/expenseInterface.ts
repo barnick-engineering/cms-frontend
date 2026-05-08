@@ -11,9 +11,9 @@ export interface Expense {
   bill_disbursed_date: string | null
   remarks: string | null
   expense_date: string
-  work_order: number
+  work_order: number | null
   customer: number | null
-  paid_by: number
+  paid_by: number | null
 }
 
 // Expense list response
@@ -29,11 +29,11 @@ export interface ExpenseListResponse {
 
 // Expense form interface (for create)
 export interface ExpenseFormInterface {
-  work_order?: string
+  work_order?: number | null
   purpose: string
-  customer?: string
-  paid_by?: string
-  details?: string
+  customer?: number | null
+  paid_by?: number | null
+  details?: string | null
   amount?: number
   expense_date?: string
   remarks?: string | null

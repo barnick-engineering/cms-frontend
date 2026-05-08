@@ -102,6 +102,12 @@ const ExpenseMutateDrawer = ({
             }))
     }, [teamData, paidBySearch])
 
+    const normalizeOptionalId = (value: string | number | null | undefined): number | null => {
+        if (value === undefined || value === null || value === "") return null
+        const parsed = Number(value)
+        return Number.isFinite(parsed) ? parsed : null
+    }
+
     const form = useForm<ExpenseFormType>({
         resolver: zodResolver(expenseFormSchema),
         defaultValues: {
@@ -149,14 +155,14 @@ const ExpenseMutateDrawer = ({
 
     const onSubmit: SubmitHandler<ExpenseFormType> = (data) => {
         const payload: ExpenseFormInterface = {
-            work_order: data.work_order ? String(data.work_order) : undefined,
+            work_order: normalizeOptionalId(data.work_order),
             purpose: data.purpose.trim(),
-            customer: data.customer ? String(data.customer) : undefined,
-            paid_by: data.paid_by ? String(data.paid_by) : undefined,
-            details: data.details?.trim() || undefined,
-            amount: data.amount || undefined,
-            expense_date: data.expense_date || undefined,
-            remarks: data.remarks || null,
+            customer: normalizeOptionalId(data.customer),
+            paid_by: normalizeOptionalId(data.paid_by),
+            details: data.details?.trim() || null,
+            amount: data.amount ?? 0,
+            expense_date: data.expense_date || new Date().toISOString().split("T")[0],
+            remarks: data.remarks?.trim() || null,
         }
 
         if (isUpdate && currentRow?.id) {
@@ -219,7 +225,7 @@ const ExpenseMutateDrawer = ({
                     <FormLabel>Customer</FormLabel>
                     <FormControl className="w-full">
                       <Combobox
-                        options={customerOptions}
+                        options={[{ value: "__none__", label: "No Customer" }, ...customerOptions]}
                         value={
                           field.value
                             ? typeof field.value === "string"
@@ -227,10 +233,10 @@ const ExpenseMutateDrawer = ({
                               : String(field.value)
                             : ""
                         }
-                        onSelect={(val) => field.onChange(val)}
+                        onSelect={(val) => field.onChange(val === "__none__" ? undefined : val)}
                         onSearch={setCustomerSearch}
                         loading={customersLoading}
-                        placeholder="Search and select customer..."
+                        placeholder="Search and select customer (optional)..."
                       />
                     </FormControl>
                     <FormMessage />
@@ -245,7 +251,7 @@ const ExpenseMutateDrawer = ({
                     <FormLabel>Work Order</FormLabel>
                     <FormControl className="w-full">
                       <Combobox
-                        options={workOrderOptions}
+                        options={[{ value: "__none__", label: "No Work Order" }, ...workOrderOptions]}
                         value={
                           typeof field.value === "string"
                             ? field.value
@@ -253,9 +259,9 @@ const ExpenseMutateDrawer = ({
                               ? String(field.value)
                               : ""
                         }
-                        onSelect={(val) => field.onChange(val || undefined)}
+                        onSelect={(val) => field.onChange(val === "__none__" ? undefined : val)}
                         onSearch={setWorkOrderSearch}
-                        placeholder="Select work order..."
+                        placeholder="Select work order (optional)..."
                       />
                     </FormControl>
                     <FormMessage />
