@@ -63,6 +63,13 @@ export const apiEndpoints: ApiEndpoints = {
     updateExpense: '/api/v1/expense/',
     deleteExpense: '/api/v1/expense/',
   },
+  loan: {
+    loanList: '/api/v1/loan',
+    createLoan: '/api/v1/loan/',
+    updateLoan: '/api/v1/loan/',
+    deleteLoan: '/api/v1/loan/',
+    getLoanById: '/api/v1/loan/',
+  },
   team: {
     teamList: '/api/v1/account/',
   },

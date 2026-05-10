@@ -52,6 +52,13 @@ export interface ApiEndpoints {
     updateExpense: string
     deleteExpense: string
   }
+  loan: {
+    loanList: string
+    createLoan: string
+    updateLoan: string
+    deleteLoan: string
+    getLoanById: string
+  }
   team: {
     teamList: string
   }
