@@ -15,6 +15,7 @@ const Inventory = lazy(() => import("@/pages/Inventory"))
 const WorkOrders = lazy(() => import("@/pages/WorkOrders"))
 const WorkOrderDetail = lazy(() => import("@/pages/WorkOrderDetail"))
 const Expense = lazy(() => import("@/pages/Expense"))
+const Loan = lazy(() => import("@/pages/Loan"))
 const Reports = lazy(() => import("@/pages/Reports"))
 const Teams = lazy(() => import("@/pages/Teams"))
 const Settings = lazy(() => import("@/features/settings"))
@@ -42,6 +43,7 @@ const AppRoutes = () => {
                             <Route path="/work-orders" element={<WorkOrders />} />
                             <Route path="/work-orders/:id" element={<WorkOrderDetail />} />
                             <Route path="/expense" element={<Expense />} />
+                            <Route path="/loan" element={<Loan />} />
                             <Route path="/teams" element={<Teams />} />
                             <Route
                                 path="/teams/add-user"
