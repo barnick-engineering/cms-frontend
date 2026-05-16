@@ -19,7 +19,7 @@ const WorkOrderViewDrawer = ({ open, onOpenChange, currentRow }: WorkOrderViewDr
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="mx-auto max-h-[90vh] max-w-4xl space-y-6 overflow-y-auto p-6">
+      <DrawerContent className="mx-auto max-h-[90vh] max-w-4xl min-w-0 space-y-6 overflow-y-auto p-6">
         <DrawerHeader>
           <DrawerTitle>Work Order Details</DrawerTitle>
           <DrawerDescription>
