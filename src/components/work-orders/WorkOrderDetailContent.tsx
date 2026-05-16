@@ -22,7 +22,7 @@ export function WorkOrderDetailContent({ workOrderDetail }: WorkOrderDetailConte
   const netProfit = itemsSubtotal - totalExpenses
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 max-w-full space-y-6">
       {/* Header Information */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card>
@@ -150,9 +150,9 @@ export function WorkOrderDetailContent({ workOrderDetail }: WorkOrderDetailConte
               Items ({workOrderDetail.total_items ?? workOrderDetail.items.length})
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="overflow-hidden rounded-lg border">
-              <table className="w-full">
+          <CardContent className="min-w-0">
+            <div className="overflow-x-auto rounded-lg border [-webkit-overflow-scrolling:touch]">
+              <table className="w-full min-w-[36rem] text-sm sm:text-base">
                 <thead className="bg-muted">
                   <tr>
                     <th className="p-3 text-left font-medium">Item</th>
@@ -199,7 +199,7 @@ export function WorkOrderDetailContent({ workOrderDetail }: WorkOrderDetailConte
           <CardHeader>
             <CardTitle>Expenses</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="min-w-0 space-y-4">
             {workOrderDetail.expense.map((expenseGroup, groupIndex) => (
               <div key={groupIndex} className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -210,8 +210,8 @@ export function WorkOrderDetailContent({ workOrderDetail }: WorkOrderDetailConte
                 </div>
                 <Separator />
                 {expenseGroup.details && expenseGroup.details.length > 0 && (
-                  <div className="overflow-hidden rounded-lg border">
-                    <table className="w-full">
+                  <div className="overflow-x-auto rounded-lg border [-webkit-overflow-scrolling:touch]">
+                    <table className="w-full min-w-[42rem] text-sm sm:text-base">
                       <thead className="bg-muted">
                         <tr>
                           <th className="p-3 text-left font-medium">Expense No</th>
