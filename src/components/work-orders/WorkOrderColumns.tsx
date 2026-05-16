@@ -79,7 +79,19 @@ export const WorkOrderColumns: ColumnDef<WorkOrderListInterface>[] = [
       const amount = row.getValue<number>('amount') || 0
       const totalExpense = row.getValue<number>('total_expense') || row.original.total_expense || 0
       const net = amount - totalExpense
-      return `৳${net.toLocaleString('en-IN')}`
+      const profitPct =
+        totalExpense > 0 ? (net / totalExpense) * 100 : null
+      const netStr = `৳${net.toLocaleString('en-IN')}`
+      const pctStr =
+        profitPct !== null ? ` (${profitPct.toFixed(2)}%)` : ''
+      return (
+        <span>
+          {netStr}
+          {pctStr ? (
+            <span className="text-muted-foreground">{pctStr}</span>
+          ) : null}
+        </span>
+      )
     },
   },
   {
