@@ -140,7 +140,9 @@ const Dashboard = () => {
           <Card className="lg:col-span-4">
             <CardHeader>
               <CardTitle className="text-base sm:text-lg">Monthly Sales</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">Sales performance over the last 12 months</CardDescription>
+              <CardDescription className="text-xs sm:text-sm">
+                Total sell vs total paid over the last 12 months
+              </CardDescription>
             </CardHeader>
             <CardContent className="overflow-x-auto">
               <DashboardOverview data={dashboardData} isLoading={isLoading} />
