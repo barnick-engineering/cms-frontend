@@ -23,6 +23,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
+import { DatePicker } from '@/components/date-picker'
 import { loanForOptions } from '@/constance/loanConstance'
 import { useCreateLoan, useUpdateLoan } from '@/hooks/useLoan'
 import type { Loan, LoanFormInterface } from '@/interface/loanInterface'
@@ -34,6 +35,25 @@ interface LoanMutateDrawerProps {
   onOpenChange: (open: boolean) => void
   currentRow?: Loan | null
   onSave?: (data: LoanFormInterface) => void
+}
+
+const getTodayDateString = () => new Date().toISOString().split('T')[0]
+
+const toDateString = (value?: string | null) => {
+  if (!value) return undefined
+  return value.split('T')[0]
+}
+
+const parseDateString = (dateString: string): Date => {
+  const [year, month, day] = dateString.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
+const formatDateToString = (date: Date): string => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 const LoanMutateDrawer = ({
@@ -54,6 +74,7 @@ const LoanMutateDrawer = ({
       amount: 0,
       paid: 0,
       remarks: '',
+      created_at: undefined,
     },
   })
   const amountValue = Number(form.watch('amount') || 0)
@@ -68,6 +89,7 @@ const LoanMutateDrawer = ({
         amount: Number(currentRow.amount || 0),
         paid: Number(currentRow.paid || 0),
         remarks: currentRow.remarks || '',
+        created_at: toDateString(currentRow.created_at || currentRow.created),
       })
       return
     }
@@ -79,6 +101,7 @@ const LoanMutateDrawer = ({
         amount: 0,
         paid: 0,
         remarks: '',
+        created_at: undefined,
       })
     }
   }, [open, currentRow, isUpdate, form])
@@ -97,6 +120,10 @@ const LoanMutateDrawer = ({
     }
 
     if (isUpdate && currentRow?.id) {
+      payload.created_at =
+        data.created_at?.trim() ||
+        toDateString(currentRow.created_at || currentRow.created) ||
+        getTodayDateString()
       updateMutation.mutate(
         { id: currentRow.id, data: payload },
         {
@@ -110,6 +137,8 @@ const LoanMutateDrawer = ({
       )
       return
     }
+
+    payload.created_at = data.created_at?.trim() || getTodayDateString()
 
     createMutation.mutate(payload, {
       onSuccess: () => {
@@ -218,6 +247,26 @@ const LoanMutateDrawer = ({
                 <Input type="number" min={0} value={computedRemaining} disabled readOnly />
               </FormControl>
             </FormItem>
+
+            <FormField
+              control={form.control}
+              name="created_at"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Created At</FormLabel>
+                  <FormControl className="w-full">
+                    <DatePicker
+                      selected={field.value ? parseDateString(field.value) : undefined}
+                      onSelect={(date) => {
+                        field.onChange(date ? formatDateToString(date) : undefined)
+                      }}
+                      placeholder="Pick a date (defaults to today)"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}

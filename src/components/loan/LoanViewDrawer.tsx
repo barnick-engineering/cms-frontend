@@ -50,9 +50,11 @@ const LoanViewDrawer = ({ open, onOpenChange, currentRow }: LoanViewDrawerProps)
             </span>
           </div>
           <div>
-            <span className="font-medium text-foreground">Created:</span>{' '}
+            <span className="font-medium text-foreground">Created At:</span>{' '}
             <span className="text-muted-foreground">
-              {currentRow.created ? new Date(currentRow.created).toLocaleString() : 'N/A'}
+              {currentRow.created_at || currentRow.created
+                ? new Date(currentRow.created_at || currentRow.created!).toLocaleDateString()
+                : 'N/A'}
             </span>
           </div>
           <div className="col-span-2">

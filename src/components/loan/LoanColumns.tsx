@@ -43,6 +43,15 @@ export const LoanColumns: ColumnDef<Loan>[] = [
     cell: ({ row }) => String(row.getValue('loan_from') || '-'),
   },
   {
+    accessorKey: 'created_at',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Created At" />,
+    cell: ({ row }) => {
+      const createdAt =
+        row.getValue<string>('created_at') || row.original.created_at || row.original.created
+      return createdAt ? new Date(createdAt).toLocaleDateString() : '-'
+    },
+  },
+  {
     accessorKey: 'amount',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Amount" />,
     cell: ({ row }) => `৳${Number(row.getValue('amount') || 0).toLocaleString('en-IN')}`,
@@ -65,14 +74,6 @@ export const LoanColumns: ColumnDef<Loan>[] = [
     accessorKey: 'remarks',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Remarks" />,
     cell: ({ row }) => String(row.getValue('remarks') || '-'),
-  },
-  {
-    accessorKey: 'created',
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Created" />,
-    cell: ({ row }) => {
-      const created = row.getValue<string>('created')
-      return created ? new Date(created).toLocaleDateString() : '-'
-    },
   },
   {
     id: 'actions',
