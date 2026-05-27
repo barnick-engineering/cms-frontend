@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTableColumnHeader } from '@/components/customers/DataTableColumnHeader'
 import type { Loan } from '@/interface/loanInterface'
+import { formatLoanCreatedDate } from '@/lib/loanDateUtils'
 import { DataTableRowActions } from './DataTableRowActions'
 
 export const LoanColumns: ColumnDef<Loan>[] = [
@@ -43,13 +44,9 @@ export const LoanColumns: ColumnDef<Loan>[] = [
     cell: ({ row }) => String(row.getValue('loan_from') || '-'),
   },
   {
-    accessorKey: 'created_at',
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Created At" />,
-    cell: ({ row }) => {
-      const createdAt =
-        row.getValue<string>('created_at') || row.original.created_at || row.original.created
-      return createdAt ? new Date(createdAt).toLocaleDateString() : '-'
-    },
+    accessorKey: 'created',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Created" />,
+    cell: ({ row }) => formatLoanCreatedDate(row.original),
   },
   {
     accessorKey: 'amount',

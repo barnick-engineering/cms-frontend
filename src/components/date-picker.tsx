@@ -1,4 +1,5 @@
 import { format } from 'date-fns'
+import { useState } from 'react'
 import { Calendar as CalendarIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
@@ -19,8 +20,10 @@ export function DatePicker({
   onSelect,
   placeholder = 'Pick a date',
 }: DatePickerProps) {
+  const [open, setOpen] = useState(false)
+
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant='outline'
@@ -40,7 +43,10 @@ export function DatePicker({
           mode='single'
           captionLayout='dropdown'
           selected={selected}
-          onSelect={onSelect}
+          onSelect={(date) => {
+            onSelect(date)
+            if (date) setOpen(false)
+          }}
           disabled={(date: Date) =>
             date > new Date() || date < new Date('1900-01-01')
           }

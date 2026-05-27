@@ -31,7 +31,10 @@ const LoanDialogs = () => {
             open={open === 'update'}
             onOpenChange={(val) => setOpen(val ? 'update' : null)}
             currentRow={currentRow}
-            onSave={() => setOpen(null)}
+            onSave={() => {
+              setOpen(null)
+              setCurrentRow(null)
+            }}
           />
           <ConfirmDialog
             key="loan-delete"

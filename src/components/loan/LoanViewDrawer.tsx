@@ -6,6 +6,7 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer'
 import type { Loan } from '@/interface/loanInterface'
+import { formatLoanCreatedDate } from '@/lib/loanDateUtils'
 
 type LoanViewDrawerProps = {
   open: boolean
@@ -51,11 +52,7 @@ const LoanViewDrawer = ({ open, onOpenChange, currentRow }: LoanViewDrawerProps)
           </div>
           <div>
             <span className="font-medium text-foreground">Created At:</span>{' '}
-            <span className="text-muted-foreground">
-              {currentRow.created_at || currentRow.created
-                ? new Date(currentRow.created_at || currentRow.created!).toLocaleDateString()
-                : 'N/A'}
-            </span>
+            <span className="text-muted-foreground">{formatLoanCreatedDate(currentRow)}</span>
           </div>
           <div className="col-span-2">
             <span className="font-medium text-foreground">Remarks:</span>{' '}
