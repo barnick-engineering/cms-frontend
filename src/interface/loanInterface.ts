@@ -4,7 +4,6 @@ export type LoanForOption = 'CEO' | 'CTO' | 'CMO' | 'Barnick Pracharani'
 
 export interface Loan {
   id: number
-  created_at?: string
   created?: string
   status: boolean
   created_by: number
@@ -40,7 +39,7 @@ export interface LoanFormInterface {
   paid?: number
   remaining?: number
   remarks?: string | null
-  created_at?: string
+  created?: string
 }
 
 export interface LoanTableProps {

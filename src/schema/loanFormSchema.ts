@@ -6,7 +6,7 @@ export const loanFormSchema = z.object({
   amount: z.number().min(0, 'Amount must be non-negative'),
   paid: z.number().min(0, 'Paid must be non-negative'),
   remarks: z.string().optional().nullable(),
-  created_at: z.string().optional(),
+  created: z.string().optional(),
 })
 
 export type LoanFormType = z.infer<typeof loanFormSchema>

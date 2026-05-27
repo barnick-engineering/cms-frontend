@@ -13,6 +13,23 @@ type BarnickWrapper<T> = {
   response_code?: number
 }
 
+const toDateString = (value: string) => value.split('T')[0]
+
+export const normalizeLoan = (loan: Loan): Loan => ({
+  ...loan,
+  created: loan.created ? toDateString(loan.created) : loan.created,
+})
+
+/** Backend field is `created` (YYYY-MM-DD). */
+export const buildLoanPayload = (data: LoanFormInterface): LoanFormInterface => {
+  const created = data.created?.trim()
+  if (!created) return data
+  return {
+    ...data,
+    created,
+  }
+}
+
 export const loanList = async (
   search?: string,
   startDate?: string,
@@ -35,7 +52,10 @@ export const loanList = async (
     : apiEndpoints.loan.loanList
 
   const res = await axiosInstance.get<LoanListResponse>(url)
-  return res.data
+  return {
+    ...res.data,
+    data: (res.data.data ?? []).map(normalizeLoan),
+  }
 }
 
 export const getLoanById = async (id: string | number): Promise<Loan> => {
@@ -43,15 +63,19 @@ export const getLoanById = async (id: string | number): Promise<Loan> => {
   const res = await axiosInstance.get<BarnickWrapper<Loan>>(
     `${apiEndpoints.loan.getLoanById}${id}/`
   )
-  return res.data.response_data ?? res.data.data ?? (res.data as unknown as Loan)
+  return normalizeLoan(
+    res.data.response_data ?? res.data.data ?? (res.data as unknown as Loan)
+  )
 }
 
 export const createLoan = async (data: LoanFormInterface): Promise<Loan> => {
   const res = await axiosInstance.post<BarnickWrapper<Loan>>(
     apiEndpoints.loan.createLoan,
-    data
+    buildLoanPayload(data)
   )
-  return res.data.response_data ?? res.data.data ?? (res.data as unknown as Loan)
+  return normalizeLoan(
+    res.data.response_data ?? res.data.data ?? (res.data as unknown as Loan)
+  )
 }
 
 export const updateLoan = async (
@@ -61,9 +85,11 @@ export const updateLoan = async (
   if (!id) throw new Error('Loan ID is required')
   const res = await axiosInstance.put<BarnickWrapper<Loan>>(
     `${apiEndpoints.loan.updateLoan}${id}/`,
-    data
+    buildLoanPayload(data as LoanFormInterface)
   )
-  return res.data.response_data ?? res.data.data ?? (res.data as unknown as Loan)
+  return normalizeLoan(
+    res.data.response_data ?? res.data.data ?? (res.data as unknown as Loan)
+  )
 }
 
 export const deleteLoan = async (id: string | number) => {
