@@ -88,4 +88,9 @@ export interface ApiEndpoints {
   aiAgent: {
     chat: string
   }
+  sampleHub: {
+    list: string
+    upload: string
+    delete: string
+  }
 }

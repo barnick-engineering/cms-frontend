@@ -21,6 +21,7 @@ export function flattenBarnickErrors(value: unknown): string {
 type BarnickErrorBody = {
   response_message?: unknown
   detail?: unknown
+  error?: unknown
 }
 
 /**
@@ -32,7 +33,15 @@ export function messageFromAxiosError(error: unknown): string {
     if (error instanceof Error) return error.message
     return 'Something went wrong.'
   }
-  const data = error.response?.data as BarnickErrorBody | undefined
+  const rawData = error.response?.data
+  if (typeof rawData === 'string' && rawData.trim()) {
+    return rawData
+  }
+
+  const data = rawData as BarnickErrorBody | undefined
+  if (typeof data?.error === 'string' && data.error.trim()) {
+    return data.error
+  }
   if (data?.response_message != null) {
     const msg = data.response_message
     if (typeof msg === 'string' && msg.trim()) return msg
@@ -64,6 +73,7 @@ const SKIP_FIELD_ERROR_KEYS = new Set([
   'data',
   'detail',
   'response_message',
+  'error',
 ])
 
 function recordFieldErrors(obj: Record<string, unknown>): Record<string, string[]> | null {
