@@ -1,6 +1,7 @@
 import {
   ChartNoAxesCombined,
   ClipboardPlus,
+  Images,
   LayoutDashboard,
   Package,
   HandCoins,
@@ -26,6 +27,7 @@ export const sidebarData: Omit<SidebarData, 'teams'> = {
         { title: 'Work Orders', url: '/work-orders', icon: Package },
         { title: 'Expense', url: '/expense', icon: ChartNoAxesCombined },
         { title: 'Loan', url: '/loan', icon: HandCoins },
+        { title: 'Sample Hub', url: '/sample-hub', icon: Images },
         { title: 'Reports', url: '/reports', icon: ClipboardPlus },
         { title: 'Teams', url: '/teams', icon: Users },
       ],

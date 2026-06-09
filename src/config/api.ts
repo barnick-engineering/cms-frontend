@@ -99,4 +99,9 @@ export const apiEndpoints: ApiEndpoints = {
   aiAgent: {
     chat: '/api/v1/ai-agent/chat/',
   },
+  sampleHub: {
+    list: '/api/v1/sample-hub/',
+    upload: '/api/v1/sample-hub/',
+    delete: '/api/v1/sample-hub/',
+  },
 }
