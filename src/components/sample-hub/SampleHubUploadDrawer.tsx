@@ -22,6 +22,11 @@ import {
   fieldErrorsFromAxiosError,
   messageFromAxiosError,
 } from '@/lib/barnickApiError'
+import {
+  isAllowedSampleImageFile,
+  isHeicLikeFile,
+  SAMPLE_IMAGE_ACCEPT,
+} from '@/lib/sampleHubUpload'
 import { cn } from '@/lib/utils'
 
 const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024
@@ -50,6 +55,7 @@ export function SampleHubUploadDrawer({
   )
   const [file, setFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [previewFailed, setPreviewFailed] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
   const [uploadError, setUploadError] = useState<string | null>(null)
 
@@ -93,6 +99,7 @@ export function SampleHubUploadDrawer({
       setFile(null)
       setFieldErrors({})
       setUploadError(null)
+      setPreviewFailed(false)
     }
   }, [open, defaultCustomerId, defaultWorkOrderId])
 
@@ -127,13 +134,14 @@ export function SampleHubUploadDrawer({
       return
     }
 
-    if (!selected.type.startsWith('image/')) {
+    if (!isAllowedSampleImageFile(selected)) {
       setFile(null)
       e.target.value = ''
-      toast.error('Please select an image file.')
+      toast.error('Please select an image file (JPG, PNG, HEIC, etc.).')
       return
     }
 
+    setPreviewFailed(false)
     setFile(selected)
   }
 
@@ -283,7 +291,7 @@ export function SampleHubUploadDrawer({
             <div>
               <h3 className="text-sm font-medium">Image file</h3>
               <p className="text-sm text-muted-foreground">
-                PNG, JPG, or other common image formats.
+                JPG, PNG, HEIC (iPhone), WebP, and other image formats.
               </p>
             </div>
 
@@ -297,12 +305,28 @@ export function SampleHubUploadDrawer({
                   fieldErrors.file?.[0] && 'border-destructive/50'
                 )}
               >
-                {previewUrl ? (
+                {file &&
+                previewUrl &&
+                !previewFailed &&
+                !isHeicLikeFile(file) ? (
                   <img
                     src={previewUrl}
                     alt="Preview"
                     className="max-h-52 w-full rounded-md object-contain"
+                    onError={() => setPreviewFailed(true)}
                   />
+                ) : file ? (
+                  <div className="flex flex-col items-center gap-2 px-4 text-center">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background shadow-sm">
+                      <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm font-medium">{file.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {isHeicLikeFile(file)
+                        ? 'HEIC selected — preview not shown in browser, upload will still work.'
+                        : 'Preview unavailable — file is ready to upload.'}
+                    </p>
+                  </div>
                 ) : (
                   <>
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background shadow-sm">
@@ -322,7 +346,7 @@ export function SampleHubUploadDrawer({
                 ref={fileInputRef}
                 id="sample-file"
                 type="file"
-                accept="image/*"
+                accept={SAMPLE_IMAGE_ACCEPT}
                 className="hidden"
                 onChange={handleFileChange}
               />
