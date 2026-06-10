@@ -22,6 +22,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
+import { NumberInput } from "@/components/ui/number-input"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import type { AxiosError } from "axios"
@@ -47,7 +48,7 @@ const ProductMutateDrawer = ({
     defaultValues: {
       name: "",
       details: "",
-      price: 0,
+      price: undefined,
     },
   })
 
@@ -62,7 +63,7 @@ const ProductMutateDrawer = ({
       form.reset({
         name: "",
         details: "",
-        price: 0,
+        price: undefined,
       })
     }
   }, [currentRow, form])
@@ -130,7 +131,7 @@ const ProductMutateDrawer = ({
           form.reset({
             name: "",
             details: "",
-            price: 0,
+            price: undefined,
           })
         }
       }}
@@ -187,12 +188,11 @@ const ProductMutateDrawer = ({
                 <FormItem>
                   <FormLabel>Price</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="number" 
-                      {...field} 
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                      placeholder="0" 
-                      min="0"
+                    <NumberInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="0"
+                      min={0}
                       step="0.01"
                     />
                   </FormControl>

@@ -13,6 +13,8 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { NumberInput } from '@/components/ui/number-input'
+import { coerceNumber } from '@/lib/numberInput'
 import {
   Sheet,
   SheetClose,
@@ -65,14 +67,14 @@ const LoanMutateDrawer = ({
     defaultValues: {
       loan_for: '',
       loan_from: '',
-      amount: 0,
-      paid: 0,
+      amount: undefined,
+      paid: undefined,
       remarks: '',
       created: undefined,
     },
   })
-  const amountValue = Number(form.watch('amount') || 0)
-  const paidValue = Number(form.watch('paid') || 0)
+  const amountValue = coerceNumber(form.watch('amount'))
+  const paidValue = coerceNumber(form.watch('paid'))
   const computedRemaining = Math.max(0, amountValue - paidValue)
 
   useEffect(() => {
@@ -81,8 +83,8 @@ const LoanMutateDrawer = ({
       form.reset({
         loan_for: '',
         loan_from: '',
-        amount: 0,
-        paid: 0,
+        amount: undefined,
+        paid: undefined,
         remarks: '',
         created: undefined,
       })
@@ -94,8 +96,8 @@ const LoanMutateDrawer = ({
       form.reset({
         loan_for: '',
         loan_from: '',
-        amount: 0,
-        paid: 0,
+        amount: undefined,
+        paid: undefined,
         remarks: '',
         created: undefined,
       })
@@ -119,8 +121,8 @@ const LoanMutateDrawer = ({
   }, [open, isUpdate, currentRow, loanDetails, isLoadingDetails, form])
 
   const onSubmit: SubmitHandler<LoanFormType> = (data) => {
-    const latestAmount = Number(form.getValues('amount') || 0)
-    const latestPaid = Number(form.getValues('paid') || 0)
+    const latestAmount = coerceNumber(form.getValues('amount'))
+    const latestPaid = coerceNumber(form.getValues('paid'))
     const latestCreated =
       form.getValues('created')?.trim() || data.created?.trim()
     const calculatedRemaining = Math.max(0, latestAmount - latestPaid)
@@ -226,12 +228,10 @@ const LoanMutateDrawer = ({
                 <FormItem>
                   <FormLabel>Amount *</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
+                    <NumberInput
                       min={0}
-                      {...field}
-                      value={field.value ?? 0}
-                      onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                      value={field.value}
+                      onChange={field.onChange}
                     />
                   </FormControl>
                   <FormMessage />
@@ -246,12 +246,10 @@ const LoanMutateDrawer = ({
                 <FormItem>
                   <FormLabel>Paid *</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
+                    <NumberInput
                       min={0}
-                      {...field}
-                      value={field.value ?? 0}
-                      onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                      value={field.value}
+                      onChange={field.onChange}
                     />
                   </FormControl>
                   <FormMessage />

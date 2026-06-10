@@ -22,6 +22,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
+import { NumberInput } from "@/components/ui/number-input"
 import { toast } from "sonner"
 import type { AxiosError } from "axios"
 import { useCreateInventory, useUpdateInventory } from "@/hooks/useInventory"
@@ -29,7 +30,6 @@ import { useShopStore } from "@/stores/shopStore"
 import { inventoryFormSchema } from "@/schema/inventoryFormSchema"
 import type { InventoryMutateDrawerProps } from "@/interface/inventoryInterface"
 
-// Combine the Zod schema type with the required unitOfMeasurementId
 type InventoryFormType = z.infer<typeof inventoryFormSchema>
 
 const InventoryMutateDrawer = ({
@@ -44,24 +44,21 @@ const InventoryMutateDrawer = ({
   const createMutation = useCreateInventory(shopId || "")
   const updateMutation = useUpdateInventory(shopId || "")
 
+  const emptyDefaults = {
+    name: "",
+    description: "",
+    quantity: undefined,
+    lastPrice: undefined,
+  } as unknown as InventoryFormType
+
   const form = useForm<InventoryFormType>({
     resolver: zodResolver(inventoryFormSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      quantity: 0,
-      lastPrice: 0,
-    },
+    defaultValues: emptyDefaults,
   })
 
   useEffect(() => {
     if (open) {
-      const emptyState: InventoryFormType = {
-        name: "",
-        description: "",
-        quantity: 0,
-        lastPrice: 0,
-      }
+      const emptyState = emptyDefaults
 
       let defaults = emptyState
 
@@ -205,15 +202,11 @@ const InventoryMutateDrawer = ({
                   <FormItem>
                     <FormLabel>Quantity</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                        type="number"
+                      <NumberInput
                         placeholder="0"
                         min={0}
-                        value={field.value ?? ''}
-                        onChange={(e) =>
-                          field.onChange(e.target.value ? Number(e.target.value) : null)
-                        }
+                        value={field.value}
+                        onChange={field.onChange}
                       />
                     </FormControl>
                     <FormMessage />
@@ -229,18 +222,12 @@ const InventoryMutateDrawer = ({
                   <FormItem className="w-full">
                     <FormLabel>Last Price</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                        type="number"
+                      <NumberInput
                         placeholder="0.00"
                         min={0}
                         step="0.01"
-                        value={field.value ?? ''}
-                        onChange={(e) => {
-                          const value = e.target.value
-                          field.onChange(value === '' ? null : parseFloat(value))
-                        }
-                        }
+                        value={field.value}
+                        onChange={field.onChange}
                       />
                     </FormControl>
                     <FormMessage />

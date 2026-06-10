@@ -22,6 +22,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
+import { NumberInput } from "@/components/ui/number-input"
+import { coerceNumber } from "@/lib/numberInput"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/date-picker"
 import { toast } from "sonner"
@@ -61,14 +63,20 @@ const WorkOrderMutateDrawer = ({
     }))
   }, [customersData])
 
+  const emptyItem = {
+    item: "",
+    total_order: undefined,
+    unit_price: undefined,
+  } as unknown as WorkOrderFormSchema["items"][number]
+
   const form = useForm<WorkOrderFormSchema>({
     resolver: zodResolver(workOrderFormSchema),
     defaultValues: {
       customer: undefined,
-      items: [{ item: "", total_order: 0, unit_price: 0 }],
+      items: [emptyItem],
       date: new Date().toISOString().split("T")[0],
-      total_paid: 0,
-      delivery_charge: 0,
+      total_paid: undefined,
+      delivery_charge: undefined,
       remarks: "",
     },
   })
@@ -98,10 +106,10 @@ const WorkOrderMutateDrawer = ({
     } else if (!open) {
       form.reset({
         customer: undefined,
-        items: [{ item: "", details: null, total_order: 0, unit_price: 0 }],
+        items: [{ ...emptyItem, details: null }],
         date: new Date().toISOString().split("T")[0],
-        total_paid: 0,
-        delivery_charge: 0,
+        total_paid: undefined,
+        delivery_charge: undefined,
         remarks: "",
       });
       setCustomerSearch("")
@@ -115,16 +123,16 @@ const WorkOrderMutateDrawer = ({
   const totalAmount = useMemo(() => {
     if (!watchedItems || watchedItems.length === 0) return 0
     return watchedItems.reduce((sum, item) => {
-      const quantity = Number(item.total_order) || 0
-      const price = Number(item.unit_price) || 0
+      const quantity = coerceNumber(item.total_order)
+      const price = coerceNumber(item.unit_price)
       return sum + (quantity * price)
     }, 0)
   }, [watchedItems])
 
   const onSubmit: SubmitHandler<WorkOrderFormSchema> = (data) => {
     const calculatedAmount = data.items.reduce((sum, item) => {
-      const quantity = Number(item.total_order) || 0
-      const price = Number(item.unit_price) || 0
+      const quantity = coerceNumber(item.total_order)
+      const price = coerceNumber(item.unit_price)
       return sum + (quantity * price)
     }, 0)
 
@@ -278,7 +286,7 @@ const WorkOrderMutateDrawer = ({
                   variant="outline"
                   size="sm"
                   onClick={() =>
-                    append({ item: "", total_order: 0, unit_price: 0 })
+                    append(emptyItem)
                   }
                 >
                   <Plus className="h-4 w-4 mr-1" />
@@ -349,14 +357,9 @@ const WorkOrderMutateDrawer = ({
                         <FormItem>
                           <FormLabel>Quantity *</FormLabel>
                           <FormControl>
-                            <Input
-                              type="number"
-                              {...field}
-                              value={field.value || ""}
-                              onChange={(e) => {
-                                const value = Number(e.target.value) || 0;
-                                field.onChange(value);
-                              }}
+                            <NumberInput
+                              value={field.value}
+                              onChange={field.onChange}
                               min={1}
                               placeholder="0"
                             />
@@ -373,14 +376,9 @@ const WorkOrderMutateDrawer = ({
                         <FormItem>
                           <FormLabel>Unit Price *</FormLabel>
                           <FormControl>
-                            <Input
-                              type="number"
-                              {...field}
-                              value={field.value || ""}
-                              onChange={(e) => {
-                                const value = Number(e.target.value) || 0;
-                                field.onChange(value);
-                              }}
+                            <NumberInput
+                              value={field.value}
+                              onChange={field.onChange}
                               min={0}
                               step="0.01"
                               placeholder="0.00"
@@ -419,13 +417,9 @@ const WorkOrderMutateDrawer = ({
                 <FormItem>
                   <FormLabel>Total Paid</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      {...field}
-                      value={field.value || ""}
-                      onChange={(e) =>
-                        field.onChange(Number(e.target.value) || 0)
-                      }
+                    <NumberInput
+                      value={field.value}
+                      onChange={field.onChange}
                       min={0}
                       step="0.01"
                       placeholder="0.00"
@@ -443,13 +437,9 @@ const WorkOrderMutateDrawer = ({
                 <FormItem>
                   <FormLabel>Delivery Charge</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      {...field}
-                      value={field.value || ""}
-                      onChange={(e) =>
-                        field.onChange(Number(e.target.value) || 0)
-                      }
+                    <NumberInput
+                      value={field.value}
+                      onChange={field.onChange}
                       min={0}
                       step="0.01"
                       placeholder="0.00"
