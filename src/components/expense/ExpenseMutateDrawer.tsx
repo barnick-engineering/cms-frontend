@@ -20,6 +20,8 @@ import {
     SheetTitle,
 } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
+import { NumberInput } from "@/components/ui/number-input"
+import { coerceNumber } from "@/lib/numberInput"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/date-picker"
 import { toast } from "sonner"
@@ -116,7 +118,7 @@ const ExpenseMutateDrawer = ({
             customer: undefined,
             paid_by: undefined,
             details: "",
-            amount: 0,
+            amount: undefined,
             expense_date: new Date().toISOString().split("T")[0],
             remarks: "",
         },
@@ -143,7 +145,7 @@ const ExpenseMutateDrawer = ({
                 customer: undefined,
                 paid_by: undefined,
                 details: "",
-                amount: 0,
+                amount: undefined,
                 expense_date: new Date().toISOString().split("T")[0],
                 remarks: "",
             })
@@ -160,7 +162,7 @@ const ExpenseMutateDrawer = ({
             customer: normalizeOptionalId(data.customer),
             paid_by: normalizeOptionalId(data.paid_by),
             details: data.details?.trim() || null,
-            amount: data.amount ?? 0,
+            amount: coerceNumber(data.amount),
             expense_date: data.expense_date || new Date().toISOString().split("T")[0],
             remarks: data.remarks?.trim() || null,
         }
@@ -334,15 +336,11 @@ const ExpenseMutateDrawer = ({
                 name="amount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Amount</FormLabel>
+                    <FormLabel>Amount *</FormLabel>
                     <FormControl className="w-full">
-                      <Input
-                        type="number"
-                        {...field}
-                        value={field.value || ""}
-                        onChange={(e) =>
-                          field.onChange(Number(e.target.value) || 0)
-                        }
+                      <NumberInput
+                        value={field.value}
+                        onChange={field.onChange}
                         min={0}
                         step="0.01"
                         placeholder="0.00"

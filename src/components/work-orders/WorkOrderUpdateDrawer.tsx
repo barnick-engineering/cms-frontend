@@ -21,17 +21,31 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-import { Input } from "@/components/ui/input"
+import { NumberInput } from "@/components/ui/number-input"
+import { coerceNumber } from "@/lib/numberInput"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
 import type { AxiosError } from "axios"
 import type { WorkOrder } from "@/interface/workOrderInterface"
 import { useUpdateWorkOrder } from "@/hooks/useWorkOrder"
 
-const updateWorkOrderSchema = z.object({
-  total_paid: z.number().min(0, "Amount must be 0 or more"),
-  paid: z.boolean().optional(),
-})
+const updateWorkOrderSchema = z
+  .object({
+    total_paid: z
+      .number({ error: "Amount is required" })
+      .min(0, "Amount must be 0 or more")
+      .optional(),
+    paid: z.boolean().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.paid && data.total_paid === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Enter an amount or mark as paid",
+        path: ["total_paid"],
+      })
+    }
+  })
 
 type UpdateWorkOrderSchema = z.infer<typeof updateWorkOrderSchema>
 
@@ -57,7 +71,7 @@ const WorkOrderUpdateDrawer = ({
   const form = useForm<UpdateWorkOrderSchema>({
     resolver: zodResolver(updateWorkOrderSchema),
     defaultValues: {
-      total_paid: 0,
+      total_paid: undefined,
       paid: false,
     },
   })
@@ -72,7 +86,9 @@ const WorkOrderUpdateDrawer = ({
     if (!currentRow) return
     // When Paid is checked: mark order fully paid (send remainder so total_paid = amount, status Paid, pending 0).
     // Amount received (data.total_paid) is not sent in that case—e.g. receive 70000, waive 500, mark paid.
-    const additionalAmount = data.paid ? pendingAmount : data.total_paid
+    const additionalAmount = data.paid
+      ? pendingAmount
+      : coerceNumber(data.total_paid)
 
     updateMutation.mutate(
       { id: currentRow.id, data: { total_paid: additionalAmount } },
@@ -152,11 +168,9 @@ const WorkOrderUpdateDrawer = ({
                 <FormItem>
                   <FormLabel>Amount received (optional when marking as paid)</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      {...field}
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                    <NumberInput
+                      value={field.value}
+                      onChange={field.onChange}
                       min={0}
                       step="0.01"
                       placeholder="0.00"
