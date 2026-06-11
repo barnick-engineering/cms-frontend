@@ -55,7 +55,11 @@ const ExpenseMutateDrawer = ({
 
     // Fetch work orders for combobox
     const [workOrderSearch, setWorkOrderSearch] = useState("")
-    const { data: workOrdersData } = useWorkOrderList(workOrderSearch || undefined, 100, 0)
+    const { data: workOrdersData } = useWorkOrderList({
+      search: workOrderSearch || undefined,
+      limit: 100,
+      offset: 0,
+    })
     const workOrderOptions = useMemo(() => {
         return (workOrdersData?.data || []).map((workOrder) => ({
           value: String(workOrder.id),

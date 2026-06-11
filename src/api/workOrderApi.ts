@@ -2,6 +2,7 @@ import { apiEndpoints } from "@/config/api"
 import { axiosInstance } from "./axios"
 import type {
   WorkOrderFormInterface,
+  WorkOrderListParams,
   WorkOrderListResponse,
   WorkOrder,
   WorkOrderDetailResponse,
@@ -9,21 +10,33 @@ import type {
   WorkOrderUpdatePayload,
 } from "@/interface/workOrderInterface"
 
-// work order list with search params and optional customer_id
+function appendWorkOrderListParams(params: URLSearchParams, filters: WorkOrderListParams) {
+  if (filters.search) params.append("search", filters.search)
+  if (filters.limit != null) params.append("limit", String(filters.limit))
+  if (filters.offset != null) params.append("offset", String(filters.offset))
+  if (filters.customer_id != null && filters.customer_id !== "") {
+    params.append("customer_id", String(filters.customer_id))
+  }
+  if (filters.start_date) params.append("start_date", filters.start_date)
+  if (filters.end_date) params.append("end_date", filters.end_date)
+  if (filters.payment_status) params.append("payment_status", filters.payment_status)
+  if (filters.work_order_no) params.append("work_order_no", filters.work_order_no)
+  if (filters.is_delivered != null) {
+    const delivered =
+      typeof filters.is_delivered === "boolean"
+        ? filters.is_delivered
+        : filters.is_delivered === "true"
+    params.append("is_delivered", delivered ? "true" : "false")
+  }
+}
+
 export const workOrderList = async (
-  search?: string,
-  limit?: number,
-  offset?: number,
-  customer_id?: string | number
+  params: WorkOrderListParams = {}
 ): Promise<WorkOrderListResponse> => {
-  const params = new URLSearchParams()
+  const searchParams = new URLSearchParams()
+  appendWorkOrderListParams(searchParams, params)
 
-  if (search) params.append("search", search)
-  if (limit) params.append("limit", String(limit))
-  if (offset) params.append("offset", String(offset))
-  if (customer_id != null && customer_id !== "") params.append("customer_id", String(customer_id))
-
-  const queryString = params.toString()
+  const queryString = searchParams.toString()
   const url = queryString
     ? `${apiEndpoints.workOrder.workOrderList}?${queryString}`
     : apiEndpoints.workOrder.workOrderList

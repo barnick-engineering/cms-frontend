@@ -77,10 +77,12 @@ export function SampleHubUploadDrawer({
   )
 
   const { data: workOrdersData, isLoading: workOrdersLoading } = useWorkOrderList(
-    workOrderSearch || undefined,
-    100,
-    0,
-    customerId,
+    {
+      search: workOrderSearch || undefined,
+      limit: 100,
+      offset: 0,
+      customer_id: customerId,
+    },
     { enabled: !!customerId }
   )
   const workOrderOptions = useMemo(

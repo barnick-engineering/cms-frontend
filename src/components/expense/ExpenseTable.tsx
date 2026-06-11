@@ -87,7 +87,11 @@ const ExpenseTable = ({
     }, [customersData])
 
     // Fetch work orders for filter combobox with search
-    const { data: workOrdersData, isLoading: workOrdersLoading } = useWorkOrderList(workOrderSearch || undefined, 100, 0)
+    const { data: workOrdersData, isLoading: workOrdersLoading } = useWorkOrderList({
+      search: workOrderSearch || undefined,
+      limit: 100,
+      offset: 0,
+    })
     const workOrderOptions = useMemo(() => {
         const options = (workOrdersData?.data || []).map((workOrder) => ({
             value: String(workOrder.id),
