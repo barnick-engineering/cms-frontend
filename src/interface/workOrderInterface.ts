@@ -15,9 +15,43 @@ export interface WorkOrderFormInterface {
   remarks?: string | null
 }
 
+export interface WorkOrderListItem {
+  id: number
+  order?: number
+  item: string
+  details?: string | null
+  total_order: number | string
+  unit_price: number | string
+  created?: string
+  status?: boolean
+  created_by?: number
+}
+
+export type WorkOrderPaymentStatus = 'paid' | 'pending' | 'partial'
+
+export interface WorkOrderListParams {
+  search?: string
+  limit?: number
+  offset?: number
+  customer_id?: string | number
+  start_date?: string
+  end_date?: string
+  payment_status?: WorkOrderPaymentStatus
+  is_delivered?: 'true' | 'false' | boolean
+  work_order_no?: string
+}
+
+export interface WorkOrderListSummary {
+  total_orders: number
+  total_amount: number
+  total_paid: number
+  total_pending: number
+}
+
 export interface WorkOrder {
   id: number
   customer: string // Customer name
+  customer_id?: number
   total_items: number
   created: string
   status: boolean
@@ -30,11 +64,13 @@ export interface WorkOrder {
   remarks: string | null
   date: string
   created_by: number
+  items?: WorkOrderListItem[]
 }
 
 export interface WorkOrderListResponse {
   data: WorkOrder[]
   total: number
+  summary?: WorkOrderListSummary
   prev_url: string | null
   next_url: string | null
   page: number
@@ -115,7 +151,6 @@ export interface DataTablePropsInterface {
   pageSize: number
   total: number
   onPageChange: (pageIndex: number) => void
-  onSearchChange?: (searchBy?: string) => void
   rowSelection?: Record<string, boolean>
 }
 

@@ -4,6 +4,10 @@ import { DataTableColumnHeader } from '../customers/DataTableColumnHeader'
 import { DataTableRowActions } from './DataTableRowActions'
 import type { WorkOrderListInterface } from '@/interface/workOrderInterface'
 import { Badge } from '../ui/badge'
+import {
+  getPaymentStatus,
+  getPendingAmount,
+} from '@/lib/workOrderPaymentStatus'
 
 export const WorkOrderColumns: ColumnDef<WorkOrderListInterface>[] = [
   {
@@ -35,7 +39,10 @@ export const WorkOrderColumns: ColumnDef<WorkOrderListInterface>[] = [
       const totalItems = row.original.total_items || 0
       return (
         <span>
-          {customer || 'N/A'} <span className="text-muted-foreground">({totalItems == 1 ? '1 item' : `${totalItems} items`})</span>
+          {customer || 'N/A'}{' '}
+          <span className="text-muted-foreground">
+            ({totalItems === 1 ? '1 item' : `${totalItems} items`})
+          </span>
         </span>
       )
     },
@@ -66,7 +73,8 @@ export const WorkOrderColumns: ColumnDef<WorkOrderListInterface>[] = [
       <DataTableColumnHeader column={column} title='Expenses' />
     ),
     cell: ({ row }) => {
-      const totalExpense = row.getValue<number>('total_expense') || row.original.total_expense || 0
+      const totalExpense =
+        row.getValue<number>('total_expense') || row.original.total_expense || 0
       return `৳${totalExpense.toLocaleString('en-IN')}`
     },
   },
@@ -77,7 +85,8 @@ export const WorkOrderColumns: ColumnDef<WorkOrderListInterface>[] = [
     ),
     cell: ({ row }) => {
       const amount = row.getValue<number>('amount') || 0
-      const totalExpense = row.getValue<number>('total_expense') || row.original.total_expense || 0
+      const totalExpense =
+        row.getValue<number>('total_expense') || row.original.total_expense || 0
       const net = amount - totalExpense
       const profitPct =
         totalExpense > 0 ? (net / totalExpense) * 100 : null
@@ -110,24 +119,42 @@ export const WorkOrderColumns: ColumnDef<WorkOrderListInterface>[] = [
       <DataTableColumnHeader column={column} title='Pending' />
     ),
     cell: ({ row }) => {
-      const amount = row.getValue<number>('amount')
-      const totalPaid = row.getValue<number>('total_paid')
-      const pending = (amount || 0) - (totalPaid || 0)
+      const amount = row.getValue<number>('amount') || 0
+      const totalPaid = row.getValue<number>('total_paid') || 0
+      const pending = getPendingAmount(amount, totalPaid)
       return `৳${pending.toLocaleString('en-IN')}`
+    },
+  },
+  {
+    id: 'payment_status',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Payment' />
+    ),
+    cell: ({ row }) => {
+      const amount = row.original.amount || 0
+      const totalPaid = row.original.total_paid || 0
+      const status = getPaymentStatus(amount, totalPaid)
+      const variant =
+        status === 'paid'
+          ? 'default'
+          : status === 'partial'
+            ? 'secondary'
+            : 'outline'
+      const label =
+        status === 'paid' ? 'Paid' : status === 'partial' ? 'Partial' : 'Pending'
+      return <Badge variant={variant}>{label}</Badge>
     },
   },
   {
     accessorKey: 'is_delivered',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Status' />
+      <DataTableColumnHeader column={column} title='Delivery' />
     ),
     cell: ({ row }) => {
-      const amount = row.getValue<number>('amount') || 0
-      const totalPaid = row.getValue<number>('total_paid') || 0
-      const isPaid = amount <= totalPaid
+      const isDelivered = row.getValue<boolean>('is_delivered')
       return (
-        <Badge variant={isPaid ? 'default' : 'secondary'}>
-          {isPaid ? 'Paid' : 'Pending'}
+        <Badge variant={isDelivered ? 'default' : 'secondary'}>
+          {isDelivered ? 'Delivered' : 'Not delivered'}
         </Badge>
       )
     },

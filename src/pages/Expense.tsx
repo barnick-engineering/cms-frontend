@@ -43,7 +43,7 @@ const Expense = () => {
 
   // Fetch customer and work order data to convert IDs to names
   const { data: customersData } = useCustomerList(undefined, 1000, 0)
-  const { data: workOrdersData } = useWorkOrderList(undefined, 1000, 0)
+  const { data: workOrdersData } = useWorkOrderList({ limit: 1000, offset: 0 })
 
   // Convert filter IDs to names and combine with search text
   const combinedSearch = useMemo(() => {

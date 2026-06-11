@@ -5,83 +5,100 @@ import { useWorkOrderList } from '@/hooks/useWorkOrder'
 import WorkOrderCreateButton from '@/components/work-orders/WorkOrderCreateButton'
 import WorkOrderTable from '@/components/work-orders/WorkOrderTable'
 import WorkOrderDialogs from '@/components/work-orders/WorkOrderDialogs'
-import { useQueries } from '@tanstack/react-query'
-import { getWorkOrderById } from '@/api/workOrderApi'
-import type { WorkOrderDetailData } from '@/interface/workOrderInterface'
+import {
+  WorkOrderFilters,
+  workOrderFiltersToParams,
+  type WorkOrderFilterValues,
+} from '@/components/work-orders/WorkOrderFilters'
+import { WorkOrderSummaryCards } from '@/components/work-orders/WorkOrderSummaryCards'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { messageFromAxiosError } from '@/lib/barnickApiError'
+
+const PAGE_SIZE = 10
+
+const EMPTY_FILTERS: WorkOrderFilterValues = {}
 
 const WorkOrders = () => {
   const [pageIndex, setPageIndex] = useState(0)
-  const [searchBy, setSearchBy] = useState('')
-  const pageSize = 10
-  const offset = pageIndex * pageSize
+  const [filters, setFilters] = useState<WorkOrderFilterValues>(EMPTY_FILTERS)
+
+  const offset = pageIndex * PAGE_SIZE
+
+  const listParams = useMemo(
+    () => workOrderFiltersToParams(filters, { limit: PAGE_SIZE, offset }),
+    [filters, offset]
+  )
 
   const handlePageChange = useCallback((index: number) => {
     setPageIndex(index)
   }, [])
 
-  const handleSearchChange = useCallback((value?: string) => {
-    setSearchBy(value || '')
+  const handleFiltersChange = useCallback(
+    (patch: Partial<WorkOrderFilterValues>) => {
+      setFilters((prev) => ({ ...prev, ...patch }))
+      setPageIndex(0)
+    },
+    []
+  )
+
+  const handleClearFilters = useCallback(() => {
+    setFilters(EMPTY_FILTERS)
     setPageIndex(0)
   }, [])
 
-  const { data, isLoading, isError } = useWorkOrderList(
-    searchBy || undefined,
-    pageSize,
-    offset
-  )
+  const { data, isLoading, isError, error, isFetching } = useWorkOrderList(listParams)
 
-  const workOrders = data?.data || []
-  const total = data?.total || 0
-  const workOrderDetailsQueries = useQueries({
-    queries: workOrders.map((workOrder) => ({
-      queryKey: ['workOrders', 'detail-expense-total', workOrder.id],
-      queryFn: () => getWorkOrderById(workOrder.id),
-      enabled: !!workOrder.id,
-    })),
-  })
-
-  const normalizedWorkOrders = useMemo(() => {
-    const detailsById = new Map(
-      workOrderDetailsQueries
-        .map((query) => query.data)
-        .filter((detail): detail is WorkOrderDetailData => Boolean(detail))
-        .map((detail) => {
-          const totalExpense =
-            detail.expense?.reduce((sum, expenseGroup) => sum + (expenseGroup.total || 0), 0) ?? 0
-          return [detail.id, totalExpense]
-        })
-    )
-
-    return workOrders.map((workOrder) => ({
-      ...workOrder,
-      total_expense: detailsById.get(workOrder.id) ?? workOrder.total_expense ?? 0,
-    }))
-  }, [workOrders, workOrderDetailsQueries])
+  const workOrders = data?.data ?? []
+  const total = data?.total ?? 0
+  const summary = data?.summary
 
   return (
     <WorkOrdersProvider>
       <Main>
-        <div className='mb-2 flex flex-wrap items-center justify-between space-y-2 gap-x-4'>
+        <div className='mb-4 flex flex-wrap items-center justify-between gap-4'>
           <div>
             <h2 className='text-2xl font-bold tracking-tight'>Work Orders</h2>
-            <p className='text-muted-foreground'>Here is a list of all your work orders</p>
+            <p className='text-muted-foreground'>
+              Filter, search, and manage work orders
+            </p>
           </div>
           <WorkOrderCreateButton />
         </div>
-        <div className='-mx-4 flex-1 overflow-auto px-4 py-1 lg:flex-row lg:space-y-0 lg:space-x-12'>
-          {isLoading ? (
+
+        <div className='-mx-4 flex-1 space-y-3 overflow-auto px-4 py-1'>
+          <WorkOrderSummaryCards
+            summary={summary}
+            isLoading={isLoading && !data}
+          />
+
+          {isError ? (
+            <Alert variant="destructive">
+              <AlertTitle>Error loading work orders</AlertTitle>
+              <AlertDescription>
+                {messageFromAxiosError(error)}
+              </AlertDescription>
+            </Alert>
+          ) : isLoading && !data ? (
             <p>Loading work orders data...</p>
-          ) : isError ? (
-            <p>Error loading work orders.</p>
           ) : (
-            <WorkOrderTable
-              data={normalizedWorkOrders}
-              pageIndex={pageIndex}
-              pageSize={pageSize}
-              total={total}
-              onPageChange={handlePageChange}
-              onSearchChange={handleSearchChange}
-            />
+            <>
+              <WorkOrderFilters
+                values={filters}
+                onChange={handleFiltersChange}
+                onClear={handleClearFilters}
+              />
+              <WorkOrderTable
+                data={workOrders}
+                pageIndex={pageIndex}
+                pageSize={PAGE_SIZE}
+                total={total}
+                onPageChange={handlePageChange}
+              />
+            </>
+          )}
+
+          {isFetching && !isLoading && (
+            <p className="text-xs text-muted-foreground">Updating results…</p>
           )}
         </div>
       </Main>

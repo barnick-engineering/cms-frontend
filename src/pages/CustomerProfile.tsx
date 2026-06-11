@@ -29,10 +29,11 @@ const CustomerProfile = () => {
     enabled: !!id,
   })
   const { data: workOrdersData, isLoading: workOrdersLoading } = useWorkOrderList(
-    undefined,
-    WORK_ORDERS_PAGE_SIZE,
-    offset,
-    id,
+    {
+      customer_id: id,
+      limit: WORK_ORDERS_PAGE_SIZE,
+      offset,
+    },
     { enabled: !!id }
   )
   const workOrders = workOrdersData?.data ?? []
