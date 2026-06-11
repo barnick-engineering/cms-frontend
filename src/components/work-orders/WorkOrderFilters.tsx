@@ -39,7 +39,6 @@ export type WorkOrderFilterValues = {
   endDate?: Date
   customerId?: string | number
   paymentStatus?: WorkOrderPaymentStatus
-  isDelivered?: 'true' | 'false'
   workOrderNo?: string
 }
 
@@ -54,7 +53,6 @@ function countAdvancedFilters(values: WorkOrderFilterValues) {
   if (values.workOrderNo) n++
   if (values.customerId) n++
   if (values.paymentStatus) n++
-  if (values.isDelivered) n++
   if (values.startDate && values.endDate) n++
   return n
 }
@@ -121,51 +119,27 @@ function AdvancedFilterFields({
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label className="text-xs font-medium">Payment</Label>
-          <Select
-            value={values.paymentStatus ?? 'all'}
-            onValueChange={(v) =>
-              onChange({
-                paymentStatus:
-                  v === 'all' ? undefined : (v as WorkOrderPaymentStatus),
-              })
-            }
-          >
-            <SelectTrigger className="h-8 w-full bg-background">
-              <SelectValue placeholder="All" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All payments</SelectItem>
-              <SelectItem value="paid">Paid</SelectItem>
-              <SelectItem value="partial">Partial</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label className="text-xs font-medium">Delivery</Label>
-          <Select
-            value={values.isDelivered ?? 'all'}
-            onValueChange={(v) =>
-              onChange({
-                isDelivered:
-                  v === 'all' ? undefined : (v as 'true' | 'false'),
-              })
-            }
-          >
-            <SelectTrigger className="h-8 w-full bg-background">
-              <SelectValue placeholder="All" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All delivery</SelectItem>
-              <SelectItem value="true">Delivered</SelectItem>
-              <SelectItem value="false">Not delivered</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="space-y-1.5">
+        <Label className="text-xs font-medium">Payment</Label>
+        <Select
+          value={values.paymentStatus ?? 'all'}
+          onValueChange={(v) =>
+            onChange({
+              paymentStatus:
+                v === 'all' ? undefined : (v as WorkOrderPaymentStatus),
+            })
+          }
+        >
+          <SelectTrigger className="h-8 w-full bg-background">
+            <SelectValue placeholder="All" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All payments</SelectItem>
+            <SelectItem value="paid">Paid</SelectItem>
+            <SelectItem value="partial">Partial</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-1.5">
@@ -279,13 +253,6 @@ export function WorkOrderFilters({
       onRemove: () => onChange({ paymentStatus: undefined }),
     })
   }
-  if (values.isDelivered) {
-    chips.push({
-      key: 'delivery',
-      label: values.isDelivered === 'true' ? 'Delivered' : 'Not delivered',
-      onRemove: () => onChange({ isDelivered: undefined }),
-    })
-  }
   if (values.startDate && values.endDate) {
     chips.push({
       key: 'dates',
@@ -363,7 +330,6 @@ export function WorkOrderFilters({
                           workOrderNo: undefined,
                           customerId: undefined,
                           paymentStatus: undefined,
-                          isDelivered: undefined,
                           startDate: undefined,
                           endDate: undefined,
                         })
@@ -421,7 +387,7 @@ export function WorkOrderFilters({
             <SheetHeader className="text-left">
               <SheetTitle>Filter work orders</SheetTitle>
               <SheetDescription>
-                Narrow by customer, payment, delivery, or date range.
+                Narrow by customer, payment, or date range.
               </SheetDescription>
             </SheetHeader>
             <div className="mt-4 overflow-y-auto pb-2">
@@ -437,7 +403,6 @@ export function WorkOrderFilters({
                     workOrderNo: undefined,
                     customerId: undefined,
                     paymentStatus: undefined,
-                    isDelivered: undefined,
                     startDate: undefined,
                     endDate: undefined,
                   })
@@ -469,7 +434,6 @@ export function workOrderFiltersToParams(
     work_order_no: filters.workOrderNo,
     customer_id: filters.customerId,
     payment_status: filters.paymentStatus,
-    is_delivered: filters.isDelivered,
     start_date:
       filters.startDate ? format(filters.startDate, 'yyyy-MM-dd') : undefined,
     end_date:

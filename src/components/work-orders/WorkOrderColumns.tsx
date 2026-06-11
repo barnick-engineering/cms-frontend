@@ -128,7 +128,7 @@ export const WorkOrderColumns: ColumnDef<WorkOrderListInterface>[] = [
   {
     id: 'payment_status',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Payment' />
+      <DataTableColumnHeader column={column} title='Status' />
     ),
     cell: ({ row }) => {
       const amount = row.original.amount || 0
@@ -143,20 +143,6 @@ export const WorkOrderColumns: ColumnDef<WorkOrderListInterface>[] = [
       const label =
         status === 'paid' ? 'Paid' : status === 'partial' ? 'Partial' : 'Pending'
       return <Badge variant={variant}>{label}</Badge>
-    },
-  },
-  {
-    accessorKey: 'is_delivered',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Delivery' />
-    ),
-    cell: ({ row }) => {
-      const isDelivered = row.getValue<boolean>('is_delivered')
-      return (
-        <Badge variant={isDelivered ? 'default' : 'secondary'}>
-          {isDelivered ? 'Delivered' : 'Not delivered'}
-        </Badge>
-      )
     },
   },
   {
