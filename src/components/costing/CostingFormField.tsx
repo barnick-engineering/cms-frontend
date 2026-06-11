@@ -20,7 +20,7 @@ export function CostingFormField({
       {hint && (
         <p className="text-xs text-muted-foreground leading-relaxed">{hint}</p>
       )}
-      <div className="max-w-md">{children}</div>
+      <div className="w-full sm:max-w-md">{children}</div>
     </div>
   )
 }

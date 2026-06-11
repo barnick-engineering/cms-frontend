@@ -23,12 +23,14 @@ export function CostingStepNav({
   return (
     <nav
       className={cn(
-        'costing-no-print rounded-lg border bg-muted/30 p-4',
+        'costing-no-print rounded-lg border bg-muted/30 p-3 sm:p-4',
         className
       )}
       aria-label="Calculation steps"
     >
-      <ol className="flex flex-col gap-2 sm:flex-row sm:items-stretch sm:gap-0">
+      <ol
+        className="flex flex-row items-stretch gap-2 overflow-x-auto pb-1 -mx-1 px-1 snap-x snap-mandatory scrollbar-thin sm:gap-0 sm:pb-0 sm:overflow-visible"
+      >
         {steps.map((step, index) => {
           const isComplete = index < currentStep
           const isCurrent = index === currentStep
@@ -37,7 +39,7 @@ export function CostingStepNav({
           return (
             <li
               key={step.id}
-              className="flex flex-1 items-center sm:min-w-0"
+              className="flex shrink-0 items-center snap-start sm:flex-1 sm:min-w-0"
             >
               {index > 0 && (
                 <span
@@ -52,7 +54,7 @@ export function CostingStepNav({
                 disabled={!isClickable}
                 onClick={() => isClickable && onStepClick(index)}
                 className={cn(
-                  'flex min-w-0 items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors sm:flex-1',
+                  'flex items-center gap-2 rounded-md px-2.5 py-2 text-left transition-colors sm:min-w-0 sm:flex-1',
                   isClickable && 'hover:bg-background/80 cursor-pointer',
                   !isClickable && 'cursor-default',
                   isCurrent && 'bg-background shadow-sm ring-1 ring-border'
@@ -60,14 +62,14 @@ export function CostingStepNav({
               >
                 <span
                   className={cn(
-                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
+                    'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold sm:h-8 sm:w-8',
                     isComplete && 'bg-primary text-primary-foreground',
                     isCurrent && !isComplete && 'bg-primary text-primary-foreground',
                     !isComplete && !isCurrent && 'bg-muted text-muted-foreground'
                   )}
                 >
                   {isComplete ? (
-                    <Check className="h-4 w-4" />
+                    <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   ) : (
                     index + 1
                   )}
@@ -75,7 +77,7 @@ export function CostingStepNav({
                 <span className="min-w-0">
                   <span
                     className={cn(
-                      'block truncate text-sm font-medium',
+                      'block truncate text-xs sm:text-sm font-medium',
                       isCurrent && 'text-foreground',
                       !isCurrent && 'text-muted-foreground'
                     )}
@@ -83,7 +85,7 @@ export function CostingStepNav({
                     {step.shortTitle ?? step.title}
                   </span>
                   {isCurrent && (
-                    <span className="block truncate text-xs text-muted-foreground">
+                    <span className="hidden truncate text-xs text-muted-foreground sm:block">
                       {step.title}
                     </span>
                   )}

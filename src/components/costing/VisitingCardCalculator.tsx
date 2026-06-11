@@ -187,7 +187,7 @@ export function VisitingCardCalculator({ item }: { item: CostingItem }) {
                 updateInput('sideSelection', v as 'single' | 'both')
               }
             >
-              <SelectTrigger className="h-10 w-full max-w-md">
+              <SelectTrigger className="h-10 w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -203,7 +203,7 @@ export function VisitingCardCalculator({ item }: { item: CostingItem }) {
           >
             <div className="flex items-center gap-3">
               <NumberInput
-                className="h-10 w-full max-w-md"
+                className="h-10 w-full"
                 value={costingNumberValue(inputs, 'designFee')}
                 onChange={(v) => updateInput('designFee', v ?? '')}
                 placeholder="0"
@@ -217,7 +217,7 @@ export function VisitingCardCalculator({ item }: { item: CostingItem }) {
             hint="Number of visiting cards to produce."
           >
             <NumberInput
-              className="h-10 w-full max-w-md"
+              className="h-10 w-full"
               value={costingNumberValue(inputs, 'totalQuantity')}
               onChange={(v) => updateInput('totalQuantity', v ?? '')}
             />
@@ -231,7 +231,7 @@ export function VisitingCardCalculator({ item }: { item: CostingItem }) {
               value={String(calc.colors)}
               onValueChange={(v) => updateInput('colors', Number(v))}
             >
-              <SelectTrigger className="h-10 w-full max-w-md">
+              <SelectTrigger className="h-10 w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -252,7 +252,7 @@ export function VisitingCardCalculator({ item }: { item: CostingItem }) {
               value={calc.paperType}
               onValueChange={(v) => updateInput('paperType', v)}
             >
-              <SelectTrigger className="h-10 w-full max-w-md">
+              <SelectTrigger className="h-10 w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -298,7 +298,7 @@ export function VisitingCardCalculator({ item }: { item: CostingItem }) {
 
       {step === 2 && (
         <div className="space-y-8">
-          <div className="space-y-4 max-w-md">
+          <div className="space-y-4 w-full">
             <div className="flex items-start gap-3 rounded-lg border p-4">
               <Checkbox
                 id="matt"
@@ -343,7 +343,7 @@ export function VisitingCardCalculator({ item }: { item: CostingItem }) {
                 updateInput('cuttingType', v as 'regular' | 'dye')
               }
             >
-              <SelectTrigger className="h-10 w-full max-w-md">
+              <SelectTrigger className="h-10 w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -367,7 +367,7 @@ export function VisitingCardCalculator({ item }: { item: CostingItem }) {
           >
             <div className="flex items-center gap-3">
               <NumberInput
-                className="h-10 w-full max-w-md"
+                className="h-10 w-full"
                 value={costingNumberValue(inputs, 'profitMargin')}
                 onChange={(v) => updateInput('profitMargin', v ?? '')}
                 placeholder="0"
