@@ -46,11 +46,4 @@ export interface ExpenseTableProps {
   pageSize: number
   total: number
   onPageChange: (index: number) => void
-  onSearchChange?: (value?: string) => void
-  onCustomerFilterChange?: (value?: string | number) => void
-  onWorkOrderFilterChange?: (value?: string | number) => void
-  onPurposeFilterChange?: (value?: string) => void
-  customerFilter?: string | number
-  workOrderFilter?: string | number
-  purposeFilter?: string
 }
