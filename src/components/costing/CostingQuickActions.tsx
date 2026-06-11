@@ -1,14 +1,20 @@
-import { FileDown, FileJson, User } from 'lucide-react'
+import { ChevronDown, FileDown, FileJson, User } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
 import type { CostingQuoteSnapshot } from '@/interface/costingInterface'
 import {
   downloadCostingCustomerSlip,
   type CostingCustomerSlipData,
 } from '@/lib/costing/customerSlipPrint'
 import { downloadCostingThermalSlip } from '@/lib/costing/thermalReceiptPrint'
+import { cn } from '@/lib/utils'
 import { generateCostingQuotePDF } from '@/utils/enums/costingQuotePdf'
 import type { CostingBreakdownData } from './CostingBreakdownCard'
 
@@ -27,6 +33,7 @@ export function CostingQuickActions({
 }: CostingQuickActionsProps) {
   const [downloadingCustomer, setDownloadingCustomer] = useState(false)
   const [downloadingCosting, setDownloadingCosting] = useState(false)
+  const [moreExportsOpen, setMoreExportsOpen] = useState(false)
 
   const handleDownloadCostingSlip = async () => {
     setDownloadingCosting(true)
@@ -82,6 +89,27 @@ export function CostingQuickActions({
     }
   }
 
+  const secondaryExports = (
+    <>
+      <Button
+        variant="outline"
+        className="w-full gap-2 bg-transparent"
+        onClick={handleExportJson}
+      >
+        <FileJson className="h-4 w-4" />
+        Export JSON
+      </Button>
+      <Button
+        variant="outline"
+        className="w-full gap-2 bg-transparent"
+        onClick={handleExportPdf}
+      >
+        <FileDown className="h-4 w-4" />
+        Export PDF
+      </Button>
+    </>
+  )
+
   return (
     <Card className={className}>
       <CardHeader>
@@ -111,22 +139,36 @@ export function CostingQuickActions({
         <p className="text-xs text-muted-foreground text-center px-1">
           JPG image with full internal production breakdown.
         </p>
-        <Button
-          variant="outline"
-          className="w-full gap-2 bg-transparent"
-          onClick={handleExportJson}
+
+        {/* Desktop: show all export options */}
+        <div className="hidden sm:block space-y-2">
+          {secondaryExports}
+        </div>
+
+        {/* Mobile: collapse JSON/PDF under "More exports" */}
+        <Collapsible
+          open={moreExportsOpen}
+          onOpenChange={setMoreExportsOpen}
+          className="sm:hidden"
         >
-          <FileJson className="h-4 w-4" />
-          Export JSON
-        </Button>
-        <Button
-          variant="outline"
-          className="w-full gap-2 bg-transparent"
-          onClick={handleExportPdf}
-        >
-          <FileDown className="h-4 w-4" />
-          Export PDF
-        </Button>
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="ghost"
+              className="w-full justify-between gap-2 text-muted-foreground"
+            >
+              More exports
+              <ChevronDown
+                className={cn(
+                  'h-4 w-4 shrink-0 transition-transform',
+                  moreExportsOpen && 'rotate-180'
+                )}
+              />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-2 pt-1">
+            {secondaryExports}
+          </CollapsibleContent>
+        </Collapsible>
       </CardContent>
     </Card>
   )

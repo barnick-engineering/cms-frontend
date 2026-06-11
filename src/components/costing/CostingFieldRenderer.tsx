@@ -30,7 +30,7 @@ export function CostingFieldRenderer({
       <CostingFormField label={field.label} hint={field.placeholder}>
         <div className="flex items-center gap-3">
           <NumberInput
-            className="h-10 w-full max-w-md"
+            className="h-10 w-full"
             value={value as number | string | undefined}
             placeholder={field.placeholder}
             onChange={(v) => onChange(v ?? '')}
@@ -47,7 +47,7 @@ export function CostingFieldRenderer({
 
   if (field.type === 'checkbox') {
     return (
-      <div className="flex items-start gap-3 rounded-lg border bg-muted/20 p-4 max-w-md">
+      <div className="flex w-full items-start gap-3 rounded-lg border bg-muted/20 p-4">
         <Checkbox
           checked={Boolean(value)}
           onCheckedChange={(checked) => onChange(Boolean(checked))}
@@ -69,7 +69,7 @@ export function CostingFieldRenderer({
     return (
       <CostingFormField label={field.label}>
         <Select value={String(value)} onValueChange={(v) => onChange(v)}>
-          <SelectTrigger className="h-10 w-full max-w-md">
+          <SelectTrigger className="h-10 w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -90,7 +90,7 @@ export function CostingFieldRenderer({
         <RadioGroup
           value={String(value)}
           onValueChange={(v) => onChange(v)}
-          className="flex flex-col gap-3 max-w-md"
+          className="flex w-full flex-col gap-3"
         >
           {field.options?.map((opt) => (
             <div

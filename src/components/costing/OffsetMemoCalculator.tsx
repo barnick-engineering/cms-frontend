@@ -176,7 +176,7 @@ export function OffsetMemoCalculator({ item }: { item: CostingItem }) {
           <CostingFormField label="Design price" hint="Artwork or setup charge.">
             <div className="flex items-center gap-3">
               <NumberInput
-                className="h-10 w-full max-w-md"
+                className="h-10 w-full"
                 value={costingNumberValue(inputs, 'designPrice')}
                 onChange={(v) => setNumberInput('designPrice', v)}
                 placeholder="0"
@@ -190,7 +190,7 @@ export function OffsetMemoCalculator({ item }: { item: CostingItem }) {
             hint="How many memo pads or sheets to produce."
           >
             <NumberInput
-              className="h-10 w-full max-w-md"
+              className="h-10 w-full"
               value={costingNumberValue(inputs, 'totalOrder')}
               onChange={(v) => setNumberInput('totalOrder', v)}
             />
@@ -201,7 +201,7 @@ export function OffsetMemoCalculator({ item }: { item: CostingItem }) {
               value={String(calc.totalColors)}
               onValueChange={(v) => updateInput('totalColors', Number(v))}
             >
-              <SelectTrigger className="h-10 w-full max-w-md">
+              <SelectTrigger className="h-10 w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -222,7 +222,7 @@ export function OffsetMemoCalculator({ item }: { item: CostingItem }) {
               value={calc.paperGSM}
               onValueChange={(v) => updateInput('paperGSM', v)}
             >
-              <SelectTrigger className="h-10 w-full max-w-md">
+              <SelectTrigger className="h-10 w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -247,7 +247,7 @@ export function OffsetMemoCalculator({ item }: { item: CostingItem }) {
                 updateInput('memoSize', v as '9x11.5' | '5.75x9')
               }
             >
-              <SelectTrigger className="h-10 w-full max-w-md">
+              <SelectTrigger className="h-10 w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -264,7 +264,7 @@ export function OffsetMemoCalculator({ item }: { item: CostingItem }) {
           <CostingFormField label="Per sheet price">
             <div className="flex items-center gap-3">
               <NumberInput
-                className="h-10 w-full max-w-md"
+                className="h-10 w-full"
                 value={costingNumberValue(inputs, 'perSheetPrice')}
                 onChange={(v) => setNumberInput('perSheetPrice', v)}
               />
@@ -283,7 +283,7 @@ export function OffsetMemoCalculator({ item }: { item: CostingItem }) {
                 updateInput('bindingType', v as 'pad' | 'memo')
               }
             >
-              <SelectTrigger className="h-10 w-full max-w-md">
+              <SelectTrigger className="h-10 w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -330,7 +330,7 @@ export function OffsetMemoCalculator({ item }: { item: CostingItem }) {
           >
             <div className="flex items-center gap-3">
               <NumberInput
-                className="h-10 w-full max-w-md"
+                className="h-10 w-full"
                 value={costingNumberValue(inputs, 'profitMargin')}
                 onChange={(v) => setNumberInput('profitMargin', v)}
                 placeholder="0"
