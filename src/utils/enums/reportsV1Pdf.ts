@@ -80,29 +80,35 @@ export function generateCustomerWorkOrdersPdf(
 
 export function generateBalanceSheetPdf(
   payload: BalanceSheetReportResponse,
-  dateRange?: { from: string; to: string }
+  dateRange?: { from: string; to: string },
+  collectedIncome?: number,
+  realizedNetProfit?: number,
+  realizedMargin?: number
 ) {
   const doc = new jsPDF()
-  const y = addReportHeader(doc, 'Balance Sheet Report', dateRange ?? (payload.period ? { from: payload.period.start_date, to: payload.period.end_date } : undefined))
+  const y = addReportHeader(doc, 'Realized P&L Report', dateRange ?? (payload.period ? { from: payload.period.start_date, to: payload.period.end_date } : undefined))
   const d = payload.data
+  const income = collectedIncome ?? d.income
+  const profit = realizedNetProfit ?? d.net_profit
+  const margin = realizedMargin ?? d.profit_margin_percent
   doc.setFont('helvetica', 'bold')
-  doc.text('Income:', 14, y)
+  doc.text('Collected income:', 14, y)
   doc.setFont('helvetica', 'normal')
-  doc.text(fmt(d.income), 60, y)
+  doc.text(fmt(income), 80, y)
   doc.setFont('helvetica', 'bold')
   doc.text('Expenses:', 14, y + 8)
   doc.setFont('helvetica', 'normal')
-  doc.text(fmt(d.expenses), 60, y + 8)
+  doc.text(fmt(d.expenses), 80, y + 8)
   doc.setFont('helvetica', 'bold')
-  doc.text('Net profit:', 14, y + 16)
+  doc.text('Realized net profit:', 14, y + 16)
   doc.setFont('helvetica', 'normal')
-  doc.text(fmt(d.net_profit), 60, y + 16)
+  doc.text(fmt(profit), 80, y + 16)
   doc.setFont('helvetica', 'bold')
-  doc.text('Profit margin:', 14, y + 24)
+  doc.text('Margin on collected:', 14, y + 24)
   doc.setFont('helvetica', 'normal')
-  doc.text(`${d.profit_margin_percent}%`, 60, y + 24)
+  doc.text(`${margin?.toFixed(1) ?? d.profit_margin_percent}%`, 80, y + 24)
   pageFooter(doc)
-  doc.save(`Balance_Sheet_Report_${Date.now()}.pdf`)
+  doc.save(`Realized_PL_Report_${Date.now()}.pdf`)
 }
 
 export function generateWorkOrderDetailsPdf(
@@ -194,4 +200,190 @@ export function generateTrendingPdf(
   doc.text(`Total orders: ${summary.total_orders}`, 14, y + 18)
   pageFooter(doc)
   doc.save(`Trending_Report_${Date.now()}.pdf`)
+}
+
+export function generateCollectionsOutstandingPdf(
+  data: CustomerWorkOrderReportRow[],
+  summary: CustomerWorkOrderReportSummary | undefined,
+  dateRange?: { from: string; to: string },
+  collected?: number,
+  pending?: number
+) {
+  const doc = new jsPDF()
+  let y = addReportHeader(doc, 'Collections & Outstanding Report', dateRange)
+  if (summary) {
+    doc.setFont('helvetica', 'bold')
+    doc.text(`Collected: ${fmt(collected ?? summary.grand_total_paid)}`, 14, y)
+    doc.text(`Outstanding: ${fmt(pending ?? summary.grand_total_pending)}`, 14, y + 6)
+    y += 14
+  }
+  autoTable(doc, {
+    startY: y,
+    head: [['Customer', 'Work value', 'Collected', 'Pending', 'Orders']],
+    body: data.map((r) => [
+      r.customer_name,
+      fmt(r.total_amount),
+      fmt(r.total_paid),
+      fmt(r.pending),
+      String(r.order_count),
+    ]),
+    theme: 'striped',
+    headStyles: { fillColor: [51, 65, 85], textColor: 255, halign: 'center' },
+    styles: { fontSize: 9 },
+  })
+  pageFooter(doc)
+  doc.save(`Collections_Outstanding_Report_${Date.now()}.pdf`)
+}
+
+export function generateExpenseByPurposePdf(
+  data: ExpenseReportV1Row[],
+  dateRange?: { from: string; to: string }
+) {
+  const map = new Map<string, { count: number; amount: number }>()
+  for (const row of data) {
+    const p = row.purpose?.trim() || 'Other'
+    const e = map.get(p) ?? { count: 0, amount: 0 }
+    e.count += 1
+    e.amount += row.amount
+    map.set(p, e)
+  }
+  const rows = Array.from(map.entries())
+    .map(([purpose, v]) => [purpose, String(v.count), fmt(v.amount)])
+    .sort((a, b) => Number(b[2].replace(/,/g, '')) - Number(a[2].replace(/,/g, '')))
+
+  const doc = new jsPDF()
+  const y = addReportHeader(doc, 'Expense by Purpose Report', dateRange)
+  autoTable(doc, {
+    startY: y,
+    head: [['Purpose', 'Count', 'Amount']],
+    body: rows,
+    theme: 'striped',
+    headStyles: { fillColor: [51, 65, 85], textColor: 255, halign: 'center' },
+    styles: { fontSize: 9 },
+  })
+  pageFooter(doc)
+  doc.save(`Expense_By_Purpose_Report_${Date.now()}.pdf`)
+}
+
+export function generateProductMixPdf(
+  data: WorkOrderDetailsReportRow[],
+  dateRange?: { from: string; to: string }
+) {
+  const map = new Map<string, { qty: number; revenue: number }>()
+  for (const row of data) {
+    for (const item of row.items ?? []) {
+      const name = item.item?.trim() || 'Unknown'
+      const qty = Number(item.total_order) || 0
+      const rev = qty * (Number(item.unit_price) || 0)
+      const e = map.get(name) ?? { qty: 0, revenue: 0 }
+      e.qty += qty
+      e.revenue += rev
+      map.set(name, e)
+    }
+  }
+  const rows = Array.from(map.entries())
+    .map(([item, v]) => [item, String(v.qty), fmt(v.revenue)])
+    .sort((a, b) => Number(b[2].replace(/,/g, '')) - Number(a[2].replace(/,/g, '')))
+
+  const doc = new jsPDF()
+  const y = addReportHeader(doc, 'Product Mix Report', dateRange)
+  autoTable(doc, {
+    startY: y,
+    head: [['Item', 'Quantity', 'Revenue']],
+    body: rows,
+    theme: 'striped',
+    headStyles: { fillColor: [51, 65, 85], textColor: 255, halign: 'center' },
+    styles: { fontSize: 9 },
+  })
+  pageFooter(doc)
+  doc.save(`Product_Mix_Report_${Date.now()}.pdf`)
+}
+
+export type ExecutiveSummaryExportData = {
+  worked: number
+  paid: number
+  pending: number
+  expenses: number
+  netProfit: number
+  workOrders?: number
+  customers?: number
+  topCustomers: Array<{ name: string; amount: number }>
+  topPurposes: Array<{ purpose: string; amount: number }>
+}
+
+export function generateExecutiveSummaryPdf(
+  data: ExecutiveSummaryExportData,
+  dateRange?: { from: string; to: string }
+) {
+  const doc = new jsPDF()
+  let y = addReportHeader(doc, 'Executive Business Summary', dateRange)
+  doc.setFont('helvetica', 'bold')
+  doc.text(`Work value: ${fmt(data.worked)}`, 14, y)
+  doc.text(`Collected: ${fmt(data.paid)}`, 14, y + 6)
+  doc.text(`Pending: ${fmt(data.pending)}`, 14, y + 12)
+  doc.text(`Expenses: ${fmt(data.expenses)}`, 14, y + 18)
+  doc.text(`Realized profit: ${fmt(data.netProfit)}`, 14, y + 24)
+  y += 34
+
+  if (data.topCustomers.length > 0) {
+    autoTable(doc, {
+      startY: y,
+      head: [['Top customers', 'Amount']],
+      body: data.topCustomers.map((c) => [c.name, fmt(c.amount)]),
+      theme: 'striped',
+      styles: { fontSize: 9 },
+    })
+    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8
+  }
+
+  if (data.topPurposes.length > 0) {
+    autoTable(doc, {
+      startY: y,
+      head: [['Top expense purposes', 'Amount']],
+      body: data.topPurposes.map((p) => [p.purpose, fmt(p.amount)]),
+      theme: 'striped',
+      styles: { fontSize: 9 },
+    })
+  }
+
+  pageFooter(doc)
+  doc.save(`Executive_Summary_Report_${Date.now()}.pdf`)
+}
+
+export function generateLoanSummaryPdf(
+  loans: Array<{
+    loan_for: string
+    loan_from: string | null
+    amount: number
+    paid: number
+    remaining: number
+  }>,
+  summary?: { total_loan: number; total_paid: number; total_remaining: number },
+  dateRange?: { from: string; to: string }
+) {
+  const doc = new jsPDF()
+  let y = addReportHeader(doc, 'Loans & Advances Report', dateRange)
+  if (summary) {
+    doc.setFont('helvetica', 'bold')
+    doc.text(`Total loan: ${fmt(summary.total_loan)}`, 14, y)
+    doc.text(`Total paid: ${fmt(summary.total_paid)}`, 14, y + 6)
+    doc.text(`Outstanding: ${fmt(summary.total_remaining)}`, 14, y + 12)
+    y += 20
+  }
+  autoTable(doc, {
+    startY: y,
+    head: [['Loan for', 'From', 'Amount', 'Paid', 'Remaining']],
+    body: loans.map((l) => [
+      l.loan_for,
+      l.loan_from ?? '—',
+      fmt(l.amount),
+      fmt(l.paid),
+      fmt(l.remaining),
+    ]),
+    theme: 'striped',
+    headStyles: { fillColor: [51, 65, 85], textColor: 255, halign: 'center' },
+    styles: { fontSize: 9 },
+  })
+  pageFooter(doc)
+  doc.save(`Loan_Summary_Report_${Date.now()}.pdf`)
 }

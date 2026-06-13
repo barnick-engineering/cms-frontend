@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import type { ColumnDef } from '@tanstack/react-table'
 import type {
   CustomerWorkOrderReportRow,
@@ -5,21 +6,37 @@ import type {
   ExpenseReportV1Row,
   TrendingReportRow,
 } from '@/interface/reportV1Interface'
+import {
+  computeRealizedProfit,
+  computeCollectionRate,
+  computePendingAmount,
+} from '@/lib/reports/collectedProfit'
 
 const formatCurrency = (n: number) => `৳${(n ?? 0).toLocaleString('en-IN')}`
 const formatDate = (s: string | null | undefined) =>
   s ? new Date(s).toLocaleDateString() : '–'
 
 export const CustomerWorkOrderReportColumns: ColumnDef<CustomerWorkOrderReportRow>[] = [
-  { accessorKey: 'customer_name', header: 'Customer Name' },
+  {
+    accessorKey: 'customer_name',
+    header: 'Customer',
+    cell: ({ row }) => (
+      <Link
+        to={`/customers/${row.original.customer_id}`}
+        className="font-medium text-primary hover:underline"
+      >
+        {row.original.customer_name}
+      </Link>
+    ),
+  },
   {
     accessorKey: 'total_amount',
-    header: 'Total Amount',
+    header: 'Work value',
     cell: ({ getValue }) => formatCurrency(getValue() as number),
   },
   {
     accessorKey: 'total_paid',
-    header: 'Total Paid',
+    header: 'Collected',
     cell: ({ getValue }) => formatCurrency(getValue() as number),
   },
   {
@@ -27,7 +44,18 @@ export const CustomerWorkOrderReportColumns: ColumnDef<CustomerWorkOrderReportRo
     header: 'Pending',
     cell: ({ getValue }) => formatCurrency(getValue() as number),
   },
-  { accessorKey: 'order_count', header: 'Order Count' },
+  {
+    id: 'collection_rate',
+    header: 'Collection %',
+    cell: ({ row }) => {
+      const rate = computeCollectionRate(
+        row.original.total_amount,
+        row.original.total_paid
+      )
+      return `${rate.toFixed(1)}%`
+    },
+  },
+  { accessorKey: 'order_count', header: 'Orders' },
 ]
 
 export const WorkOrderDetailsReportColumns: ColumnDef<WorkOrderDetailsReportRow>[] = [
@@ -43,15 +71,23 @@ export const WorkOrderDetailsReportColumns: ColumnDef<WorkOrderDetailsReportRow>
   },
   {
     id: 'amount',
-    header: 'Amount',
+    header: 'Work value',
     accessorFn: (row) => row.work_order.amount,
     cell: ({ row }) => formatCurrency(row.original.work_order.amount),
   },
   {
     id: 'total_paid',
-    header: 'Total Paid',
+    header: 'Collected',
     accessorFn: (row) => row.work_order.total_paid,
     cell: ({ row }) => formatCurrency(row.original.work_order.total_paid),
+  },
+  {
+    id: 'pending',
+    header: 'Pending',
+    cell: ({ row }) => {
+      const wo = row.original.work_order
+      return formatCurrency(computePendingAmount(wo.amount, wo.total_paid))
+    },
   },
   {
     id: 'date',
@@ -61,13 +97,17 @@ export const WorkOrderDetailsReportColumns: ColumnDef<WorkOrderDetailsReportRow>
   },
   {
     accessorKey: 'total_expense',
-    header: 'Total Expense',
+    header: 'Expenses',
     cell: ({ getValue }) => formatCurrency(getValue() as number),
   },
   {
-    accessorKey: 'net_profit',
-    header: 'Net Profit',
-    cell: ({ getValue }) => formatCurrency(getValue() as number),
+    id: 'realized_profit',
+    header: 'Realized profit',
+    cell: ({ row }) => {
+      const wo = row.original.work_order
+      const profit = computeRealizedProfit(wo.total_paid, row.original.total_expense)
+      return formatCurrency(profit)
+    },
   },
 ]
 
@@ -116,7 +156,7 @@ export const TrendingReportColumns: ColumnDef<TrendingReportRow>[] = [
   { accessorKey: 'period', header: 'Period' },
   {
     accessorKey: 'revenue',
-    header: 'Revenue',
+    header: 'Revenue (work value)',
     cell: ({ getValue }) => formatCurrency(getValue() as number),
   },
   {
@@ -126,8 +166,8 @@ export const TrendingReportColumns: ColumnDef<TrendingReportRow>[] = [
   },
   {
     accessorKey: 'net_profit',
-    header: 'Net Profit',
+    header: 'Net profit',
     cell: ({ getValue }) => formatCurrency(getValue() as number),
   },
-  { accessorKey: 'order_count', header: 'Order Count' },
+  { accessorKey: 'order_count', header: 'Orders' },
 ]

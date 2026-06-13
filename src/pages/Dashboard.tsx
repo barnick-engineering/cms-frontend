@@ -7,14 +7,23 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Main } from '@/components/layout/main'
-import DashboardOverview from '@/components/dashboard/DashboardOverview'
 import RecentWorkordersTable from '@/components/dashboard/RecentWorkordersTable'
-import BusinessAnalytics from '@/components/dashboard/BusinessAnalytics'
+import { DashboardPeriodSnapshot } from '@/components/dashboard/DashboardPeriodSnapshot'
+import { DashboardMoneyFlow } from '@/components/dashboard/DashboardMoneyFlow'
+import { DashboardTwelveMonthAnalytics } from '@/components/dashboard/DashboardTwelveMonthAnalytics'
+import { DashboardCrossFunctionalInsights } from '@/components/dashboard/DashboardCrossFunctionalInsights'
+import { DashboardPaymentCharts } from '@/components/dashboard/DashboardPaymentCharts'
+import { DashboardTopCustomers } from '@/components/dashboard/DashboardTopCustomers'
+import { DashboardExpenseSnapshot } from '@/components/dashboard/DashboardExpenseSnapshot'
 import { useDashboardData } from '@/hooks/useDashboard'
+import {
+  useBalanceSheetReportV1,
+  useCustomerWorkOrdersReport,
+  useExpensesReportV1,
+} from '@/hooks/useReportV1'
 import DateRangeSearch from '@/components/DateRangeSearch'
 import { format, subDays } from 'date-fns'
 import type { DateRange } from 'react-day-picker'
-import { TrendingDown, Users, Package, FileText } from 'lucide-react'
 
 const getDefaultDateRange = (): DateRange => {
   const end = new Date()
@@ -25,7 +34,7 @@ const getDefaultDateRange = (): DateRange => {
 const Dashboard = () => {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(getDefaultDateRange)
 
-  const dashboardParams = useMemo(() => {
+  const dashboardApiParams = useMemo(() => {
     const from = dateRange?.from
     const to = dateRange?.to
     if (from && to) {
@@ -37,34 +46,70 @@ const Dashboard = () => {
     return undefined
   }, [dateRange])
 
-  const { data, isLoading, isError, error } = useDashboardData(dashboardParams)
+  const reportHookParams = useMemo(() => {
+    const from = dateRange?.from
+    const to = dateRange?.to
+    if (!from || !to) return undefined
+    return {
+      startDate: format(from, 'yyyy-MM-dd'),
+      endDate: format(to, 'yyyy-MM-dd'),
+    }
+  }, [dateRange])
 
-  if (isError) {
-    return (
-      <Main>
-        <div className="flex flex-col items-center justify-center h-96 gap-2">
-          <p className="text-destructive text-lg font-semibold">Error loading dashboard data.</p>
-          {error && (
-            <p className="text-muted-foreground text-sm">
-              {error instanceof Error ? error.message : 'Unknown error occurred'}
-            </p>
-          )}
-        </div>
-      </Main>
+  const reportsEnabled = !!reportHookParams
+
+  const {
+    data: dashboardResponse,
+    isLoading: dashboardLoading,
+    isError: dashboardError,
+    error: dashboardErr,
+  } = useDashboardData(dashboardApiParams)
+
+  const {
+    data: twelveMonthResponse,
+    isLoading: twelveMonthLoading,
+  } = useDashboardData(undefined)
+
+  const { data: balanceSheet, isLoading: balanceLoading } =
+    useBalanceSheetReportV1(reportHookParams, { enabled: reportsEnabled })
+
+  const { data: customerReport, isLoading: customersLoading } =
+    useCustomerWorkOrdersReport(
+      reportHookParams
+        ? { ...reportHookParams, limit: 100, offset: 0 }
+        : undefined,
+      { enabled: reportsEnabled }
     )
-  }
 
-  if (isLoading && !data) {
-    return (
-      <Main>
-        <div className="flex items-center justify-center h-96">
-          <p className="text-muted-foreground">Loading dashboard...</p>
-        </div>
-      </Main>
+  const { data: expenseReport, isLoading: expensesLoading } =
+    useExpensesReportV1(
+      reportHookParams
+        ? { ...reportHookParams, limit: 100, offset: 0 }
+        : undefined,
+      { enabled: reportsEnabled }
     )
-  }
 
-  const dashboardData = data?.data
+  const dashboardData = dashboardResponse?.data
+  const twelveMonthData = twelveMonthResponse?.data
+  const balance = balanceSheet?.data
+
+  const paid = dashboardData?.paid ?? 0
+  const pending = dashboardData?.total_pending ?? 0
+  const worked = dashboardData?.worked ?? 0
+
+  const expenses =
+    balance?.expenses ?? dashboardData?.total_regular_expense ?? 0
+
+  // Profit and margin use collected revenue only — pending is excluded
+  const realizedNetProfit = paid - expenses
+  const realizedMargin =
+    paid > 0 ? (realizedNetProfit / paid) * 100 : undefined
+
+  const snapshotLoading = dashboardLoading || balanceLoading
+  const activeCustomers =
+    customerReport?.summary?.total_customers ??
+    customerReport?.data?.length ??
+    0
 
   const handleDateChange = (from?: Date, to?: Date) => {
     if (from && to) {
@@ -74,12 +119,35 @@ const Dashboard = () => {
     }
   }
 
+  if (dashboardError) {
+    return (
+      <Main>
+        <div className="flex flex-col items-center justify-center h-96 gap-2">
+          <p className="text-destructive text-lg font-semibold">
+            Error loading dashboard data.
+          </p>
+          {dashboardErr && (
+            <p className="text-muted-foreground text-sm">
+              {dashboardErr instanceof Error
+                ? dashboardErr.message
+                : 'Unknown error occurred'}
+            </p>
+          )}
+        </div>
+      </Main>
+    )
+  }
+
   return (
     <Main>
       <div className="mb-4 sm:mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-1 text-sm sm:text-base">Overview of your business performance</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            Dashboard
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+            How your print business is performing this period
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <DateRangeSearch value={dateRange} onDateChange={handleDateChange} />
@@ -87,80 +155,87 @@ const Dashboard = () => {
       </div>
 
       <div className="space-y-6">
-        {/* Business Analytics Dashboard */}
-        <BusinessAnalytics data={dashboardData} isLoading={isLoading} />
+        <DashboardPeriodSnapshot
+          worked={worked}
+          paid={paid}
+          pending={pending}
+          expenses={expenses}
+          netProfit={realizedNetProfit}
+          marginPercent={realizedMargin}
+          customers={dashboardData?.total_customer}
+          workOrders={dashboardData?.total_workorder}
+          products={dashboardData?.total_product}
+          isLoading={snapshotLoading}
+        />
 
-        {/* Statistics Cards */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Customers</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{isLoading ? '...' : dashboardData?.total_customer ?? 0}</div>
-            </CardContent>
-          </Card>
+        <DashboardMoneyFlow
+          worked={worked}
+          paid={paid}
+          pending={pending}
+          expenses={expenses}
+          netProfit={realizedNetProfit}
+          isLoading={snapshotLoading}
+        />
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Products</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{isLoading ? '...' : dashboardData?.total_product ?? 0}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Work Orders</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{isLoading ? '...' : dashboardData?.total_workorder ?? 0}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Expenses</CardTitle>
-              <TrendingDown className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {isLoading ? '...' : `৳${(dashboardData?.total_regular_expense ?? 0).toLocaleString('en-IN')}`}
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+          <DashboardTwelveMonthAnalytics
+            monthlySales={twelveMonthData?.monthly_sales}
+            isLoading={twelveMonthLoading && !twelveMonthData}
+          />
+          <DashboardCrossFunctionalInsights
+            worked={worked}
+            paid={paid}
+            pending={pending}
+            expenses={expenses}
+            netProfit={realizedNetProfit}
+            marginPercent={realizedMargin}
+            activeCustomers={activeCustomers}
+            expenseCount={expenseReport?.summary?.count}
+            totalExpenseAmount={expenseReport?.summary?.total_expenses}
+            isLoading={snapshotLoading || customersLoading || expensesLoading}
+          />
         </div>
 
-        {/* Charts and Recent Workorders */}
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
-          <Card className="lg:col-span-4">
-            <CardHeader>
-              <CardTitle className="text-base sm:text-lg">Monthly Sales</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
-                Total sell vs total paid over the last 12 months
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="overflow-x-auto">
-              <DashboardOverview data={dashboardData} isLoading={isLoading} />
-            </CardContent>
-          </Card>
+        <DashboardPaymentCharts
+          paid={paid}
+          pending={pending}
+          income={paid}
+          expenses={expenses}
+          netProfit={realizedNetProfit}
+          isLoading={snapshotLoading}
+        />
 
-          <Card className="lg:col-span-3">
-            <CardHeader>
-              <CardTitle className="text-base sm:text-lg">Recent Work Orders</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
-                {dashboardData?.recent_workorders?.length ?? 0} recent work orders
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="overflow-x-auto">
-              <RecentWorkordersTable data={dashboardData} isLoading={isLoading} />
-            </CardContent>
-          </Card>
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+          <DashboardTopCustomers
+            data={customerReport}
+            isLoading={customersLoading}
+            reportFrom={reportHookParams?.startDate}
+            reportTo={reportHookParams?.endDate}
+          />
+          <DashboardExpenseSnapshot
+            data={expenseReport}
+            isLoading={expensesLoading}
+            reportFrom={reportHookParams?.startDate}
+            reportTo={reportHookParams?.endDate}
+          />
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base sm:text-lg">
+              Recent work orders
+            </CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              Latest jobs — payment status at a glance
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="overflow-x-auto">
+            <RecentWorkordersTable
+              data={dashboardData}
+              isLoading={dashboardLoading && !dashboardData}
+            />
+          </CardContent>
+        </Card>
       </div>
     </Main>
   )

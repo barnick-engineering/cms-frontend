@@ -10,6 +10,7 @@ import type {
   TrendingReportRow,
   TrendingReportSummary,
 } from '@/interface/reportV1Interface'
+import type { ExecutiveSummaryExportData } from '@/utils/enums/reportsV1Pdf'
 
 const REPORT_HEADER = 'Barnick Pracharani'
 
@@ -50,16 +51,19 @@ export function generateCustomerWorkOrdersExcel(
 
 export function generateBalanceSheetExcel(
   payload: BalanceSheetReportResponse,
-  dateRange?: { from: string; to: string }
+  dateRange?: { from: string; to: string },
+  collectedIncome?: number,
+  realizedNetProfit?: number,
+  realizedMargin?: number
 ) {
   const d = payload.data
   const period = dateRange ?? (payload.period ? { from: payload.period.start_date, to: payload.period.end_date } : undefined)
   const rows = [
-    ...headerRows('Balance Sheet Report', period),
-    ['Income', d.income],
+    ...headerRows('Realized P&L Report', period),
+    ['Collected income', collectedIncome ?? d.income],
     ['Expenses', d.expenses],
-    ['Net profit', d.net_profit],
-    ['Profit margin (%)', d.profit_margin_percent],
+    ['Realized net profit', realizedNetProfit ?? d.net_profit],
+    ['Margin on collected (%)', realizedMargin ?? d.profit_margin_percent],
   ]
   const ws = XLSX.utils.aoa_to_sheet(rows)
   const wb = XLSX.utils.book_new()
@@ -149,4 +153,163 @@ export function generateTrendingExcel(
     type: 'application/octet-stream',
   })
   saveAs(blob, `Trending_Report_${Date.now()}.xlsx`)
+}
+
+export function generateCollectionsOutstandingExcel(
+  data: CustomerWorkOrderReportRow[],
+  summary: CustomerWorkOrderReportSummary,
+  dateRange?: { from: string; to: string }
+) {
+  const rows = [
+    ...headerRows('Collections & Outstanding Report', dateRange),
+    ['Customer', 'Work value', 'Collected', 'Pending', 'Orders'],
+    ...data.map((r) => [
+      r.customer_name,
+      r.total_amount,
+      r.total_paid,
+      r.pending,
+      r.order_count,
+    ]),
+    [],
+    ['Grand total amount', summary.grand_total_amount],
+    ['Grand total paid', summary.grand_total_paid],
+    ['Grand total pending', summary.grand_total_pending],
+  ]
+  const ws = XLSX.utils.aoa_to_sheet(rows)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Collections')
+  const blob = new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })], {
+    type: 'application/octet-stream',
+  })
+  saveAs(blob, `Collections_Outstanding_Report_${Date.now()}.xlsx`)
+}
+
+export function generateExpenseByPurposeExcel(
+  data: ExpenseReportV1Row[],
+  dateRange?: { from: string; to: string }
+) {
+  const map = new Map<string, { count: number; amount: number }>()
+  for (const row of data) {
+    const p = row.purpose?.trim() || 'Other'
+    const e = map.get(p) ?? { count: 0, amount: 0 }
+    e.count += 1
+    e.amount += row.amount
+    map.set(p, e)
+  }
+  const aggregated = Array.from(map.entries())
+    .map(([purpose, v]) => [purpose, v.count, v.amount])
+    .sort((a, b) => (b[2] as number) - (a[2] as number))
+
+  const rows = [
+    ...headerRows('Expense by Purpose Report', dateRange),
+    ['Purpose', 'Count', 'Amount'],
+    ...aggregated,
+  ]
+  const ws = XLSX.utils.aoa_to_sheet(rows)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Expense by Purpose')
+  const blob = new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })], {
+    type: 'application/octet-stream',
+  })
+  saveAs(blob, `Expense_By_Purpose_Report_${Date.now()}.xlsx`)
+}
+
+export function generateProductMixExcel(
+  data: WorkOrderDetailsReportRow[],
+  dateRange?: { from: string; to: string }
+) {
+  const map = new Map<string, { qty: number; revenue: number }>()
+  for (const row of data) {
+    for (const item of row.items ?? []) {
+      const name = item.item?.trim() || 'Unknown'
+      const qty = Number(item.total_order) || 0
+      const rev = qty * (Number(item.unit_price) || 0)
+      const e = map.get(name) ?? { qty: 0, revenue: 0 }
+      e.qty += qty
+      e.revenue += rev
+      map.set(name, e)
+    }
+  }
+  const aggregated = Array.from(map.entries())
+    .map(([item, v]) => [item, v.qty, v.revenue])
+    .sort((a, b) => (b[2] as number) - (a[2] as number))
+
+  const rows = [
+    ...headerRows('Product Mix Report', dateRange),
+    ['Item', 'Quantity', 'Revenue'],
+    ...aggregated,
+  ]
+  const ws = XLSX.utils.aoa_to_sheet(rows)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Product Mix')
+  const blob = new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })], {
+    type: 'application/octet-stream',
+  })
+  saveAs(blob, `Product_Mix_Report_${Date.now()}.xlsx`)
+}
+
+export function generateExecutiveSummaryExcel(
+  data: ExecutiveSummaryExportData,
+  dateRange?: { from: string; to: string }
+) {
+  const rows = [
+    ...headerRows('Executive Business Summary', dateRange),
+    ['Work value', data.worked],
+    ['Collected', data.paid],
+    ['Pending', data.pending],
+    ['Expenses', data.expenses],
+    ['Realized profit', data.netProfit],
+    [],
+    ['Top customers', 'Amount'],
+    ...data.topCustomers.map((c) => [c.name, c.amount]),
+    [],
+    ['Top expense purposes', 'Amount'],
+    ...data.topPurposes.map((p) => [p.purpose, p.amount]),
+  ]
+  const ws = XLSX.utils.aoa_to_sheet(rows)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Executive Summary')
+  const blob = new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })], {
+    type: 'application/octet-stream',
+  })
+  saveAs(blob, `Executive_Summary_Report_${Date.now()}.xlsx`)
+}
+
+export function generateLoanSummaryExcel(
+  loans: Array<{
+    loan_for: string
+    loan_from: string | null
+    amount: number
+    paid: number
+    remaining: number
+  }>,
+  summary?: { total_loan: number; total_paid: number; total_remaining: number },
+  dateRange?: { from: string; to: string }
+) {
+  const rows = [
+    ...headerRows('Loans & Advances Report', dateRange),
+    ['Loan for', 'From', 'Amount', 'Paid', 'Remaining'],
+    ...loans.map((l) => [
+      l.loan_for,
+      l.loan_from ?? '',
+      l.amount,
+      l.paid,
+      l.remaining,
+    ]),
+  ]
+  if (summary) {
+    rows.push(
+      [],
+      ['Total loan', summary.total_loan],
+      ['Total paid', summary.total_paid],
+      ['Outstanding', summary.total_remaining]
+    )
+  }
+  const ws = XLSX.utils.aoa_to_sheet(rows)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Loans')
+  const blob = new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })], {
+    type: 'application/octet-stream',
+  })
+  saveAs(blob, `Loan_Summary_Report_${Date.now()}.xlsx`)
 }
