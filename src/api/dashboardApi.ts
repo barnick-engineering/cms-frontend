@@ -19,11 +19,12 @@ export interface DashboardData {
     total_net_profit: number
     monthly_sales: MonthlySalesEntry[]
     recent_workorders: Array<{
+        id?: number
         no: string
         customer: string
         amount: number
         paid: number
-        is_delivered: boolean
+        is_delivered?: boolean
     }>
 }
 

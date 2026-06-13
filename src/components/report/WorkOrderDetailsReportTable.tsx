@@ -76,13 +76,24 @@ const columns: ColumnDef<WorkOrderDetailsReportRow>[] = [
   },
   {
     accessorKey: 'total_expense',
-    header: 'Total Expense',
+    header: 'Expenses',
     cell: ({ getValue }) => formatCurrency(getValue() as number),
   },
   {
-    accessorKey: 'net_profit',
-    header: 'Net Profit',
-    cell: ({ getValue }) => formatCurrency(getValue() as number),
+    id: 'pending',
+    header: 'Pending',
+    cell: ({ row }) => {
+      const wo = row.original.work_order
+      return formatCurrency(Math.max(0, wo.amount - wo.total_paid))
+    },
+  },
+  {
+    id: 'realized_profit',
+    header: 'Realized profit',
+    cell: ({ row }) => {
+      const wo = row.original.work_order
+      return formatCurrency(wo.total_paid - row.original.total_expense)
+    },
   },
 ]
 

@@ -1,19 +1,11 @@
-import { NoDataFound } from "../NoDataFound"
-import { Badge } from "@/components/ui/badge"
-import { CheckCircle2, XCircle } from "lucide-react"
-
-interface WorkOrder {
-  no: string
-  customer: string
-  amount: number
-  paid: number
-  is_delivered: boolean
-}
+import { Link } from 'react-router-dom'
+import { NoDataFound } from '../NoDataFound'
+import { Badge } from '@/components/ui/badge'
+import { getPaymentStatus } from '@/lib/workOrderPaymentStatus'
+import type { DashboardData } from '@/api/dashboardApi'
 
 interface RecentWorkordersTableProps {
-  data?: {
-    recent_workorders?: WorkOrder[]
-  }
+  data?: Pick<DashboardData, 'recent_workorders'>
   isLoading?: boolean
 }
 
@@ -41,7 +33,6 @@ const RecentWorkordersTable = ({ data, isLoading }: RecentWorkordersTableProps) 
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="hidden sm:grid grid-cols-[2fr_1fr_1fr_100px] gap-2 sm:gap-4 text-xs sm:text-sm font-semibold text-muted-foreground pb-2 border-b">
         <div>Work Order</div>
         <div className="text-right">Amount</div>
@@ -49,50 +40,69 @@ const RecentWorkordersTable = ({ data, isLoading }: RecentWorkordersTableProps) 
         <div className="text-center">Status</div>
       </div>
 
-      {/* Data Rows */}
-      {workorders.map((wo, index) => (
-        <div key={index} className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr_100px] gap-2 sm:gap-4 items-start sm:items-center py-2 border-b last:border-0">
-          <div className="space-y-1">
-            <p className="text-xs sm:text-sm leading-none font-medium">
-              {wo.no}
-            </p>
-            <p className="text-muted-foreground text-xs">{wo.customer}</p>
-          </div>
+      {workorders.map((wo, index) => {
+        const status = getPaymentStatus(wo.amount, wo.paid)
+        const statusLabel =
+          status === 'paid' ? 'Paid' : status === 'partial' ? 'Partial' : 'Pending'
+        const statusVariant =
+          status === 'paid'
+            ? 'default'
+            : status === 'partial'
+              ? 'secondary'
+              : 'outline'
 
-          <div className="flex justify-between sm:justify-end items-center">
-            <span className="text-xs sm:hidden text-muted-foreground font-medium">Amount:</span>
-            <span className="font-medium text-right text-xs sm:text-sm">
-              ৳{wo.amount.toLocaleString('en-IN')}
-            </span>
-          </div>
-
-          <div className="flex justify-between sm:justify-end items-center">
-            <span className="text-xs sm:hidden text-muted-foreground font-medium">Paid:</span>
-            <span className="font-medium text-right text-xs sm:text-sm">
-              ৳{wo.paid.toLocaleString('en-IN')}
-            </span>
-          </div>
-
-          <div className="flex justify-between sm:justify-center items-center">
-            <span className="text-xs sm:hidden text-muted-foreground font-medium">Status:</span>
-            <div className="flex sm:justify-center">
-              {wo.is_delivered ? (
-                <Badge variant="default" className="gap-1 text-xs">
-                  <CheckCircle2 className="h-3 w-3" />
-                  <span className="hidden sm:inline">Delivered</span>
-                  <span className="sm:hidden">Del</span>
-                </Badge>
+        return (
+          <div
+            key={wo.id ?? wo.no ?? index}
+            className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr_100px] gap-2 sm:gap-4 items-start sm:items-center py-2 border-b last:border-0"
+          >
+            <div className="space-y-1 min-w-0">
+              {wo.id ? (
+                <Link
+                  to={`/work-orders/${wo.id}`}
+                  className="text-xs sm:text-sm leading-none font-medium text-primary hover:underline"
+                >
+                  {wo.no}
+                </Link>
               ) : (
-                <Badge variant="secondary" className="gap-1 text-xs">
-                  <XCircle className="h-3 w-3" />
-                  <span className="hidden sm:inline">Pending</span>
-                  <span className="sm:hidden">Pen</span>
-                </Badge>
+                <p className="text-xs sm:text-sm leading-none font-medium">
+                  {wo.no}
+                </p>
               )}
+              <p className="text-muted-foreground text-xs truncate">
+                {wo.customer}
+              </p>
+            </div>
+
+            <div className="flex justify-between sm:justify-end items-center">
+              <span className="text-xs sm:hidden text-muted-foreground font-medium">
+                Amount:
+              </span>
+              <span className="font-medium text-right text-xs sm:text-sm tabular-nums">
+                ৳{wo.amount.toLocaleString('en-IN')}
+              </span>
+            </div>
+
+            <div className="flex justify-between sm:justify-end items-center">
+              <span className="text-xs sm:hidden text-muted-foreground font-medium">
+                Paid:
+              </span>
+              <span className="font-medium text-right text-xs sm:text-sm tabular-nums">
+                ৳{wo.paid.toLocaleString('en-IN')}
+              </span>
+            </div>
+
+            <div className="flex justify-between sm:justify-center items-center">
+              <span className="text-xs sm:hidden text-muted-foreground font-medium">
+                Status:
+              </span>
+              <Badge variant={statusVariant} className="text-xs capitalize">
+                {statusLabel}
+              </Badge>
             </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
