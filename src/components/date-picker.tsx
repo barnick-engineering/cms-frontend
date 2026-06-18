@@ -13,12 +13,21 @@ type DatePickerProps = {
   selected: Date | undefined
   onSelect: (date: Date | undefined) => void
   placeholder?: string
+  /** Allow dates after today (e.g. task deadlines). Default false for expense/historical dates. */
+  allowFuture?: boolean
+}
+
+function startOfDay(d: Date): Date {
+  const copy = new Date(d)
+  copy.setHours(0, 0, 0, 0)
+  return copy
 }
 
 export function DatePicker({
   selected,
   onSelect,
   placeholder = 'Pick a date',
+  allowFuture = false,
 }: DatePickerProps) {
   const [open, setOpen] = useState(false)
 
@@ -47,9 +56,13 @@ export function DatePicker({
             onSelect(date)
             if (date) setOpen(false)
           }}
-          disabled={(date: Date) =>
-            date > new Date() || date < new Date('1900-01-01')
-          }
+          disabled={(date: Date) => {
+            const day = startOfDay(date)
+            const today = startOfDay(new Date())
+            if (!allowFuture && day > today) return true
+            if (day < startOfDay(new Date('1900-01-01'))) return true
+            return false
+          }}
         />
       </PopoverContent>
     </Popover>
