@@ -104,4 +104,13 @@ export const apiEndpoints: ApiEndpoints = {
     upload: '/api/v1/sample-hub/',
     delete: '/api/v1/sample-hub/',
   },
+  kanban: {
+    board: '/api/v1/kanban/board/',
+    taskList: '/api/v1/kanban/tasks/',
+    createTask: '/api/v1/kanban/tasks/',
+    getTaskById: '/api/v1/kanban/tasks/',
+    updateTask: '/api/v1/kanban/tasks/',
+    deleteTask: '/api/v1/kanban/tasks/',
+    moveTask: '/api/v1/kanban/tasks/',
+  },
 }

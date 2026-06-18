@@ -93,4 +93,13 @@ export interface ApiEndpoints {
     upload: string
     delete: string
   }
+  kanban: {
+    board: string
+    taskList: string
+    createTask: string
+    getTaskById: string
+    updateTask: string
+    deleteTask: string
+    moveTask: string
+  }
 }
