@@ -113,4 +113,12 @@ export const apiEndpoints: ApiEndpoints = {
     deleteTask: '/api/v1/kanban/tasks/',
     moveTask: '/api/v1/kanban/tasks/',
   },
+  billing: {
+    documents: '/api/v1/billing/documents/',
+    prefill: '/api/v1/billing/documents/prefill/',
+    getDocumentById: '/api/v1/billing/documents/',
+    updateDocument: '/api/v1/billing/documents/',
+    deleteDocument: '/api/v1/billing/documents/',
+    finalizeDocument: '/api/v1/billing/documents/',
+  },
 }

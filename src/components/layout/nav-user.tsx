@@ -114,7 +114,7 @@ export function NavUser({ user }: NavUserProps) {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link to='#' className='cursor-pointer'>
+                <Link to='/billing' className='cursor-pointer'>
                   <CreditCard />
                   Billing
                 </Link>

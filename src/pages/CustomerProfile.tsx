@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, ChevronRight, FileText } from 'lucide-react'
 import { NoDataFound } from '@/components/NoDataFound'
 
 const WORK_ORDERS_PAGE_SIZE = 10
@@ -80,13 +80,21 @@ const CustomerProfile = () => {
 
   return (
     <Main>
-      <div className="mb-4 flex items-center gap-2">
-        <Button variant="ghost" size="icon" asChild>
-          <Link to="/customers" aria-label="Back to customers">
-            <ArrowLeft className="h-4 w-4" />
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" asChild>
+            <Link to="/customers" aria-label="Back to customers">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <h1 className="text-2xl font-bold tracking-tight">Customer Profile</h1>
+        </div>
+        <Button variant="outline" asChild>
+          <Link to={`/billing?customer_id=${id}&type=quotation`}>
+            <FileText className="mr-2 h-4 w-4" />
+            New Quotation
           </Link>
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight">Customer Profile</h1>
       </div>
 
       <div className="space-y-6">

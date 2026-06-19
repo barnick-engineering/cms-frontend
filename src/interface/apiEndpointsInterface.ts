@@ -102,4 +102,12 @@ export interface ApiEndpoints {
     deleteTask: string
     moveTask: string
   }
+  billing: {
+    documents: string
+    prefill: string
+    getDocumentById: string
+    updateDocument: string
+    deleteDocument: string
+    finalizeDocument: string
+  }
 }
