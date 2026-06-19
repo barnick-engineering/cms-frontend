@@ -59,7 +59,7 @@ export function ProfileDropdown() {
 
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link to="#" className="flex justify-between w-full cursor-pointer">
+            <Link to="/billing" className="flex justify-between w-full cursor-pointer">
               Billing
               <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
             </Link>
