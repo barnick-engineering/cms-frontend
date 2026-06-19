@@ -9,9 +9,12 @@ import {
 } from '@/components/ui/dialog'
 import { BillingDocumentPreview } from '@/components/billing/BillingDocumentPreview'
 import { useBillingDocumentById } from '@/hooks/useBilling'
-import { printBillingPreview } from '@/lib/billing/billingPrint'
-import { billingDocumentToFormPayload } from '@/interface/billingInterface'
-import { BILLING_DOCUMENT_TYPE_LABELS } from '@/interface/billingInterface'
+import {
+  BILLING_DOCUMENT_TYPE_LABELS,
+  billingDocumentToFormPayload,
+} from '@/interface/billingInterface'
+import { exportBillingPreview } from '@/lib/billing/billingPdfExport'
+import { isMobileExport } from '@/lib/billing/billingExportUtils'
 
 type BillingDocumentPreviewDialogProps = {
   documentId: number | null
@@ -42,13 +45,17 @@ export function BillingDocumentPreviewDialog({
 
     hasPrintedRef.current = true
     const timer = setTimeout(() => {
-      void printBillingPreview(previewRef.current)
+      void exportBillingPreview(
+        previewRef.current,
+        doc ? billingDocumentToFormPayload(doc) : undefined
+      )
     }, 400)
     return () => clearTimeout(timer)
   }, [open, autoPrint, doc])
 
   const handleDownload = async () => {
-    await printBillingPreview(previewRef.current)
+    if (!doc) return
+    await exportBillingPreview(previewRef.current, billingDocumentToFormPayload(doc))
   }
 
   const title = doc
@@ -71,7 +78,7 @@ export function BillingDocumentPreviewDialog({
               disabled={!doc || isLoading}
             >
               <Download className="mr-2 h-4 w-4" />
-              Download / Print
+              {isMobileExport() ? 'Download PDF' : 'Download / Print'}
             </Button>
           </div>
         </DialogHeader>

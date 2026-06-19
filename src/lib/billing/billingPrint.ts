@@ -1,8 +1,11 @@
+import { isIosSafari, isMobileExport } from '@/lib/billing/billingExportUtils'
+
 const PRINT_ROOT_ID = 'billing-print-root'
 const PRINT_STYLE_ID = 'billing-print-styles'
 
 /** Full A4 page height (full-bleed, @page margin 0). */
-const A4_PAGE_HEIGHT_MM = 297
+export const A4_PAGE_HEIGHT_MM = 297
+const IOS_PRINT_INSET_MM = 24
 
 const PRINT_STYLES = `
 @media print {
@@ -35,27 +38,19 @@ const PRINT_STYLES = `
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
-  #${PRINT_ROOT_ID} .billing-print-single-page {
-    min-height: ${A4_PAGE_HEIGHT_MM}mm !important;
-    height: ${A4_PAGE_HEIGHT_MM}mm !important;
-  }
-  #${PRINT_ROOT_ID} .billing-print-single-page .billing-print-closing {
+  #${PRINT_ROOT_ID} .billing-print-single-page .billing-print-closing-pin {
     display: flex !important;
     flex-direction: column !important;
   }
-  #${PRINT_ROOT_ID} .billing-print-single-page .billing-print-closing .billing-document-footer {
+  #${PRINT_ROOT_ID} .billing-print-single-page .billing-print-closing-pin .billing-document-footer {
     margin-top: auto !important;
   }
-  #${PRINT_ROOT_ID} .billing-print-multi-page .billing-print-closing {
+  #${PRINT_ROOT_ID} .billing-print-multi-page .billing-print-closing-pin {
     display: flex !important;
     flex-direction: column !important;
   }
-  #${PRINT_ROOT_ID} .billing-print-multi-page .billing-print-closing .billing-document-footer {
+  #${PRINT_ROOT_ID} .billing-print-multi-page .billing-print-closing-pin .billing-document-footer {
     margin-top: auto !important;
-  }
-  #${PRINT_ROOT_ID} .billing-print-closing {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
   }
   #${PRINT_ROOT_ID} .billing-totals-block {
     page-break-inside: avoid !important;
@@ -89,7 +84,7 @@ const PRINT_STYLES = `
 }
 `
 
-function mmToPx(mm: number): number {
+export function mmToPx(mm: number): number {
   const probe = document.createElement('div')
   probe.style.cssText = 'position:absolute;visibility:hidden;height:0;width:0;'
   const inner = document.createElement('div')
@@ -101,10 +96,19 @@ function mmToPx(mm: number): number {
   return px
 }
 
+export function getEffectivePageHeightPx(): number {
+  const fullHeight = mmToPx(A4_PAGE_HEIGHT_MM)
+  if (isIosSafari() || (typeof window !== 'undefined' && window.innerWidth < 768)) {
+    return mmToPx(A4_PAGE_HEIGHT_MM - IOS_PRINT_INSET_MM)
+  }
+  return fullHeight
+}
+
 function clearPrintLayoutStyles(
   preview: HTMLElement,
   body: HTMLElement | null,
   closing: HTMLElement | null,
+  pin: HTMLElement | null,
   footer: HTMLElement
 ) {
   preview.classList.remove('billing-print-single-page', 'billing-print-multi-page')
@@ -114,7 +118,8 @@ function clearPrintLayoutStyles(
   if (body) {
     body.style.removeProperty('padding-bottom')
   }
-  if (closing) {
+  for (const el of [closing, pin]) {
+    if (!el) continue
     for (const prop of [
       'display',
       'flex-direction',
@@ -122,7 +127,7 @@ function clearPrintLayoutStyles(
       'page-break-before',
       'break-before',
     ] as const) {
-      closing.style.removeProperty(prop)
+      el.style.removeProperty(prop)
     }
   }
   for (const prop of [
@@ -139,9 +144,9 @@ function clearPrintLayoutStyles(
   }
 }
 
-function applyClosingFlexLayout(
+function applyPinFlexLayout(
   preview: HTMLElement,
-  closing: HTMLElement,
+  pin: HTMLElement,
   footer: HTMLElement,
   pageHeightPx: number,
   remainder: number,
@@ -151,36 +156,57 @@ function applyClosingFlexLayout(
 
   const minHeight = pageHeightPx - remainder
 
-  closing.style.setProperty('display', 'flex', 'important')
-  closing.style.setProperty('flex-direction', 'column', 'important')
-  closing.style.setProperty('min-height', `${minHeight}px`, 'important')
+  pin.style.setProperty('display', 'flex', 'important')
+  pin.style.setProperty('flex-direction', 'column', 'important')
+  pin.style.setProperty('min-height', `${minHeight}px`, 'important')
   footer.style.setProperty('margin-top', 'auto', 'important')
+}
+
+async function applyPageBreakBeforePin(
+  preview: HTMLElement,
+  closing: HTMLElement,
+  pin: HTMLElement,
+  pageHeightPx: number
+): Promise<number> {
+  const pinHeight = pin.offsetHeight
+  let contentBeforePin = pin.offsetTop - preview.offsetTop
+  let remainder = contentBeforePin % pageHeightPx
+
+  if (remainder === 0 && contentBeforePin > 0 && pinHeight <= pageHeightPx) {
+    return remainder
+  }
+
+  if (remainder + pinHeight <= pageHeightPx) {
+    return remainder
+  }
+
+  const totalsBlock = closing.querySelector('.billing-totals-block') as HTMLElement | null
+  const totalsHeight = totalsBlock?.offsetHeight ?? 0
+  const totalsFitOnCurrentPage =
+    totalsBlock && totalsHeight > 0 && remainder + totalsHeight <= pageHeightPx
+
+  const breakTarget = totalsFitOnCurrentPage ? pin : closing
+  breakTarget.style.setProperty('break-before', 'page', 'important')
+  breakTarget.style.setProperty('page-break-before', 'always', 'important')
+
+  await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+  void breakTarget.offsetTop
+
+  return 0
 }
 
 async function applyMultiPageFooterLayout(
   preview: HTMLElement,
   closing: HTMLElement,
+  pin: HTMLElement,
   footer: HTMLElement,
   pageHeightPx: number
 ) {
-  const closingHeight = closing.offsetHeight
-  let contentBeforeClosing = closing.offsetTop - preview.offsetTop
-  let remainder = contentBeforeClosing % pageHeightPx
+  const remainder = await applyPageBreakBeforePin(preview, closing, pin, pageHeightPx)
 
-  if (remainder === 0 || remainder + closingHeight > pageHeightPx) {
-    closing.style.setProperty('break-before', 'page', 'important')
-    closing.style.setProperty('page-break-before', 'always', 'important')
-
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
-
-    // break-before only affects paginated print; treat closing as starting a fresh page.
-    void closing.offsetTop
-    remainder = 0
-  }
-
-  applyClosingFlexLayout(
+  applyPinFlexLayout(
     preview,
-    closing,
+    pin,
     footer,
     pageHeightPx,
     remainder,
@@ -188,20 +214,17 @@ async function applyMultiPageFooterLayout(
   )
 }
 
-function applySinglePageClosingLayout(
+function applySinglePageFooterLayout(
   preview: HTMLElement,
-  closing: HTMLElement,
+  pin: HTMLElement,
   footer: HTMLElement,
   pageHeightPx: number
 ) {
-  preview.style.setProperty('min-height', `${pageHeightPx}px`, 'important')
-  preview.style.setProperty('height', `${pageHeightPx}px`, 'important')
-
-  const contentBeforeClosing = closing.offsetTop - preview.offsetTop
-  const remainder = contentBeforeClosing % pageHeightPx
-  applyClosingFlexLayout(
+  const contentBeforePin = pin.offsetTop - preview.offsetTop
+  const remainder = contentBeforePin % pageHeightPx
+  applyPinFlexLayout(
     preview,
-    closing,
+    pin,
     footer,
     pageHeightPx,
     remainder,
@@ -209,16 +232,18 @@ function applySinglePageClosingLayout(
   )
 }
 
-async function layoutPrintFooter(root: HTMLElement) {
+/** Pin footer to page bottom — works in screen DOM (PDF export) and print clone. */
+export async function layoutBillingFooter(root: HTMLElement) {
   const preview = root.querySelector('.billing-preview') as HTMLElement | null
   const body = root.querySelector('.billing-preview-body') as HTMLElement | null
   const closing = root.querySelector('.billing-print-closing') as HTMLElement | null
+  const pin = root.querySelector('.billing-print-closing-pin') as HTMLElement | null
   const footer = root.querySelector('.billing-document-footer') as HTMLElement | null
-  if (!preview || !closing || !footer) return
+  if (!preview || !closing || !pin || !footer) return
 
-  clearPrintLayoutStyles(preview, body, closing, footer)
+  clearPrintLayoutStyles(preview, body, closing, pin, footer)
 
-  const pageHeightPx = mmToPx(A4_PAGE_HEIGHT_MM)
+  const pageHeightPx = getEffectivePageHeightPx()
   const topBar = preview.firstElementChild as HTMLElement | null
   const topBarHeight = topBar?.offsetHeight ?? 0
   const bodyHeight = body?.scrollHeight ?? 0
@@ -226,9 +251,9 @@ async function layoutPrintFooter(root: HTMLElement) {
   const totalHeight = topBarHeight + bodyHeight + closingHeight
 
   if (totalHeight <= pageHeightPx) {
-    applySinglePageClosingLayout(preview, closing, footer, pageHeightPx)
+    applySinglePageFooterLayout(preview, pin, footer, pageHeightPx)
   } else {
-    await applyMultiPageFooterLayout(preview, closing, footer, pageHeightPx)
+    await applyMultiPageFooterLayout(preview, closing, pin, footer, pageHeightPx)
   }
 }
 
@@ -283,7 +308,9 @@ export async function printBillingPreview(source: HTMLElement | null) {
 
   window.addEventListener('afterprint', cleanup)
 
-  await layoutPrintFooter(root)
+  await layoutBillingFooter(root)
   window.print()
   setTimeout(cleanup, 2000)
 }
+
+export { isMobileExport }

@@ -20,7 +20,8 @@ import type {
   BillingDocumentType,
 } from '@/interface/billingInterface'
 import { emptyBillingDocument, getDefaultBillingListFilters } from '@/interface/billingInterface'
-import { printBillingPreview } from '@/lib/billing/billingPrint'
+import { exportBillingPreview } from '@/lib/billing/billingPdfExport'
+import { isMobileExport } from '@/lib/billing/billingExportUtils'
 import { ArrowLeft, Printer, Save, Trash2 } from 'lucide-react'
 
 const Billing = () => {
@@ -157,7 +158,7 @@ const Billing = () => {
   }
 
   const handlePrint = async () => {
-    await printBillingPreview(previewRef.current)
+    await exportBillingPreview(previewRef.current, form)
   }
 
   const handleDelete = async () => {
@@ -246,7 +247,7 @@ const Billing = () => {
             </Button>
             <Button size="sm" onClick={handlePrint}>
               <Printer className="mr-1 h-4 w-4" />
-              Generate {generateLabel}
+              {isMobileExport() ? `Download ${generateLabel}` : `Generate ${generateLabel}`}
             </Button>
           </div>
 

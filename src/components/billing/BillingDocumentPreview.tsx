@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import { BRAND_COLORS, COMPANY_DETAILS } from '@/config/companyDetails'
 import type { BillingDocumentFormPayload, BillingDocumentType } from '@/interface/billingInterface'
 import { BILLING_DOCUMENT_TYPE_LABELS, computeBillingTotals, resolveBillingDocumentSubject } from '@/interface/billingInterface'
@@ -44,6 +45,39 @@ function fieldValue(value: string | null | undefined): string | null {
   return trimmed.length > 0 ? trimmed : null
 }
 
+/** Split long single-line addresses into 2–3 readable lines (comma-separated parts). */
+function formatAddressLines(address: string): string[] {
+  const trimmed = address.trim()
+  if (!trimmed) return []
+
+  if (trimmed.includes('\n')) {
+    return trimmed
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+  }
+
+  if (trimmed.length <= 55) return [trimmed]
+
+  const parts = trimmed
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+
+  if (parts.length <= 1) return [trimmed]
+
+  const lineCount = trimmed.length > 90 ? 3 : 2
+  const perLine = Math.ceil(parts.length / lineCount)
+  const lines: string[] = []
+
+  for (let i = 0; i < lineCount; i++) {
+    const chunk = parts.slice(i * perLine, (i + 1) * perLine)
+    if (chunk.length > 0) lines.push(chunk.join(', '))
+  }
+
+  return lines.length > 0 ? lines : [trimmed]
+}
+
 type BillingDocumentPreviewProps = {
   data: PreviewData
 }
@@ -76,6 +110,7 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
     resolveBillingDocumentSubject(data.document_type, data.line_items ?? [], data.subject)
   )
   const address = fieldValue(data.address)
+  const addressLines = address ? formatAddressLines(address) : []
 
   return (
     <div className="billing-preview mx-auto box-border w-full min-w-0 max-w-[800px] overflow-hidden bg-white text-black shadow-lg print:mx-0 print:max-w-none print:overflow-visible print:shadow-none">
@@ -179,12 +214,18 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
                 {subject}
               </div>
             )}
-            {address && (
-              <div className="sm:col-span-2">
+            {addressLines.length > 0 && (
+              <div className="sm:col-span-2 grid grid-cols-[auto_1fr] gap-x-1.5 gap-y-0.5 leading-snug">
                 <span className="font-semibold" style={{ color: primaryDark }}>
-                  Address:{' '}
+                  Address:
                 </span>
-                {address}
+                <span className="break-words">{addressLines[0]}</span>
+                {addressLines.slice(1).map((line, index) => (
+                  <Fragment key={index}>
+                    <span aria-hidden="true" />
+                    <span className="break-words">{line}</span>
+                  </Fragment>
+                ))}
               </div>
             )}
           </div>
@@ -313,9 +354,9 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
           </div>
         )}
 
-      {/* Footer — terms, signature, and contact stay together on export */}
-      <footer className="billing-document-footer mt-4 print:mt-0">
-        <div className="billing-footer-closing px-4 pb-4 sm:px-8 print:px-[8mm]">
+        <div className="billing-print-closing-pin">
+          <footer className="billing-document-footer mt-4 print:mt-0">
+            <div className="billing-footer-closing px-4 pb-4 sm:px-8 print:px-[8mm]">
           <div
             className={
               showTerms
@@ -376,30 +417,33 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
               </div>
             </div>
           </div>
-        </div>
+            </div>
 
-        <div className="h-1 w-full" style={{ backgroundColor: accent }} />
-        <div
-          className="px-4 py-4 text-center text-sm text-white sm:px-8 print:px-6 print:py-3 print:text-xs"
-          style={{ backgroundColor: primary }}
-        >
-          <p className="break-all sm:break-normal">{COMPANY_DETAILS.email}</p>
-          <p className="mt-1">
-            {COMPANY_DETAILS.phone}
-            {COMPANY_DETAILS.phoneSecondary
-              ? ` · ${COMPANY_DETAILS.phoneSecondary}`
-              : ''}
-          </p>
-          {COMPANY_DETAILS.address && (
-            <p className="mt-1 opacity-80">{COMPANY_DETAILS.address}</p>
-          )}
-        </div>
+            <div className="h-1 w-full" style={{ backgroundColor: accent }} />
+            <div
+              className="px-4 py-4 text-center text-sm text-white sm:px-8 print:px-6 print:py-3 print:text-xs"
+              style={{ backgroundColor: primary }}
+            >
+              <p className="break-all sm:break-normal">{COMPANY_DETAILS.email}</p>
+              <p className="mt-1">
+                {COMPANY_DETAILS.phone}
+                {COMPANY_DETAILS.phoneSecondary
+                  ? ` · ${COMPANY_DETAILS.phoneSecondary}`
+                  : ''}
+              </p>
+              {COMPANY_DETAILS.address && (
+                <p className="mx-auto mt-1 max-w-md break-words px-2 leading-snug whitespace-pre-line opacity-80">
+                  {COMPANY_DETAILS.address}
+                </p>
+              )}
+            </div>
 
-        <div className="flex h-2 w-full print:h-1.5">
-          <div className="flex-1" style={{ backgroundColor: accent }} />
-          <div className="flex-[2]" style={{ backgroundColor: primary }} />
+            <div className="flex h-2 w-full print:h-1.5">
+              <div className="flex-1" style={{ backgroundColor: accent }} />
+              <div className="flex-[2]" style={{ backgroundColor: primary }} />
+            </div>
+          </footer>
         </div>
-      </footer>
       </div>
     </div>
   )
