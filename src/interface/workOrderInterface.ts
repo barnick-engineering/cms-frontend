@@ -57,6 +57,7 @@ export interface WorkOrder {
   status: boolean
   no: string
   is_delivered: boolean
+  is_paid?: boolean
   amount: number
   total_paid: number
   total_expense?: number
@@ -124,6 +125,7 @@ export interface WorkOrderDetailData {
   created: string
   status: boolean
   is_delivered: boolean
+  is_paid?: boolean
   remarks: string | null
   created_by: number
 }
@@ -135,7 +137,8 @@ export interface WorkOrderDetailResponse {
 }
 
 export interface WorkOrderUpdatePayload {
-  total_paid: number
+  total_paid?: number
+  is_paid?: boolean
 }
 
 export interface WorkOrderMutateDrawerProps {

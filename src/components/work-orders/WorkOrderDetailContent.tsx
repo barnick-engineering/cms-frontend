@@ -2,14 +2,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import type { WorkOrderDetailData } from '@/interface/workOrderInterface'
+import {
+  getPaymentStatus,
+  getPendingAmount,
+  getWaivedAmount,
+} from '@/lib/workOrderPaymentStatus'
 
 type WorkOrderDetailContentProps = {
   workOrderDetail: WorkOrderDetailData
 }
 
 export function WorkOrderDetailContent({ workOrderDetail }: WorkOrderDetailContentProps) {
-  const isPaid = workOrderDetail.amount <= workOrderDetail.total_paid
-  const pendingAmount = workOrderDetail.amount - workOrderDetail.total_paid
+  const amount = workOrderDetail.amount || 0
+  const totalPaid = workOrderDetail.total_paid || 0
+  const isPaidFlag = workOrderDetail.is_paid ?? false
+  const paymentStatus = getPaymentStatus(amount, totalPaid, isPaidFlag)
+  const pendingAmount = getPendingAmount(amount, totalPaid, isPaidFlag)
+  const waivedAmount = getWaivedAmount(amount, totalPaid, isPaidFlag)
 
   const itemsSubtotal =
     workOrderDetail.items?.reduce(
@@ -50,8 +59,15 @@ export function WorkOrderDetailContent({ workOrderDetail }: WorkOrderDetailConte
             <CardTitle className="text-sm font-medium text-muted-foreground">Status</CardTitle>
           </CardHeader>
           <CardContent>
-            <Badge variant={isPaid ? 'default' : 'secondary'} className="text-sm">
-              {isPaid ? 'Paid' : 'Pending'}
+            <Badge
+              variant={paymentStatus === 'paid' ? 'default' : 'secondary'}
+              className="text-sm"
+            >
+              {paymentStatus === 'paid'
+                ? 'Paid'
+                : paymentStatus === 'partial'
+                  ? 'Partial'
+                  : 'Pending'}
             </Badge>
           </CardContent>
         </Card>
@@ -138,6 +154,14 @@ export function WorkOrderDetailContent({ workOrderDetail }: WorkOrderDetailConte
                 ৳{pendingAmount.toLocaleString('en-IN')}
               </p>
             </div>
+            {waivedAmount > 0 && (
+              <div>
+                <span className="text-sm font-medium text-muted-foreground">Waived</span>
+                <p className="text-xl font-bold text-muted-foreground">
+                  ৳{waivedAmount.toLocaleString('en-IN')}
+                </p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

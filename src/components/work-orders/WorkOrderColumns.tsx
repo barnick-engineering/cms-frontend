@@ -121,7 +121,7 @@ export const WorkOrderColumns: ColumnDef<WorkOrderListInterface>[] = [
     cell: ({ row }) => {
       const amount = row.getValue<number>('amount') || 0
       const totalPaid = row.getValue<number>('total_paid') || 0
-      const pending = getPendingAmount(amount, totalPaid)
+      const pending = getPendingAmount(amount, totalPaid, row.original.is_paid)
       return `৳${pending.toLocaleString('en-IN')}`
     },
   },
@@ -133,7 +133,7 @@ export const WorkOrderColumns: ColumnDef<WorkOrderListInterface>[] = [
     cell: ({ row }) => {
       const amount = row.original.amount || 0
       const totalPaid = row.original.total_paid || 0
-      const status = getPaymentStatus(amount, totalPaid)
+      const status = getPaymentStatus(amount, totalPaid, row.original.is_paid)
       const variant =
         status === 'paid'
           ? 'default'
