@@ -8,15 +8,31 @@ export function getWorkOrderValue(amount: number, totalPaid: number): number {
 
 export function getPaymentStatus(
   amount: number,
-  totalPaid: number
+  totalPaid: number,
+  isPaid = false
 ): WorkOrderPaymentStatus {
   const orderValue = getWorkOrderValue(amount, totalPaid)
-  if (orderValue > 0 && totalPaid >= orderValue) return 'paid'
+  if (isPaid || (orderValue > 0 && totalPaid >= orderValue)) return 'paid'
   if (totalPaid > 0 && totalPaid < orderValue) return 'partial'
   return 'pending'
 }
 
-export function getPendingAmount(amount: number, totalPaid: number): number {
+export function getPendingAmount(
+  amount: number,
+  totalPaid: number,
+  isPaid = false
+): number {
+  if (isPaid) return 0
+  const orderValue = getWorkOrderValue(amount, totalPaid)
+  return Math.max(0, orderValue - totalPaid)
+}
+
+export function getWaivedAmount(
+  amount: number,
+  totalPaid: number,
+  isPaid = false
+): number {
+  if (!isPaid) return 0
   const orderValue = getWorkOrderValue(amount, totalPaid)
   return Math.max(0, orderValue - totalPaid)
 }

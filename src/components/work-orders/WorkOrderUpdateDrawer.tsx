@@ -28,6 +28,7 @@ import { toast } from "sonner"
 import type { AxiosError } from "axios"
 import type { WorkOrder } from "@/interface/workOrderInterface"
 import { useUpdateWorkOrder } from "@/hooks/useWorkOrder"
+import { getPendingAmount } from "@/lib/workOrderPaymentStatus"
 
 const updateWorkOrderSchema = z
   .object({
@@ -66,7 +67,11 @@ const WorkOrderUpdateDrawer = ({
 
   const currentTotalPaid = currentRow?.total_paid || 0
   const currentAmount = currentRow?.amount || 0
-  const pendingAmount = currentAmount - currentTotalPaid
+  const pendingAmount = getPendingAmount(
+    currentAmount,
+    currentTotalPaid,
+    currentRow?.is_paid
+  )
 
   const form = useForm<UpdateWorkOrderSchema>({
     resolver: zodResolver(updateWorkOrderSchema),
@@ -78,20 +83,22 @@ const WorkOrderUpdateDrawer = ({
 
   useEffect(() => {
     if (!open) {
-      form.reset({ total_paid: 0, paid: false })
+      form.reset({ total_paid: undefined, paid: false })
     }
   }, [open, form])
 
   const onSubmit: SubmitHandler<UpdateWorkOrderSchema> = (data) => {
     if (!currentRow) return
-    // When Paid is checked: mark order fully paid (send remainder so total_paid = amount, status Paid, pending 0).
-    // Amount received (data.total_paid) is not sent in that case—e.g. receive 70000, waive 500, mark paid.
-    const additionalAmount = data.paid
-      ? pendingAmount
-      : coerceNumber(data.total_paid)
+    const additionalAmount = coerceNumber(data.total_paid) ?? 0
 
     updateMutation.mutate(
-      { id: currentRow.id, data: { total_paid: additionalAmount } },
+      {
+        id: currentRow.id,
+        data: {
+          ...(additionalAmount > 0 || !data.paid ? { total_paid: additionalAmount } : {}),
+          ...(data.paid ? { is_paid: true } : {}),
+        },
+      },
       {
         onSuccess: () => {
           onOpenChange(false)
@@ -153,7 +160,7 @@ const WorkOrderUpdateDrawer = ({
                     <div className="space-y-1 leading-none">
                       <FormLabel className="cursor-pointer font-medium">Paid</FormLabel>
                       <p className="text-xs text-muted-foreground">
-                        Mark this work order as fully paid (status Paid, pending ৳0). You can receive less than the full amount and still mark it paid—e.g. receive ৳70,000, waive ৳500, tick Paid.
+                        Records the amount received and marks the order settled. Any remaining balance is waived (e.g. receive ৳4,000 on a ৳5,000 order).
                       </p>
                     </div>
                   </FormItem>
@@ -166,7 +173,9 @@ const WorkOrderUpdateDrawer = ({
               name="total_paid"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Amount received (optional when marking as paid)</FormLabel>
+                  <FormLabel>
+                    Amount received{form.watch("paid") ? " (optional if already partially paid)" : ""}
+                  </FormLabel>
                   <FormControl>
                     <NumberInput
                       value={field.value}
@@ -180,7 +189,7 @@ const WorkOrderUpdateDrawer = ({
                   <FormMessage />
                   <p className="text-xs text-muted-foreground">
                     {form.watch("paid")
-                      ? "When Paid is checked, the order will be marked fully paid regardless of this amount."
+                      ? "This amount is added to total paid. The order is marked settled; remaining balance is waived."
                       : `Maximum: ৳${pendingAmount.toLocaleString('en-IN')}`}
                   </p>
                 </FormItem>
