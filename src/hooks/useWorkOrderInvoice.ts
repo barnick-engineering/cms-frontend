@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { toast } from 'sonner'
 import { getWorkOrderById } from '@/api/workOrderApi'
 import { workOrderToBillingPayload } from '@/interface/billingInterface'
+import { isMobileExport } from '@/lib/billing/billingExportUtils'
 import { printBillingDocument } from '@/lib/billing/printBillingDocument'
 
 export const useWorkOrderInvoice = () => {
@@ -17,7 +18,9 @@ export const useWorkOrderInvoice = () => {
       await printBillingDocument(
         workOrderToBillingPayload(workOrderDetail, 'invoice')
       )
-      toast.success('Invoice ready to download')
+      toast.success(
+        isMobileExport() ? 'Invoice PDF downloaded' : 'Invoice ready to download'
+      )
     } catch (error) {
       console.error('Error generating invoice:', error)
       toast.error('Failed to generate invoice. Please try again.')

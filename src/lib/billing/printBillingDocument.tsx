@@ -1,10 +1,17 @@
 import { createRoot } from 'react-dom/client'
 import { BillingDocumentPreview } from '@/components/billing/BillingDocumentPreview'
 import type { BillingDocumentFormPayload } from '@/interface/billingInterface'
+import { isMobileExport } from '@/lib/billing/billingExportUtils'
+import { downloadBillingPdf } from '@/lib/billing/billingPdfExport'
 import { printBillingPreview } from '@/lib/billing/billingPrint'
 
 /** Render a billing document off-screen and open the print / PDF dialog. */
 export async function printBillingDocument(data: BillingDocumentFormPayload) {
+  if (isMobileExport()) {
+    await downloadBillingPdf(data)
+    return
+  }
+
   const mount = document.createElement('div')
   mount.setAttribute('aria-hidden', 'true')
   mount.style.cssText =

@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { toast } from 'sonner'
 import { getWorkOrderById } from '@/api/workOrderApi'
 import { workOrderToBillingPayload } from '@/interface/billingInterface'
+import { isMobileExport } from '@/lib/billing/billingExportUtils'
 import { printBillingDocument } from '@/lib/billing/printBillingDocument'
 
 export const useWorkOrderDeliveryChallan = () => {
@@ -17,7 +18,11 @@ export const useWorkOrderDeliveryChallan = () => {
       await printBillingDocument(
         workOrderToBillingPayload(workOrderDetail, 'delivery_challan')
       )
-      toast.success('Delivery challan ready to download')
+      toast.success(
+        isMobileExport()
+          ? 'Delivery challan PDF downloaded'
+          : 'Delivery challan ready to download'
+      )
     } catch (error) {
       console.error('Error generating delivery challan:', error)
       toast.error('Failed to generate delivery challan. Please try again.')
