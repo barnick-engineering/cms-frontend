@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Combobox } from '@/components/ui/combobox'
 import { DatePicker } from '@/components/date-picker'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Switch } from '@/components/ui/switch'
 import {
   Select,
   SelectContent,
@@ -336,7 +337,21 @@ export function BillingDocumentForm({
         </div>
 
         {showPricing && (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <>
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <Label htmlFor="show-totals">Show subtotal &amp; total</Label>
+                <p className="text-xs text-muted-foreground">
+                  Turn off to hide the totals block on the exported document
+                </p>
+              </div>
+              <Switch
+                id="show-totals"
+                checked={form.show_totals !== false}
+                onCheckedChange={(checked) => update({ show_totals: checked })}
+              />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Delivery Cost</Label>
               <Input
@@ -355,7 +370,8 @@ export function BillingDocumentForm({
                 onChange={(e) => update({ discount: Number(e.target.value) || 0 })}
               />
             </div>
-          </div>
+            </div>
+          </>
         )}
 
         {form.document_type === 'quotation' && (

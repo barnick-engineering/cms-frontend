@@ -89,10 +89,7 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
     data.discount
   )
   const showPricing = data.document_type !== 'delivery_challan'
-  const showTotals =
-    showPricing &&
-    (data.document_type === 'invoice' ||
-      (data.document_type === 'quotation' && data.show_totals !== false))
+  const showTotals = showPricing && data.show_totals !== false
   const balanceDue =
     data.document_type === 'invoice'
       ? Math.max(total - (Number(data.advance_payment) || 0), 0)
