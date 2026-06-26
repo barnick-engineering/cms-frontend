@@ -25,6 +25,8 @@ import type {
 import {
   BILLING_DOCUMENT_TYPE_LABELS,
   DEFAULT_QUOTATION_TERMS,
+  defaultBillingBankFields,
+  defaultBillingMfsFields,
   emptyBillingLineItem,
 } from '@/interface/billingInterface'
 import { formatDateToString, parseDateString } from '@/lib/loanDateUtils'
@@ -371,6 +373,112 @@ export function BillingDocumentForm({
               />
             </div>
             </div>
+          </>
+        )}
+
+        {form.document_type === 'invoice' && (
+          <>
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <Label htmlFor="show-bank-details">Show bank details</Label>
+                <p className="text-xs text-muted-foreground">
+                  Display payment bank information on the invoice
+                </p>
+              </div>
+              <Switch
+                id="show-bank-details"
+                checked={form.show_bank_details === true}
+                onCheckedChange={(checked) => {
+                  const patch: Partial<BillingDocumentFormPayload> = {
+                    show_bank_details: checked,
+                  }
+                  if (checked && !form.bank_name) {
+                    Object.assign(patch, defaultBillingBankFields())
+                  }
+                  update(patch)
+                }}
+              />
+            </div>
+            {form.show_bank_details && (
+              <div className="grid gap-4 rounded-lg border p-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Bank</Label>
+                  <Input
+                    value={form.bank_name ?? ''}
+                    onChange={(e) => update({ bank_name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Account Name</Label>
+                  <Input
+                    value={form.bank_account_name ?? ''}
+                    onChange={(e) => update({ bank_account_name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Account Number</Label>
+                  <Input
+                    value={form.bank_account_number ?? ''}
+                    onChange={(e) => update({ bank_account_number: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Branch</Label>
+                  <Input
+                    value={form.bank_branch ?? ''}
+                    onChange={(e) => update({ bank_branch: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Routing Number</Label>
+                  <Input
+                    value={form.bank_routing_number ?? ''}
+                    onChange={(e) => update({ bank_routing_number: e.target.value })}
+                  />
+                </div>
+              </div>
+            )}
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <Label htmlFor="show-mfs-details">Show MFS (Bkash) details</Label>
+                <p className="text-xs text-muted-foreground">
+                  Display mobile financial service payment info on the invoice
+                </p>
+              </div>
+              <Switch
+                id="show-mfs-details"
+                checked={form.show_mfs_details === true}
+                onCheckedChange={(checked) => {
+                  const patch: Partial<BillingDocumentFormPayload> = {
+                    show_mfs_details: checked,
+                  }
+                  if (checked && !form.mfs_number) {
+                    Object.assign(patch, defaultBillingMfsFields())
+                  }
+                  update(patch)
+                }}
+              />
+            </div>
+            {form.show_mfs_details && (
+              <div className="grid gap-4 rounded-lg border p-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>MFS Provider</Label>
+                  <Input
+                    value={form.mfs_provider ?? ''}
+                    onChange={(e) => update({ mfs_provider: e.target.value })}
+                    placeholder="Bkash"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>MFS Number</Label>
+                  <Input
+                    value={form.mfs_number ?? ''}
+                    onChange={(e) => update({ mfs_number: e.target.value })}
+                    placeholder="+8801671737258"
+                  />
+                </div>
+              </div>
+            )}
           </>
         )}
 

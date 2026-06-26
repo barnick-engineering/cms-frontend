@@ -56,6 +56,18 @@ const PRINT_STYLES = `
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
+  #${PRINT_ROOT_ID} .billing-bank-details-block {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  #${PRINT_ROOT_ID} .billing-mfs-details-block {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  #${PRINT_ROOT_ID} .billing-payment-details-block {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
   #${PRINT_ROOT_ID} .billing-document-footer {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
@@ -232,8 +244,11 @@ function applySinglePageFooterLayout(
   )
 }
 
-/** Pin footer to page bottom ‚Äî works in screen DOM (PDF export) and print clone. */
-export async function layoutBillingFooter(root: HTMLElement) {
+/** Pin footer to page bottom ù works in screen DOM (PDF export) and print clone. */
+export async function layoutBillingFooter(
+  root: HTMLElement,
+  options?: { pdfCapture?: boolean }
+) {
   const preview = root.querySelector('.billing-preview') as HTMLElement | null
   const body = root.querySelector('.billing-preview-body') as HTMLElement | null
   const closing = root.querySelector('.billing-print-closing') as HTMLElement | null
@@ -242,6 +257,11 @@ export async function layoutBillingFooter(root: HTMLElement) {
   if (!preview || !closing || !pin || !footer) return
 
   clearPrintLayoutStyles(preview, body, closing, pin, footer)
+
+  if (options?.pdfCapture) {
+    preview.classList.add('billing-pdf-capture')
+    return
+  }
 
   const pageHeightPx = getEffectivePageHeightPx()
   const topBar = preview.firstElementChild as HTMLElement | null
@@ -278,7 +298,7 @@ function getPreviewElement(source: HTMLElement): HTMLElement | null {
   return source.querySelector('.billing-preview') ?? source.closest('.billing-preview')
 }
 
-/** Print only the billing document ‚Äî not the app shell, dialog, or sidebar. */
+/** Print only the billing document ù not the app shell, dialog, or sidebar. */
 export async function printBillingPreview(source: HTMLElement | null) {
   if (!source) return
 

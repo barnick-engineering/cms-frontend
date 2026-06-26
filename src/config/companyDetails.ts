@@ -10,6 +10,19 @@ export const COMPANY_DETAILS = {
     'Dhaka, Bangladesh',
 }
 
+export const DEFAULT_BANK_DETAILS = {
+  bank_name: import.meta.env.VITE_BANK_NAME || 'Bank Asia',
+  account_name: import.meta.env.VITE_BANK_ACCOUNT_NAME || 'Barnick Pracharani',
+  account_number: import.meta.env.VITE_BANK_ACCOUNT_NUMBER || '63133000181',
+  branch: import.meta.env.VITE_BANK_BRANCH || 'Rampura branch, dhaka',
+  routing_number: import.meta.env.VITE_BANK_ROUTING_NUMBER || '070263914',
+} as const
+
+export const DEFAULT_MFS_DETAILS = {
+  mfs_provider: import.meta.env.VITE_MFS_PROVIDER || 'Bkash',
+  mfs_number: import.meta.env.VITE_MFS_NUMBER || '+8801671737258',
+} as const
+
 /** Logo-aligned palette for exportable billing documents */
 export const BRAND_COLORS = {
   primary: '#074581',
