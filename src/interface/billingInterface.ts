@@ -1,4 +1,5 @@
 import { subDays } from 'date-fns'
+import { DEFAULT_BANK_DETAILS, DEFAULT_MFS_DETAILS } from '@/config/companyDetails'
 import { formatDateToString, getTodayDateString } from '@/lib/loanDateUtils'
 import type { WorkOrderDetailData } from '@/interface/workOrderInterface'
 
@@ -35,6 +36,15 @@ export interface BillingDocument {
   subtotal: number
   total: number
   show_totals: boolean
+  show_bank_details?: boolean
+  bank_name?: string | null
+  bank_account_name?: string | null
+  bank_account_number?: string | null
+  bank_branch?: string | null
+  bank_routing_number?: string | null
+  show_mfs_details?: boolean
+  mfs_provider?: string | null
+  mfs_number?: string | null
   terms: string | null
   balance_due: number
   line_items: BillingLineItem[]
@@ -57,6 +67,15 @@ export interface BillingDocumentFormPayload {
   discount?: number
   advance_payment?: number
   show_totals?: boolean
+  show_bank_details?: boolean
+  bank_name?: string
+  bank_account_name?: string
+  bank_account_number?: string
+  bank_branch?: string
+  bank_routing_number?: string
+  show_mfs_details?: boolean
+  mfs_provider?: string
+  mfs_number?: string
   terms?: string | null
   line_items?: BillingLineItem[]
 }
@@ -151,6 +170,42 @@ export const DEFAULT_QUOTATION_TERMS =
   'Valid for 15 days from issue date unless specified (*depends on raw materials price).\n' +
   'Delivery dates agreed upon at order confirmation.'
 
+export function defaultBillingBankFields() {
+  return {
+    bank_name: DEFAULT_BANK_DETAILS.bank_name,
+    bank_account_name: DEFAULT_BANK_DETAILS.account_name,
+    bank_account_number: DEFAULT_BANK_DETAILS.account_number,
+    bank_branch: DEFAULT_BANK_DETAILS.branch,
+    bank_routing_number: DEFAULT_BANK_DETAILS.routing_number,
+  }
+}
+
+export function resolveBillingBankDetails(data: BillingDocumentFormPayload) {
+  const defaults = defaultBillingBankFields()
+  return {
+    bank_name: (data.bank_name ?? defaults.bank_name).trim(),
+    bank_account_name: (data.bank_account_name ?? defaults.bank_account_name).trim(),
+    bank_account_number: (data.bank_account_number ?? defaults.bank_account_number).trim(),
+    bank_branch: (data.bank_branch ?? defaults.bank_branch).trim(),
+    bank_routing_number: (data.bank_routing_number ?? defaults.bank_routing_number).trim(),
+  }
+}
+
+export function defaultBillingMfsFields() {
+  return {
+    mfs_provider: DEFAULT_MFS_DETAILS.mfs_provider,
+    mfs_number: DEFAULT_MFS_DETAILS.mfs_number,
+  }
+}
+
+export function resolveBillingMfsDetails(data: BillingDocumentFormPayload) {
+  const defaults = defaultBillingMfsFields()
+  return {
+    mfs_provider: (data.mfs_provider ?? defaults.mfs_provider).trim(),
+    mfs_number: (data.mfs_number ?? defaults.mfs_number).trim(),
+  }
+}
+
 export function emptyBillingLineItem(): BillingLineItem {
   return {
     product: '',
@@ -178,6 +233,10 @@ export function emptyBillingDocument(
     discount: 0,
     advance_payment: 0,
     show_totals: true,
+    show_bank_details: false,
+    show_mfs_details: false,
+    ...defaultBillingBankFields(),
+    ...defaultBillingMfsFields(),
     terms: documentType === 'quotation' ? DEFAULT_QUOTATION_TERMS : null,
     line_items: [emptyBillingLineItem()],
   }
@@ -227,6 +286,17 @@ export function billingDocumentToFormPayload(
     discount: doc.discount,
     advance_payment: doc.advance_payment,
     show_totals: doc.show_totals,
+    show_bank_details: doc.show_bank_details ?? false,
+    bank_name: doc.bank_name ?? defaultBillingBankFields().bank_name,
+    bank_account_name: doc.bank_account_name ?? defaultBillingBankFields().bank_account_name,
+    bank_account_number:
+      doc.bank_account_number ?? defaultBillingBankFields().bank_account_number,
+    bank_branch: doc.bank_branch ?? defaultBillingBankFields().bank_branch,
+    bank_routing_number:
+      doc.bank_routing_number ?? defaultBillingBankFields().bank_routing_number,
+    show_mfs_details: doc.show_mfs_details ?? false,
+    mfs_provider: doc.mfs_provider ?? defaultBillingMfsFields().mfs_provider,
+    mfs_number: doc.mfs_number ?? defaultBillingMfsFields().mfs_number,
     terms: doc.terms,
     line_items: doc.line_items.map(({ product, description, quantity, rate }) => ({
       product,
@@ -259,6 +329,11 @@ export function workOrderToBillingPayload(
     discount: 0,
     advance_payment: documentType === 'invoice' ? Number(workOrder.total_paid) || 0 : 0,
     show_totals: documentType === 'invoice',
+    show_bank_details: false,
+    show_mfs_details: false,
+    ...(documentType === 'invoice'
+      ? { ...defaultBillingBankFields(), ...defaultBillingMfsFields() }
+      : {}),
     terms: null,
     line_items: (workOrder.items ?? []).map((item) => ({
       product: item.item,

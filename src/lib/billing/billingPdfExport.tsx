@@ -95,7 +95,7 @@ export async function downloadBillingPdf(data: BillingDocumentFormPayload) {
   try {
     await waitForPaint()
     await waitForImages(mount)
-    await layoutBillingFooter(mount)
+    await layoutBillingFooter(mount, { pdfCapture: true })
 
     const preview = mount.querySelector('.billing-preview') as HTMLElement | null
     if (!preview) {

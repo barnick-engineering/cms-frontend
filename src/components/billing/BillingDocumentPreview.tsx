@@ -1,7 +1,7 @@
 import { Fragment } from 'react'
 import { BRAND_COLORS, COMPANY_DETAILS } from '@/config/companyDetails'
 import type { BillingDocumentFormPayload, BillingDocumentType } from '@/interface/billingInterface'
-import { BILLING_DOCUMENT_TYPE_LABELS, computeBillingTotals, resolveBillingDocumentSubject } from '@/interface/billingInterface'
+import { BILLING_DOCUMENT_TYPE_LABELS, computeBillingTotals, resolveBillingBankDetails, resolveBillingDocumentSubject, resolveBillingMfsDetails } from '@/interface/billingInterface'
 import { parseDateString } from '@/lib/loanDateUtils'
 
 const { primary, primaryDark, accent, primaryLight } = BRAND_COLORS
@@ -90,6 +90,13 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
   )
   const showPricing = data.document_type !== 'delivery_challan'
   const showTotals = showPricing && data.show_totals !== false
+  const showBankDetails =
+    data.document_type === 'invoice' && data.show_bank_details === true
+  const showMfsDetails =
+    data.document_type === 'invoice' && data.show_mfs_details === true
+  const showPaymentDetails = showBankDetails || showMfsDetails
+  const bankDetails = resolveBillingBankDetails(data)
+  const mfsDetails = resolveBillingMfsDetails(data)
   const balanceDue =
     data.document_type === 'invoice'
       ? Math.max(total - (Number(data.advance_payment) || 0), 0)
@@ -294,58 +301,145 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
       </div>
 
       <div className="billing-print-closing print:px-[8mm]">
-        {showTotals && (
+        {(showTotals || showPaymentDetails) && (
           <div
-            className="billing-totals-block mt-6 flex justify-end px-4 sm:px-8 print:mt-4 print:px-0"
+            className={`billing-totals-block mt-4 px-4 sm:px-8 print:mt-2 print:px-0 ${
+              showTotals && !showPaymentDetails ? 'flex justify-end' : ''
+            }`}
             style={{ pageBreakInside: 'avoid' }}
           >
             <div
-              className="w-full space-y-1.5 pt-3 text-sm sm:w-72"
+              className={`flex w-full gap-4 pt-2 text-sm print:gap-3 print:pt-1.5 ${
+                showPaymentDetails && showTotals
+                  ? 'flex-col sm:flex-row sm:items-start sm:justify-between print:flex-row'
+                  : showTotals
+                    ? 'justify-end'
+                    : 'justify-start'
+              }`}
               style={{ borderTop: `2px solid ${primary}` }}
             >
-              <div className="flex justify-between">
-                <span className="text-neutral-600">Subtotal</span>
-                <span className="tabular-nums font-medium">{formatAmount(subtotal)}</span>
-              </div>
-              {(data.delivery_cost ?? 0) > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-neutral-600">Delivery Cost</span>
-                  <span className="tabular-nums font-medium">
-                    {formatAmount(Number(data.delivery_cost))}
-                  </span>
+              {showPaymentDetails && (
+                <div
+                  className="billing-payment-details-block min-w-0 flex-1 text-xs leading-tight sm:max-w-md print:text-[11px] print:leading-snug"
+                  style={{
+                    borderLeft: `3px solid ${accent}`,
+                    backgroundColor: primaryLight,
+                    padding: '6px 10px',
+                  }}
+                >
+                  {showBankDetails && (
+                    <div className="billing-bank-details-block space-y-0.5">
+                      <p
+                        className="font-bold uppercase tracking-wide"
+                        style={{ color: primary, fontSize: '10px' }}
+                      >
+                        Bank Details
+                      </p>
+                      <p>
+                        <span className="font-bold" style={{ color: primaryDark }}>
+                          Bank:{' '}
+                        </span>
+                        {bankDetails.bank_name}
+                        {' · '}
+                        <span className="font-bold" style={{ color: primaryDark }}>
+                          Acc:{' '}
+                        </span>
+                        <span className="font-bold tabular-nums" style={{ color: primary }}>
+                          {bankDetails.bank_account_number}
+                        </span>
+                      </p>
+                      <p>
+                        <span className="font-bold" style={{ color: primaryDark }}>
+                          Name:{' '}
+                        </span>
+                        {bankDetails.bank_account_name}
+                      </p>
+                      <p>
+                        <span className="font-bold" style={{ color: primaryDark }}>
+                          Branch:{' '}
+                        </span>
+                        {bankDetails.bank_branch}
+                        {' · '}
+                        <span className="font-bold" style={{ color: primaryDark }}>
+                          Routing:{' '}
+                        </span>
+                        <span className="font-bold tabular-nums">{bankDetails.bank_routing_number}</span>
+                      </p>
+                    </div>
+                  )}
+                  {showBankDetails && showMfsDetails && (
+                    <div
+                      className="my-1 border-t print:my-0.5"
+                      style={{ borderColor: `${primary}25` }}
+                    />
+                  )}
+                  {showMfsDetails && (
+                    <div className="billing-mfs-details-block space-y-0.5">
+                      <p
+                        className="font-bold uppercase tracking-wide"
+                        style={{ color: accent, fontSize: '10px' }}
+                      >
+                        MFS ({mfsDetails.mfs_provider})
+                      </p>
+                      <p>
+                        <span className="font-bold" style={{ color: primaryDark }}>
+                          No:{' '}
+                        </span>
+                        <span className="font-bold tabular-nums" style={{ color: primaryDark }}>
+                          {mfsDetails.mfs_number}
+                        </span>
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
-              {(data.discount ?? 0) > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-neutral-600">Discount</span>
-                  <span className="tabular-nums font-medium">
-                    {formatAmount(Number(data.discount))}
-                  </span>
-                </div>
-              )}
-              <div
-                className="flex justify-between border-t pt-2 text-base font-bold"
-                style={{ borderColor: accent, color: primaryDark }}
-              >
-                <span>Total</span>
-                <span className="tabular-nums">{formatAmount(total)}</span>
-              </div>
-              {showAdvance && (
-                <>
+              {showTotals && (
+                <div className="w-full shrink-0 space-y-1.5 sm:w-72">
                   <div className="flex justify-between">
-                    <span className="text-neutral-600">Advance Payment</span>
-                    <span className="tabular-nums font-medium">
-                      {formatAmount(Number(data.advance_payment))}
-                    </span>
+                    <span className="text-neutral-600">Subtotal</span>
+                    <span className="tabular-nums font-medium">{formatAmount(subtotal)}</span>
                   </div>
+                  {(data.delivery_cost ?? 0) > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-neutral-600">Delivery Cost</span>
+                      <span className="tabular-nums font-medium">
+                        {formatAmount(Number(data.delivery_cost))}
+                      </span>
+                    </div>
+                  )}
+                  {(data.discount ?? 0) > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-neutral-600">Discount</span>
+                      <span className="tabular-nums font-medium">
+                        {formatAmount(Number(data.discount))}
+                      </span>
+                    </div>
+                  )}
                   <div
-                    className="flex justify-between font-bold"
-                    style={{ color: primaryDark }}
+                    className="flex justify-between border-t pt-2 text-base font-bold"
+                    style={{ borderColor: accent, color: primaryDark }}
                   >
-                    <span>Balance Due</span>
-                    <span className="tabular-nums">{formatAmount(balanceDue)}</span>
+                    <span>Total</span>
+                    <span className="tabular-nums">{formatAmount(total)}</span>
                   </div>
-                </>
+                  {showAdvance && (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-neutral-600">Advance Payment</span>
+                        <span className="tabular-nums font-medium">
+                          {formatAmount(Number(data.advance_payment))}
+                        </span>
+                      </div>
+                      <div
+                        className="flex justify-between font-bold"
+                        style={{ color: primaryDark }}
+                      >
+                        <span>Balance Due</span>
+                        <span className="tabular-nums">{formatAmount(balanceDue)}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
               )}
             </div>
           </div>
