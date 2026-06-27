@@ -11,8 +11,9 @@ export function getPaymentStatus(
   totalPaid: number,
   isPaid = false
 ): WorkOrderPaymentStatus {
+  if (isPaid) return 'paid'
   const orderValue = getWorkOrderValue(amount, totalPaid)
-  if (isPaid || (orderValue > 0 && totalPaid >= orderValue)) return 'paid'
+  if (orderValue > 0 && totalPaid >= orderValue) return 'paid'
   if (totalPaid > 0 && totalPaid < orderValue) return 'partial'
   return 'pending'
 }
@@ -27,12 +28,10 @@ export function getPendingAmount(
   return Math.max(0, orderValue - totalPaid)
 }
 
-export function getWaivedAmount(
-  amount: number,
-  totalPaid: number,
-  isPaid = false
-): number {
-  if (!isPaid) return 0
-  const orderValue = getWorkOrderValue(amount, totalPaid)
-  return Math.max(0, orderValue - totalPaid)
+export const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  cash: 'Cash',
+  bank: 'Bank',
+  bkash: 'Bkash',
 }
+
+export const DEFAULT_BKASH_NUMBER = '01671737258'

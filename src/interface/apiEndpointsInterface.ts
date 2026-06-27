@@ -37,6 +37,7 @@ export interface ApiEndpoints {
     updateWorkOrder: string
     deleteWorkOrder: string
     getWorkOrderById: string
+    addWorkOrderPayment: string
   }
   inventory: {
     inventoryList: string

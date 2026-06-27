@@ -15,7 +15,6 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, ChevronLeft, ChevronRight, FileText } from 'lucide-react'
-import { getPaymentStatus, getPendingAmount } from '@/lib/workOrderPaymentStatus'
 import { NoDataFound } from '@/components/NoDataFound'
 
 const WORK_ORDERS_PAGE_SIZE = 10
@@ -173,8 +172,8 @@ const CustomerProfile = () => {
                     {workOrders.map((wo) => {
                       const amount = wo.amount ?? 0
                       const totalPaid = wo.total_paid ?? 0
-                      const pending = getPendingAmount(amount, totalPaid, wo.is_paid)
-                      const paymentStatus = getPaymentStatus(amount, totalPaid, wo.is_paid)
+                      const pending = amount - totalPaid
+                      const isPaid = amount <= totalPaid
                       return (
                         <TableRow
                           key={wo.id}
@@ -204,16 +203,8 @@ const CustomerProfile = () => {
                             ৳{pending.toLocaleString('en-IN')}
                           </TableCell>
                           <TableCell>
-                            <Badge
-                              variant={
-                                paymentStatus === 'paid' ? 'default' : 'secondary'
-                              }
-                            >
-                              {paymentStatus === 'paid'
-                                ? 'Paid'
-                                : paymentStatus === 'partial'
-                                  ? 'Partial'
-                                  : 'Pending'}
+                            <Badge variant={isPaid ? 'default' : 'secondary'}>
+                              {isPaid ? 'Paid' : 'Pending'}
                             </Badge>
                           </TableCell>
                         </TableRow>

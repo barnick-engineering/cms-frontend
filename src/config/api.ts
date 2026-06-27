@@ -48,6 +48,7 @@ export const apiEndpoints: ApiEndpoints = {
     updateWorkOrder: '/api/v1/work-order/',
     deleteWorkOrder: '/api/v1/work-order/',
     getWorkOrderById: '/api/v1/work-order/',
+    addWorkOrderPayment: '/api/v1/work-order/',
   },
   inventory: {
     inventoryList: '/inventory',

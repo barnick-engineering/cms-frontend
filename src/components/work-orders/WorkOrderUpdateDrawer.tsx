@@ -21,30 +21,50 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
 import { NumberInput } from "@/components/ui/number-input"
 import { coerceNumber } from "@/lib/numberInput"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
 import type { AxiosError } from "axios"
-import type { WorkOrder } from "@/interface/workOrderInterface"
+import type { WorkOrder, WorkOrderPaymentMethod } from "@/interface/workOrderInterface"
 import { useUpdateWorkOrder } from "@/hooks/useWorkOrder"
-import { getPendingAmount } from "@/lib/workOrderPaymentStatus"
+import { DEFAULT_BKASH_NUMBER } from "@/lib/workOrderPaymentStatus"
 
 const updateWorkOrderSchema = z
   .object({
-    total_paid: z
+    amount: z
       .number({ error: "Amount is required" })
       .min(0, "Amount must be 0 or more")
       .optional(),
+    method: z.enum(["cash", "bank", "bkash"]),
+    bkash_number: z.string().optional(),
     paid: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
-    if (!data.paid && data.total_paid === undefined) {
+    if (!data.paid && data.amount === undefined) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Enter an amount or mark as paid",
-        path: ["total_paid"],
+        path: ["amount"],
       })
+    }
+    if (data.method === "bkash" && (data.amount ?? 0) > 0) {
+      const number = (data.bkash_number || "").trim()
+      if (!number) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Bkash number is required",
+          path: ["bkash_number"],
+        })
+      }
     }
   })
 
@@ -67,36 +87,48 @@ const WorkOrderUpdateDrawer = ({
 
   const currentTotalPaid = currentRow?.total_paid || 0
   const currentAmount = currentRow?.amount || 0
-  const pendingAmount = getPendingAmount(
-    currentAmount,
-    currentTotalPaid,
-    currentRow?.is_paid
-  )
+  const pendingAmount = currentAmount - currentTotalPaid
 
   const form = useForm<UpdateWorkOrderSchema>({
     resolver: zodResolver(updateWorkOrderSchema),
     defaultValues: {
-      total_paid: undefined,
+      amount: undefined,
+      method: "cash",
+      bkash_number: DEFAULT_BKASH_NUMBER,
       paid: false,
     },
   })
 
+  const watchedMethod = form.watch("method")
+
   useEffect(() => {
     if (!open) {
-      form.reset({ total_paid: undefined, paid: false })
+      form.reset({
+        amount: undefined,
+        method: "cash",
+        bkash_number: DEFAULT_BKASH_NUMBER,
+        paid: false,
+      })
     }
   }, [open, form])
 
   const onSubmit: SubmitHandler<UpdateWorkOrderSchema> = (data) => {
     if (!currentRow) return
-    const additionalAmount = coerceNumber(data.total_paid) ?? 0
+
+    const paymentAmount = data.paid
+      ? Math.round(coerceNumber(data.amount, 0))
+      : Math.round(coerceNumber(data.amount))
 
     updateMutation.mutate(
       {
         id: currentRow.id,
         data: {
-          ...(additionalAmount > 0 || !data.paid ? { total_paid: additionalAmount } : {}),
-          ...(data.paid ? { is_paid: true } : {}),
+          amount: paymentAmount,
+          method: data.method as WorkOrderPaymentMethod,
+          ...(data.method === "bkash" && {
+            bkash_number: (data.bkash_number || DEFAULT_BKASH_NUMBER).trim(),
+          }),
+          ...(data.paid && { is_paid: true }),
         },
       },
       {
@@ -107,8 +139,13 @@ const WorkOrderUpdateDrawer = ({
           toast.success("Payment added successfully.")
         },
         onError: (err: unknown) => {
-          const error = err as AxiosError<{ message: string }>
-          toast.error(error?.response?.data?.message || "Update failed")
+          const error = err as AxiosError<{ response_message?: Record<string, string[]>; message?: string }>
+          const msg =
+            error?.response?.data?.response_message &&
+            typeof error.response.data.response_message === "object"
+              ? Object.values(error.response.data.response_message).flat().join(", ")
+              : error?.response?.data?.message || "Update failed"
+          toast.error(msg)
         },
       }
     )
@@ -145,6 +182,45 @@ const WorkOrderUpdateDrawer = ({
               </div>
             </div>
 
+            <FormField
+              control={form.control}
+              name="method"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Payment method</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select method" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="bank">Bank</SelectItem>
+                      <SelectItem value="bkash">Bkash</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {watchedMethod === "bkash" && (
+              <FormField
+                control={form.control}
+                name="bkash_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bkash number</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder={DEFAULT_BKASH_NUMBER} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
             {pendingAmount > 0 && (
               <FormField
                 control={form.control}
@@ -160,7 +236,7 @@ const WorkOrderUpdateDrawer = ({
                     <div className="space-y-1 leading-none">
                       <FormLabel className="cursor-pointer font-medium">Paid</FormLabel>
                       <p className="text-xs text-muted-foreground">
-                        Records the amount received and marks the order settled. Any remaining balance is waived (e.g. receive ৳4,000 on a ৳5,000 order).
+                        Mark this work order as settled even if the amount received is less than the total — e.g. receive ৳4,000 on a ৳5,000 order and waive the rest.
                       </p>
                     </div>
                   </FormItem>
@@ -170,26 +246,24 @@ const WorkOrderUpdateDrawer = ({
 
             <FormField
               control={form.control}
-              name="total_paid"
+              name="amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    Amount received{form.watch("paid") ? " (optional if already partially paid)" : ""}
-                  </FormLabel>
+                  <FormLabel>Amount received (optional when marking as paid)</FormLabel>
                   <FormControl>
                     <NumberInput
                       value={field.value}
                       onChange={field.onChange}
                       min={0}
-                      step="0.01"
-                      placeholder="0.00"
+                      step="1"
+                      placeholder="0"
                       max={pendingAmount}
                     />
                   </FormControl>
                   <FormMessage />
                   <p className="text-xs text-muted-foreground">
                     {form.watch("paid")
-                      ? "This amount is added to total paid. The order is marked settled; remaining balance is waived."
+                      ? "When Paid is checked, the order is marked settled with the amount you enter (not auto-filled to pending)."
                       : `Maximum: ৳${pendingAmount.toLocaleString('en-IN')}`}
                   </p>
                 </FormItem>
