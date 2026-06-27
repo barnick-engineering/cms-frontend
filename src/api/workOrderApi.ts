@@ -67,7 +67,22 @@ export const createWorkOrder = async (data: WorkOrderFormInterface) => {
   return res.data
 }
 
-// update work order (only total_paid)
+// update work order (record payment)
+export const addWorkOrderPayment = async (
+  id: string | number,
+  data: WorkOrderUpdatePayload
+): Promise<WorkOrderDetailData> => {
+  if (!id) throw new Error("Work Order ID is required")
+
+  const res = await axiosInstance.post<{ data: WorkOrderDetailData }>(
+    `${apiEndpoints.workOrder.addWorkOrderPayment}${id}/payments/`,
+    data
+  )
+
+  return res.data.data
+}
+
+// update work order (legacy PUT — payment-only payloads still supported)
 export const updateWorkOrder = async (
   id: string | number,
   data: WorkOrderUpdatePayload

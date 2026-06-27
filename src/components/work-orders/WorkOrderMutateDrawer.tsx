@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
-import type z from "zod"
 import { useForm, useFieldArray } from "react-hook-form"
-import type { SubmitHandler } from "react-hook-form"
+import type { FieldErrors, Resolver, SubmitHandler } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import {
@@ -29,13 +28,11 @@ import { DatePicker } from "@/components/date-picker"
 import { toast } from "sonner"
 import type { AxiosError } from "axios"
 import type { WorkOrderMutateDrawerProps, WorkOrderFormInterface } from "@/interface/workOrderInterface"
-import { workOrderFormSchema } from "@/schema/workOrderFormSchema"
+import { workOrderFormSchema, type WorkOrderFormSchema } from "@/schema/workOrderFormSchema"
 import { useCreateWorkOrder, useUpdateWorkOrderFull, useWorkOrderById } from "@/hooks/useWorkOrder"
 import { useCustomerList } from "@/hooks/useCustomer"
 import { Combobox } from "@/components/ui/combobox"
 import { Plus, Minus } from "lucide-react"
-
-type WorkOrderFormSchema = z.infer<typeof workOrderFormSchema>
 
 const WorkOrderMutateDrawer = ({
   open,
@@ -48,10 +45,13 @@ const WorkOrderMutateDrawer = ({
   const isUpdate = !!currentRow?.id
 
   // Fetch work order details when in update mode
-  const { data: workOrderDetails, isLoading: isLoadingDetails } = useWorkOrderById(
-    currentRow?.id || 0,
-    { enabled: isUpdate && open && !!currentRow?.id }
-  )
+  const {
+    data: workOrderDetails,
+    isLoading: isLoadingDetails,
+    isError: isDetailsError,
+  } = useWorkOrderById(currentRow?.id || 0, {
+    enabled: isUpdate && open && !!currentRow?.id,
+  })
 
   // Fetch customers for combobox with search functionality
   const [customerSearch, setCustomerSearch] = useState("")
@@ -70,7 +70,7 @@ const WorkOrderMutateDrawer = ({
   } as unknown as WorkOrderFormSchema["items"][number]
 
   const form = useForm<WorkOrderFormSchema>({
-    resolver: zodResolver(workOrderFormSchema),
+    resolver: zodResolver(workOrderFormSchema) as Resolver<WorkOrderFormSchema>,
     defaultValues: {
       customer: undefined,
       items: [emptyItem],
@@ -95,13 +95,16 @@ const WorkOrderMutateDrawer = ({
           id: item.id,
           item: item.item,
           details: item.details || null,
-          total_order: item.total_order,
-          unit_price: item.unit_price,
+          total_order: coerceNumber(item.total_order),
+          unit_price: coerceNumber(item.unit_price),
         })),
-        date: workOrderDetails.date,
-        total_paid: workOrderDetails.total_paid || 0,
-        delivery_charge: workOrderDetails.delivery_charge || 0,
-        remarks: workOrderDetails.remarks || "",
+        date: workOrderDetails.date ?? undefined,
+        total_paid: coerceNumber(workOrderDetails.total_paid, 0),
+        delivery_charge:
+          workOrderDetails.delivery_charge != null
+            ? coerceNumber(workOrderDetails.delivery_charge)
+            : undefined,
+        remarks: workOrderDetails.remarks ?? "",
       });
     } else if (!open) {
       form.reset({
@@ -146,8 +149,8 @@ const WorkOrderMutateDrawer = ({
         unit_price: item.unit_price,
       })),
       date: data.date || new Date().toISOString().split("T")[0],
-      amount: calculatedAmount,
-      delivery_charge: data.delivery_charge || 0,
+      amount: Math.round(calculatedAmount),
+      delivery_charge: Math.round(coerceNumber(data.delivery_charge, 0)),
       total_paid: data.total_paid || 0,
       remarks: data.remarks || null,
     };
@@ -161,10 +164,9 @@ const WorkOrderMutateDrawer = ({
       
       const updatePayload: WorkOrderFormInterface = {
         ...normalizedData,
-        amount: calculatedAmount,
-        // Only include total_paid if it's different, and send the difference
         ...(totalPaidDifference !== 0 && { total_paid: totalPaidDifference }),
       }
+      delete updatePayload.amount
       
       updateMutation.mutate(
         { id: currentRow.id, data: updatePayload },
@@ -176,8 +178,18 @@ const WorkOrderMutateDrawer = ({
             toast.success("Work order updated successfully.")
           },
           onError: (err: unknown) => {
-            const error = err as AxiosError<{ message: string }>
-            toast.error(error?.response?.data?.message || "Update failed")
+            const error = err as AxiosError<{
+              message?: string
+              response_message?: string | Record<string, string[]>
+            }>
+            const responseMessage = error?.response?.data?.response_message
+            const msg =
+              typeof responseMessage === "string"
+                ? responseMessage
+                : responseMessage && typeof responseMessage === "object"
+                  ? Object.values(responseMessage).flat().join(", ")
+                  : error?.response?.data?.message || "Update failed"
+            toast.error(msg)
           },
         }
       )
@@ -197,6 +209,11 @@ const WorkOrderMutateDrawer = ({
     }
   }
 
+  const onInvalid = (errors: FieldErrors<WorkOrderFormSchema>) => {
+    const firstMessage = findFirstFormError(errors)
+    toast.error(firstMessage || "Please fix the form errors before saving.")
+  }
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="flex flex-col overflow-y-auto">
@@ -214,7 +231,7 @@ const WorkOrderMutateDrawer = ({
         <Form {...form}>
           <form
             id="work-order-form"
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={form.handleSubmit(onSubmit, onInvalid)}
             className="flex-1 space-y-6 overflow-y-auto px-4"
           >
             <FormField
@@ -471,6 +488,12 @@ const WorkOrderMutateDrawer = ({
           </form>
         </Form>
 
+        {isUpdate && isDetailsError && (
+          <p className="px-4 text-sm text-destructive">
+            Could not load work order details. Close and try again.
+          </p>
+        )}
+
         <SheetFooter className="gap-2">
           <SheetClose asChild>
             <Button variant="outline">Close</Button>
@@ -478,7 +501,7 @@ const WorkOrderMutateDrawer = ({
           <Button
             form="work-order-form"
             type="submit"
-            disabled={isUpdate && isLoadingDetails}
+            disabled={isUpdate && (isLoadingDetails || isDetailsError)}
           >
             {isUpdate ? "Update" : "Create"}
           </Button>
@@ -486,6 +509,28 @@ const WorkOrderMutateDrawer = ({
       </SheetContent>
     </Sheet>
   );
+}
+
+function findFirstFormError(errors: FieldErrors<WorkOrderFormSchema>): string | undefined {
+  if (Array.isArray(errors)) {
+    for (const item of errors) {
+      const nested = findFirstFormError(item as FieldErrors<WorkOrderFormSchema>)
+      if (nested) return nested
+    }
+    return undefined
+  }
+
+  for (const value of Object.values(errors)) {
+    if (!value) continue
+    if (typeof value === "object" && "message" in value && value.message) {
+      return String(value.message)
+    }
+    if (typeof value === "object") {
+      const nested = findFirstFormError(value as FieldErrors<WorkOrderFormSchema>)
+      if (nested) return nested
+    }
+  }
+  return undefined
 }
 
 export default WorkOrderMutateDrawer

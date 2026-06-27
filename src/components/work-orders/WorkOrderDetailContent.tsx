@@ -2,23 +2,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import type { WorkOrderDetailData } from '@/interface/workOrderInterface'
-import {
-  getPaymentStatus,
-  getPendingAmount,
-  getWaivedAmount,
-} from '@/lib/workOrderPaymentStatus'
+import { getPaymentStatus, getPendingAmount, PAYMENT_METHOD_LABELS } from '@/lib/workOrderPaymentStatus'
 
 type WorkOrderDetailContentProps = {
   workOrderDetail: WorkOrderDetailData
 }
 
 export function WorkOrderDetailContent({ workOrderDetail }: WorkOrderDetailContentProps) {
-  const amount = workOrderDetail.amount || 0
-  const totalPaid = workOrderDetail.total_paid || 0
-  const isPaidFlag = workOrderDetail.is_paid ?? false
-  const paymentStatus = getPaymentStatus(amount, totalPaid, isPaidFlag)
-  const pendingAmount = getPendingAmount(amount, totalPaid, isPaidFlag)
-  const waivedAmount = getWaivedAmount(amount, totalPaid, isPaidFlag)
+  const isPaid =
+    getPaymentStatus(
+      workOrderDetail.amount,
+      workOrderDetail.total_paid,
+      workOrderDetail.is_paid
+    ) === 'paid'
+  const pendingAmount = getPendingAmount(
+    workOrderDetail.amount,
+    workOrderDetail.total_paid,
+    workOrderDetail.is_paid
+  )
 
   const itemsSubtotal =
     workOrderDetail.items?.reduce(
@@ -59,15 +60,8 @@ export function WorkOrderDetailContent({ workOrderDetail }: WorkOrderDetailConte
             <CardTitle className="text-sm font-medium text-muted-foreground">Status</CardTitle>
           </CardHeader>
           <CardContent>
-            <Badge
-              variant={paymentStatus === 'paid' ? 'default' : 'secondary'}
-              className="text-sm"
-            >
-              {paymentStatus === 'paid'
-                ? 'Paid'
-                : paymentStatus === 'partial'
-                  ? 'Partial'
-                  : 'Pending'}
+            <Badge variant={isPaid ? 'default' : 'secondary'} className="text-sm">
+              {isPaid ? 'Paid' : 'Pending'}
             </Badge>
           </CardContent>
         </Card>
@@ -154,17 +148,53 @@ export function WorkOrderDetailContent({ workOrderDetail }: WorkOrderDetailConte
                 ৳{pendingAmount.toLocaleString('en-IN')}
               </p>
             </div>
-            {waivedAmount > 0 && (
-              <div>
-                <span className="text-sm font-medium text-muted-foreground">Waived</span>
-                <p className="text-xl font-bold text-muted-foreground">
-                  ৳{waivedAmount.toLocaleString('en-IN')}
-                </p>
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>
+
+      {workOrderDetail.payments && workOrderDetail.payments.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Payment History</CardTitle>
+          </CardHeader>
+          <CardContent className="min-w-0">
+            <div className="overflow-x-auto rounded-lg border">
+              <table className="w-full min-w-[28rem] text-sm">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="p-3 text-left font-medium">Date</th>
+                    <th className="p-3 text-left font-medium">Method</th>
+                    <th className="p-3 text-left font-medium">Details</th>
+                    <th className="p-3 text-right font-medium">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {workOrderDetail.payments.map((payment) => (
+                    <tr key={payment.id} className="border-t">
+                      <td className="p-3">
+                        {payment.created
+                          ? new Date(payment.created).toLocaleString()
+                          : '—'}
+                      </td>
+                      <td className="p-3">
+                        {PAYMENT_METHOD_LABELS[payment.method] || payment.method}
+                      </td>
+                      <td className="p-3 text-muted-foreground">
+                        {payment.method === 'bkash' && payment.bkash_number
+                          ? payment.bkash_number
+                          : payment.paid_by || '—'}
+                      </td>
+                      <td className="p-3 text-right font-semibold">
+                        ৳{payment.amount.toLocaleString('en-IN')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Items */}
       {workOrderDetail.items && workOrderDetail.items.length > 0 && (

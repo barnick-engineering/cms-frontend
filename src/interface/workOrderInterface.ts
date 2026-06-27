@@ -63,7 +63,7 @@ export interface WorkOrder {
   total_expense?: number
   delivery_charge?: number
   remarks: string | null
-  date: string
+  date?: string | null
   created_by: number
   items?: WorkOrderListItem[]
 }
@@ -105,6 +105,17 @@ export interface WorkOrderDetailExpense {
   details: WorkOrderDetailExpenseItem[]
 }
 
+export type WorkOrderPaymentMethod = 'cash' | 'bank' | 'bkash'
+
+export interface WorkOrderPaymentRecord {
+  id: number
+  amount: number
+  method: WorkOrderPaymentMethod
+  bkash_number: string | null
+  created: string
+  paid_by: string | null
+}
+
 export interface WorkOrderDetailData {
   id: number
   no: string
@@ -118,14 +129,15 @@ export interface WorkOrderDetailData {
   items: WorkOrderDetailItem[]
   total_items: number
   expense: WorkOrderDetailExpense[]
+  payments?: WorkOrderPaymentRecord[]
   amount: number
   total_paid: number
+  is_paid?: boolean
   delivery_charge?: number
-  date: string
+  date?: string | null
   created: string
   status: boolean
   is_delivered: boolean
-  is_paid?: boolean
   remarks: string | null
   created_by: number
 }
@@ -137,7 +149,10 @@ export interface WorkOrderDetailResponse {
 }
 
 export interface WorkOrderUpdatePayload {
+  amount?: number
   total_paid?: number
+  method?: WorkOrderPaymentMethod
+  bkash_number?: string
   is_paid?: boolean
 }
 

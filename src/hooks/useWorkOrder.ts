@@ -1,8 +1,8 @@
 import {
+  addWorkOrderPayment,
   createWorkOrder,
   deleteWorkOrder,
   getWorkOrderById,
-  updateWorkOrder,
   updateWorkOrderFull,
   workOrderList,
 } from "@/api/workOrderApi"
@@ -57,7 +57,7 @@ export const useCreateWorkOrder = () => {
   })
 }
 
-// update (only total_paid)
+// update (record payment)
 export const useUpdateWorkOrder = () => {
   const queryClient = useQueryClient()
   return useMutation({
@@ -67,7 +67,7 @@ export const useUpdateWorkOrder = () => {
     }: {
       id: string | number
       data: WorkOrderUpdatePayload
-    }) => updateWorkOrder(id, data),
+    }) => addWorkOrderPayment(id, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: WORK_ORDER_KEYS.all })
       queryClient.invalidateQueries({ queryKey: WORK_ORDER_KEYS.detail(variables.id) })
