@@ -16,8 +16,13 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, ChevronLeft, ChevronRight, FileText } from 'lucide-react'
 import { NoDataFound } from '@/components/NoDataFound'
+import { getPaymentStatus, getPendingAmount } from '@/lib/workOrderPaymentStatus'
 
 const WORK_ORDERS_PAGE_SIZE = 10
+
+function formatCurrency(value: number) {
+  return `৳${value.toLocaleString('en-IN')}`
+}
 
 const CustomerProfile = () => {
   const { id } = useParams<{ id: string }>()
@@ -38,6 +43,7 @@ const CustomerProfile = () => {
   )
   const workOrders = workOrdersData?.data ?? []
   const workOrdersTotal = workOrdersData?.total ?? 0
+  const workOrderSummary = workOrdersData?.summary
   const workOrderPageCount = Math.ceil(workOrdersTotal / WORK_ORDERS_PAGE_SIZE) || 1
 
   const handleWorkOrderPageChange = useCallback((newPage: number) => {
@@ -140,6 +146,55 @@ const CustomerProfile = () => {
           </CardContent>
         </Card>
 
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total worked
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">
+                {workOrdersLoading
+                  ? '—'
+                  : formatCurrency(workOrderSummary?.total_amount ?? 0)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {workOrderSummary?.total_orders ?? 0} work order
+                {(workOrderSummary?.total_orders ?? 0) === 1 ? '' : 's'}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total paid
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">
+                {workOrdersLoading
+                  ? '—'
+                  : formatCurrency(workOrderSummary?.total_paid ?? 0)}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Pending
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">
+                {workOrdersLoading
+                  ? '—'
+                  : formatCurrency(workOrderSummary?.total_pending ?? 0)}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
         <Card>
           <CardHeader>
             <CardTitle>Work orders</CardTitle>
@@ -172,8 +227,20 @@ const CustomerProfile = () => {
                     {workOrders.map((wo) => {
                       const amount = wo.amount ?? 0
                       const totalPaid = wo.total_paid ?? 0
-                      const pending = amount - totalPaid
-                      const isPaid = amount <= totalPaid
+                      const pending = getPendingAmount(amount, totalPaid, wo.is_paid)
+                      const status = getPaymentStatus(amount, totalPaid, wo.is_paid)
+                      const badgeVariant =
+                        status === 'paid'
+                          ? 'default'
+                          : status === 'partial'
+                            ? 'secondary'
+                            : 'outline'
+                      const badgeLabel =
+                        status === 'paid'
+                          ? 'Paid'
+                          : status === 'partial'
+                            ? 'Partial'
+                            : 'Pending'
                       return (
                         <TableRow
                           key={wo.id}
@@ -203,9 +270,7 @@ const CustomerProfile = () => {
                             ৳{pending.toLocaleString('en-IN')}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={isPaid ? 'default' : 'secondary'}>
-                              {isPaid ? 'Paid' : 'Pending'}
-                            </Badge>
+                            <Badge variant={badgeVariant}>{badgeLabel}</Badge>
                           </TableCell>
                         </TableRow>
                       )
