@@ -28,6 +28,7 @@ interface ReportTableProps<TData> {
     onDownloadExcel?: () => void
     entityName?: string
     title?: string
+    exporting?: boolean
 }
 
 export const ReportTable = <TData,>({
@@ -41,6 +42,7 @@ export const ReportTable = <TData,>({
     onDownloadExcel,
     // entityName,
     title = 'Ledger Details',
+    exporting = false,
 }: ReportTableProps<TData>) => {
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
@@ -89,14 +91,14 @@ export const ReportTable = <TData,>({
                 </div>
                 <div className='flex flex-col md:items-center gap-2'>
                     {onDownloadExcel && (
-                        <Button onClick={onDownloadExcel}>
-                            Download as Excel
+                        <Button onClick={onDownloadExcel} disabled={exporting}>
+                            {exporting ? 'Exporting…' : 'Download as Excel'}
                         </Button>
                     )}
 
-                    <Button onClick={onDownloadPdf} className="gap-2">
+                    <Button onClick={onDownloadPdf} className="gap-2" disabled={exporting}>
                         <Download className="h-4 w-4" />
-                        Download PDF
+                        {exporting ? 'Exporting…' : 'Download PDF'}
                     </Button>
                 </div>
             </div>
@@ -150,7 +152,9 @@ export const ReportTable = <TData,>({
                 </Table>
             </div>
 
-            {data.length > 0 && <DataTablePagination table={table} />}
+            {data.length > 0 && (
+                <DataTablePagination table={table} totalCount={total} />
+            )}
         </div>
     )
 }

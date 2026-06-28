@@ -11,6 +11,8 @@ import type {
 
 type BarnickWrapper<T> = { data: T; response_message: string; response_code: number }
 
+export const REPORT_EXPORT_MAX = 5000
+
 function getParams(params?: ReportV1Params): Record<string, string | number> {
   const out: Record<string, string | number> = {}
   if (params?.start_date) out.start_date = params.start_date
@@ -18,6 +20,43 @@ function getParams(params?: ReportV1Params): Record<string, string | number> {
   if (params?.limit != null) out.limit = params.limit
   if (params?.offset != null) out.offset = params.offset
   return out
+}
+
+function toExportLimit(total: number): number {
+  return Math.min(Math.max(total, 1), REPORT_EXPORT_MAX)
+}
+
+export async function fetchAllCustomerWorkOrdersReport(
+  params: ReportV1Params | undefined,
+  total: number
+): Promise<CustomerWorkOrderReportResponse> {
+  return fetchCustomerWorkOrdersReport({
+    ...params,
+    limit: toExportLimit(total),
+    offset: 0,
+  })
+}
+
+export async function fetchAllWorkOrderDetailsReport(
+  params: ReportV1Params | undefined,
+  total: number
+): Promise<WorkOrderDetailsReportPaginatedResponse> {
+  return fetchWorkOrderDetailsReport({
+    ...params,
+    limit: toExportLimit(total),
+    offset: 0,
+  })
+}
+
+export async function fetchAllExpensesReportV1(
+  params: ReportV1Params | undefined,
+  total: number
+): Promise<ExpenseReportV1Response> {
+  return fetchExpensesReportV1({
+    ...params,
+    limit: toExportLimit(total),
+    offset: 0,
+  })
 }
 
 export async function fetchCustomerWorkOrdersReport(

@@ -1,6 +1,14 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Download } from 'lucide-react'
+import { toast } from 'sonner'
+import {
+  fetchAllCustomerWorkOrdersReport,
+  fetchAllWorkOrderDetailsReport,
+  fetchAllExpensesReportV1,
+  REPORT_EXPORT_MAX,
+} from '@/api/reportV1Api'
+import type { ReportV1Params } from '@/interface/reportV1Interface'
 import { ReportSlug } from '@/utils/enums/reportType'
 import { ReportCard } from '@/components/report/ReportCard'
 import { ReportTable } from '@/components/report/ReportTable'
@@ -67,6 +75,25 @@ import {
 
 const PAGE_SIZE = 10
 
+function toApiParams(params?: ReportV1HookParams): ReportV1Params {
+  return {
+    ...(params?.startDate && { start_date: params.startDate }),
+    ...(params?.endDate && { end_date: params.endDate }),
+    ...(params?.limit != null && { limit: params.limit }),
+    ...(params?.offset != null && { offset: params.offset }),
+  }
+}
+
+function checkExportLimit(total: number): boolean {
+  if (total > REPORT_EXPORT_MAX) {
+    toast.error(
+      `Export is limited to ${REPORT_EXPORT_MAX.toLocaleString()} rows. Narrow your filters or date range.`
+    )
+    return false
+  }
+  return true
+}
+
 type ReportDetailViewProps = {
   slug: ReportSlug
   reportParams?: ReportV1HookParams
@@ -84,6 +111,8 @@ export function ReportDetailView({
   pageIndex,
   onPageChange,
 }: ReportDetailViewProps) {
+  const [exporting, setExporting] = useState(false)
+
   const paginatedParams = useMemo(
     () =>
       reportParams
@@ -259,62 +288,86 @@ export function ReportDetailView({
     return []
   }, [stockReportData])
 
-  const handlePdf = useCallback(() => {
-    if (!exportDateRange) return
-    if (isCustomerWise && customerSummary) {
-      generateCustomerWorkOrdersPdf(customerList, customerSummary, exportDateRange)
-    } else if (isBalanceSheet && balanceSheetData) {
-      generateBalanceSheetPdf(
-        balanceSheetData,
-        exportDateRange,
-        collected,
-        realizedProfit,
-        realizedMargin
-      )
-    } else if (isWorkOrderDetails && woList.length > 0) {
-      generateWorkOrderDetailsPdf(woList, exportDateRange)
-    } else if (isExpenseReport && expensesSummary) {
-      generateExpenseReportV1Pdf(expensesList, expensesSummary, exportDateRange)
-    } else if (isTrending && trendingSummary) {
-      generateTrendingPdf(trendingList, trendingSummary, exportDateRange)
-    } else if (slug === ReportSlug.COLLECTIONS_OUTSTANDING && customerSummary) {
-      generateCollectionsOutstandingPdf(
-        sortCustomersByAmount(customerData?.data ?? []).filter((c) => c.pending > 0),
-        customerSummary,
-        exportDateRange,
-        collected,
-        dashboardRes?.data?.total_pending ?? customerSummary.grand_total_pending
-      )
-    } else if (slug === ReportSlug.EXPENSE_BY_PURPOSE && expensesData?.data) {
-      generateExpenseByPurposePdf(expensesData.data, exportDateRange)
-    } else if (slug === ReportSlug.PRODUCT_MIX && woDetailsData?.data) {
-      generateProductMixPdf(woDetailsData.data, exportDateRange)
-    } else if (isExecutive && executiveExportData) {
-      generateExecutiveSummaryPdf(executiveExportData, exportDateRange)
-    } else if (isLoan && loanData?.data?.length) {
-      generateLoanSummaryPdf(
-        loanData.data,
-        loanData.summary,
-        exportDateRange
-      )
-    } else if (isStock && stockItems.length > 0) {
-      generateStockReportPDF(stockItems, shopName, exportDateRange)
+  const handlePdf = useCallback(async () => {
+    if (!exportDateRange || exporting) return
+
+    setExporting(true)
+    try {
+      if (isCustomerWise && customerSummary) {
+        const total = customerPagedData?.total ?? 0
+        if (!checkExportLimit(total)) return
+        const full = await fetchAllCustomerWorkOrdersReport(toApiParams(reportParams), total)
+        generateCustomerWorkOrdersPdf(
+          sortCustomersByAmount(full.data),
+          customerSummary,
+          exportDateRange
+        )
+      } else if (isBalanceSheet && balanceSheetData) {
+        generateBalanceSheetPdf(
+          balanceSheetData,
+          exportDateRange,
+          collected,
+          realizedProfit,
+          realizedMargin
+        )
+      } else if (isWorkOrderDetails && woList.length > 0) {
+        const total = woDetailsData?.total ?? 0
+        if (!checkExportLimit(total)) return
+        const full = await fetchAllWorkOrderDetailsReport(toApiParams(reportParams), total)
+        generateWorkOrderDetailsPdf(full.data, exportDateRange)
+      } else if (isExpenseReport && expensesSummary) {
+        const total = expensesData?.total ?? 0
+        if (!checkExportLimit(total)) return
+        const full = await fetchAllExpensesReportV1(toApiParams(reportParams), total)
+        generateExpenseReportV1Pdf(full.data, expensesSummary, exportDateRange)
+      } else if (isTrending && trendingSummary) {
+        generateTrendingPdf(trendingList, trendingSummary, exportDateRange)
+      } else if (slug === ReportSlug.COLLECTIONS_OUTSTANDING && customerSummary) {
+        generateCollectionsOutstandingPdf(
+          sortCustomersByAmount(customerData?.data ?? []).filter((c) => c.pending > 0),
+          customerSummary,
+          exportDateRange,
+          collected,
+          dashboardRes?.data?.total_pending ?? customerSummary.grand_total_pending
+        )
+      } else if (slug === ReportSlug.EXPENSE_BY_PURPOSE && expensesData?.data) {
+        generateExpenseByPurposePdf(expensesData.data, exportDateRange)
+      } else if (slug === ReportSlug.PRODUCT_MIX && woDetailsData?.data) {
+        generateProductMixPdf(woDetailsData.data, exportDateRange)
+      } else if (isExecutive && executiveExportData) {
+        generateExecutiveSummaryPdf(executiveExportData, exportDateRange)
+      } else if (isLoan && loanData?.data?.length) {
+        generateLoanSummaryPdf(
+          loanData.data,
+          loanData.summary,
+          exportDateRange
+        )
+      } else if (isStock && stockItems.length > 0) {
+        generateStockReportPDF(stockItems, shopName, exportDateRange)
+      }
+    } catch {
+      toast.error('Failed to export PDF. Please try again.')
+    } finally {
+      setExporting(false)
     }
   }, [
     exportDateRange,
+    exporting,
     isCustomerWise,
     customerSummary,
-    customerList,
+    customerPagedData?.total,
+    reportParams,
     isBalanceSheet,
     balanceSheetData,
     collected,
     realizedProfit,
     realizedMargin,
     isWorkOrderDetails,
-    woList,
+    woList.length,
+    woDetailsData?.total,
     isExpenseReport,
     expensesSummary,
-    expensesList,
+    expensesData?.total,
     isTrending,
     trendingSummary,
     trendingList,
@@ -332,60 +385,84 @@ export function ReportDetailView({
     shopName,
   ])
 
-  const handleExcel = useCallback(() => {
-    if (!exportDateRange) return
-    if (isCustomerWise && customerSummary) {
-      generateCustomerWorkOrdersExcel(customerList, customerSummary, exportDateRange)
-    } else if (isBalanceSheet && balanceSheetData) {
-      generateBalanceSheetExcel(
-        balanceSheetData,
-        exportDateRange,
-        collected,
-        realizedProfit,
-        realizedMargin
-      )
-    } else if (isWorkOrderDetails && woList.length > 0) {
-      generateWorkOrderDetailsExcel(woList, exportDateRange)
-    } else if (isExpenseReport && expensesSummary) {
-      generateExpenseReportV1Excel(expensesList, expensesSummary, exportDateRange)
-    } else if (isTrending && trendingSummary) {
-      generateTrendingExcel(trendingList, trendingSummary, exportDateRange)
-    } else if (slug === ReportSlug.COLLECTIONS_OUTSTANDING && customerSummary) {
-      generateCollectionsOutstandingExcel(
-        sortCustomersByAmount(customerData?.data ?? []).filter((c) => c.pending > 0),
-        customerSummary,
-        exportDateRange
-      )
-    } else if (slug === ReportSlug.EXPENSE_BY_PURPOSE && expensesData?.data) {
-      generateExpenseByPurposeExcel(expensesData.data, exportDateRange)
-    } else if (slug === ReportSlug.PRODUCT_MIX && woDetailsData?.data) {
-      generateProductMixExcel(woDetailsData.data, exportDateRange)
-    } else if (isExecutive && executiveExportData) {
-      generateExecutiveSummaryExcel(executiveExportData, exportDateRange)
-    } else if (isLoan && loanData?.data?.length) {
-      generateLoanSummaryExcel(
-        loanData.data,
-        loanData.summary,
-        exportDateRange
-      )
-    } else if (isStock && stockItems.length > 0) {
-      generateStockReportExcel(stockItems, shopName, exportDateRange)
+  const handleExcel = useCallback(async () => {
+    if (!exportDateRange || exporting) return
+
+    setExporting(true)
+    try {
+      if (isCustomerWise && customerSummary) {
+        const total = customerPagedData?.total ?? 0
+        if (!checkExportLimit(total)) return
+        const full = await fetchAllCustomerWorkOrdersReport(toApiParams(reportParams), total)
+        generateCustomerWorkOrdersExcel(
+          sortCustomersByAmount(full.data),
+          customerSummary,
+          exportDateRange
+        )
+      } else if (isBalanceSheet && balanceSheetData) {
+        generateBalanceSheetExcel(
+          balanceSheetData,
+          exportDateRange,
+          collected,
+          realizedProfit,
+          realizedMargin
+        )
+      } else if (isWorkOrderDetails && woList.length > 0) {
+        const total = woDetailsData?.total ?? 0
+        if (!checkExportLimit(total)) return
+        const full = await fetchAllWorkOrderDetailsReport(toApiParams(reportParams), total)
+        generateWorkOrderDetailsExcel(full.data, exportDateRange)
+      } else if (isExpenseReport && expensesSummary) {
+        const total = expensesData?.total ?? 0
+        if (!checkExportLimit(total)) return
+        const full = await fetchAllExpensesReportV1(toApiParams(reportParams), total)
+        generateExpenseReportV1Excel(full.data, expensesSummary, exportDateRange)
+      } else if (isTrending && trendingSummary) {
+        generateTrendingExcel(trendingList, trendingSummary, exportDateRange)
+      } else if (slug === ReportSlug.COLLECTIONS_OUTSTANDING && customerSummary) {
+        generateCollectionsOutstandingExcel(
+          sortCustomersByAmount(customerData?.data ?? []).filter((c) => c.pending > 0),
+          customerSummary,
+          exportDateRange
+        )
+      } else if (slug === ReportSlug.EXPENSE_BY_PURPOSE && expensesData?.data) {
+        generateExpenseByPurposeExcel(expensesData.data, exportDateRange)
+      } else if (slug === ReportSlug.PRODUCT_MIX && woDetailsData?.data) {
+        generateProductMixExcel(woDetailsData.data, exportDateRange)
+      } else if (isExecutive && executiveExportData) {
+        generateExecutiveSummaryExcel(executiveExportData, exportDateRange)
+      } else if (isLoan && loanData?.data?.length) {
+        generateLoanSummaryExcel(
+          loanData.data,
+          loanData.summary,
+          exportDateRange
+        )
+      } else if (isStock && stockItems.length > 0) {
+        generateStockReportExcel(stockItems, shopName, exportDateRange)
+      }
+    } catch {
+      toast.error('Failed to export Excel. Please try again.')
+    } finally {
+      setExporting(false)
     }
   }, [
     exportDateRange,
+    exporting,
     isCustomerWise,
     customerSummary,
-    customerList,
+    customerPagedData?.total,
+    reportParams,
     isBalanceSheet,
     balanceSheetData,
     collected,
     realizedProfit,
     realizedMargin,
     isWorkOrderDetails,
-    woList,
+    woList.length,
+    woDetailsData?.total,
     isExpenseReport,
     expensesSummary,
-    expensesList,
+    expensesData?.total,
     isTrending,
     trendingSummary,
     trendingList,
@@ -404,13 +481,25 @@ export function ReportDetailView({
 
   const exportButtons = (
     <div className="flex flex-wrap gap-2 justify-end">
-      <Button variant="outline" size="sm" onClick={handleExcel} className="gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleExcel}
+        className="gap-2"
+        disabled={exporting}
+      >
         <Download className="h-4 w-4" />
-        Excel
+        {exporting ? 'Exporting…' : 'Excel'}
       </Button>
-      <Button variant="outline" size="sm" onClick={handlePdf} className="gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handlePdf}
+        className="gap-2"
+        disabled={exporting}
+      >
         <Download className="h-4 w-4" />
-        PDF
+        {exporting ? 'Exporting…' : 'PDF'}
       </Button>
     </div>
   )
@@ -508,6 +597,7 @@ export function ReportDetailView({
           onPageChange={onPageChange}
           onDownloadPdf={handlePdf}
           onDownloadExcel={handleExcel}
+          exporting={exporting}
         />
       </>
     )
@@ -556,6 +646,7 @@ export function ReportDetailView({
         title="Work order profitability"
         onDownloadPdf={handlePdf}
         onDownloadExcel={handleExcel}
+        exporting={exporting}
       />
     )
   }
@@ -582,6 +673,7 @@ export function ReportDetailView({
           onPageChange={onPageChange}
           onDownloadPdf={handlePdf}
           onDownloadExcel={handleExcel}
+          exporting={exporting}
         />
       </>
     )
@@ -618,6 +710,7 @@ export function ReportDetailView({
             onPageChange={onPageChange}
             onDownloadPdf={handlePdf}
             onDownloadExcel={handleExcel}
+            exporting={exporting}
           />
         </div>
       </>

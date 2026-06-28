@@ -168,6 +168,7 @@ interface WorkOrderDetailsReportTableProps {
   title?: string
   onDownloadPdf?: () => void
   onDownloadExcel?: () => void
+  exporting?: boolean
 }
 
 export function WorkOrderDetailsReportTable({
@@ -179,6 +180,7 @@ export function WorkOrderDetailsReportTable({
   title = 'Work Order Details Report',
   onDownloadPdf,
   onDownloadExcel,
+  exporting = false,
 }: WorkOrderDetailsReportTableProps) {
   const [expandedId, setExpandedId] = useState<number | null>(null)
 
@@ -206,14 +208,14 @@ export function WorkOrderDetailsReportTable({
         <h2 className="text-2xl font-semibold">{title}</h2>
         <div className="flex gap-2">
           {onDownloadExcel && (
-            <Button variant="outline" size="sm" onClick={onDownloadExcel}>
-              Download as Excel
+            <Button variant="outline" size="sm" onClick={onDownloadExcel} disabled={exporting}>
+              {exporting ? 'Exporting…' : 'Download as Excel'}
             </Button>
           )}
           {onDownloadPdf && (
-            <Button variant="outline" size="sm" onClick={onDownloadPdf} className="gap-2">
+            <Button variant="outline" size="sm" onClick={onDownloadPdf} className="gap-2" disabled={exporting}>
               <Download className="h-4 w-4" />
-              Download PDF
+              {exporting ? 'Exporting…' : 'Download PDF'}
             </Button>
           )}
         </div>
@@ -301,7 +303,9 @@ export function WorkOrderDetailsReportTable({
         </Table>
       </div>
 
-      {data.length > 0 && <DataTablePagination table={table} />}
+      {data.length > 0 && (
+        <DataTablePagination table={table} totalCount={total} />
+      )}
     </div>
   )
 }
