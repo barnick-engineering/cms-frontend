@@ -1,7 +1,3 @@
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
 import { useDroppable } from '@dnd-kit/core'
 import { Badge } from '@/components/ui/badge'
 import type { KanbanColumn as KanbanColumnType, KanbanTask } from '@/interface/kanbanInterface'
@@ -14,11 +10,9 @@ type KanbanColumnProps = {
 }
 
 export function KanbanColumn({ column, onTaskClick }: KanbanColumnProps) {
-  const droppableId = `column-${column.stage}`
-  const { setNodeRef, isOver } = useDroppable({ id: droppableId })
+  const { setNodeRef, isOver } = useDroppable({ id: `column-${column.stage}` })
 
   const tasks = [...column.tasks].sort((a, b) => a.position - b.position)
-  const taskIds = tasks.map((t) => String(t.id))
 
   return (
     <div className="flex w-[280px] shrink-0 flex-col">
@@ -36,11 +30,9 @@ export function KanbanColumn({ column, onTaskClick }: KanbanColumnProps) {
           isOver && 'border-primary bg-primary/5'
         )}
       >
-        <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
-          {tasks.map((task) => (
-            <KanbanCard key={task.id} task={task} onClick={onTaskClick} />
-          ))}
-        </SortableContext>
+        {tasks.map((task) => (
+          <KanbanCard key={task.id} task={task} onClick={onTaskClick} />
+        ))}
 
         {tasks.length === 0 && (
           <p className="py-6 text-center text-xs text-muted-foreground">
