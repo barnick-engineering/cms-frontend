@@ -1,15 +1,14 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   DndContext,
   DragOverlay,
   PointerSensor,
-  closestCorners,
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragOverEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
-import { useState } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useMoveKanbanTask } from '@/hooks/useKanban'
 import type {
@@ -18,7 +17,7 @@ import type {
   KanbanStage,
   KanbanTask,
 } from '@/interface/kanbanInterface'
-import { KanbanCard } from './KanbanCard'
+import { KanbanCard, KanbanCardOverlay } from './KanbanCard'
 import { KanbanColumn } from './KanbanColumn'
 import { useKanbanContext } from './kanban-provider'
 
@@ -28,45 +27,47 @@ type KanbanBoardProps = {
   isLoading?: boolean
 }
 
-function findTaskLocation(
-  columns: KanbanColumnType[],
-  taskId: number
-): { stage: KanbanStage; index: number } | null {
+function stageFromOverId(overId: string | number): KanbanStage | null {
+  const s = String(overId)
+  return s.startsWith('column-') ? (s.replace('column-', '') as KanbanStage) : null
+}
+
+function findTaskStage(columns: KanbanColumnType[], taskId: number): KanbanStage | null {
   for (const col of columns) {
-    const index = col.tasks.findIndex((t) => t.id === taskId)
-    if (index !== -1) return { stage: col.stage, index }
+    if (col.tasks.some((t) => t.id === taskId)) return col.stage
   }
   return null
 }
 
-function resolveDropTarget(
-  columns: KanbanColumnType[],
-  overId: string | number
-): { stage: KanbanStage; position?: number } | null {
-  const overStr = String(overId)
-
-  if (overStr.startsWith('column-')) {
-    const stage = overStr.replace('column-', '') as KanbanStage
-    return { stage }
-  }
-
-  const taskId = Number(overStr)
-  if (!Number.isNaN(taskId)) {
-    const loc = findTaskLocation(columns, taskId)
-    if (loc) return { stage: loc.stage, position: loc.index }
-  }
-
-  return null
+function applyMoveToColumns(
+  cols: KanbanColumnType[],
+  taskId: number,
+  targetStage: KanbanStage
+): KanbanColumnType[] {
+  const sourceTask = cols.flatMap((c) => c.tasks).find((t) => t.id === taskId)
+  if (!sourceTask) return cols
+  const task: KanbanTask = { ...sourceTask, stage: targetStage }
+  return cols.map((col) => {
+    if (col.stage === sourceTask.stage) {
+      return { ...col, tasks: col.tasks.filter((t) => t.id !== taskId) }
+    }
+    if (col.stage === targetStage) {
+      return { ...col, tasks: [...col.tasks, task] }
+    }
+    return col
+  })
 }
 
-export function KanbanBoard({
-  columns,
-  boardParams,
-  isLoading,
-}: KanbanBoardProps) {
+export function KanbanBoard({ columns, boardParams, isLoading }: KanbanBoardProps) {
   const moveMutation = useMoveKanbanTask()
   const { setOpen, setCurrentTask } = useKanbanContext()
   const [activeTask, setActiveTask] = useState<KanbanTask | null>(null)
+  const [localColumns, setLocalColumns] = useState<KanbanColumnType[]>(columns)
+  const isDraggingRef = useRef(false)
+
+  useEffect(() => {
+    if (!isDraggingRef.current) setLocalColumns(columns)
+  }, [columns])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -75,48 +76,49 @@ export function KanbanBoard({
   const taskMap = useMemo(() => {
     const map = new Map<number, KanbanTask>()
     for (const col of columns) {
-      for (const task of col.tasks) {
-        map.set(task.id, task)
-      }
+      for (const task of col.tasks) map.set(task.id, task)
     }
     return map
   }, [columns])
 
-  const handleTaskClick = (task: KanbanTask) => {
-    setCurrentTask(task)
-    setOpen('view')
-  }
-
   const handleDragStart = (event: DragStartEvent) => {
+    isDraggingRef.current = true
     const id = Number(event.active.id)
     setActiveTask(taskMap.get(id) ?? null)
   }
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    setActiveTask(null)
+  // Moves card into the target column visually as the user hovers over it
+  const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event
     if (!over) return
+    const targetStage = stageFromOverId(over.id)
+    if (!targetStage) return
+    const activeId = Number(active.id)
+    const currentStage = findTaskStage(localColumns, activeId)
+    if (!currentStage || currentStage === targetStage) return
+    setLocalColumns((prev) => applyMoveToColumns(prev, activeId, targetStage))
+  }
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    isDraggingRef.current = false
+    setActiveTask(null)
+
+    const { active, over } = event
+    console.log('[DND] dragEnd active:', active.id, 'over:', over?.id ?? 'NULL')
+
+    if (!over) { setLocalColumns(columns); return }
+
+    const targetStage = stageFromOverId(over.id)
+    if (!targetStage) { setLocalColumns(columns); return }
 
     const activeId = Number(active.id)
-    const source = findTaskLocation(columns, activeId)
-    const target = resolveDropTarget(columns, over.id)
-    if (!source || !target) return
+    const sourceStage = findTaskStage(columns, activeId)
+    if (!sourceStage || sourceStage === targetStage) return
 
-    const sameColumn = source.stage === target.stage
-    const samePosition =
-      sameColumn &&
-      target.position != null &&
-      target.position === source.index
-
-    if (sameColumn && samePosition) return
-    if (sameColumn && target.position == null) return
-
+    console.log('[DND] MOVING', activeId, 'from', sourceStage, 'to', targetStage)
     moveMutation.mutate({
       id: activeId,
-      payload: {
-        stage: target.stage,
-        position: target.position,
-      },
+      payload: { stage: targetStage },
       boardParams,
     })
   }
@@ -137,24 +139,22 @@ export function KanbanBoard({
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCorners}
       onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
       <div className="flex gap-4 overflow-x-auto pb-4">
-        {columns.map((column) => (
-          <KanbanColumn
-            key={column.stage}
-            column={column}
-            onTaskClick={handleTaskClick}
-          />
+        {localColumns.map((column) => (
+          <KanbanColumn key={column.stage} column={column} onTaskClick={(task) => {
+            setCurrentTask(task); setOpen('view')
+          }} />
         ))}
       </div>
 
       <DragOverlay>
         {activeTask ? (
           <div className="w-[260px] rotate-2 opacity-90">
-            <KanbanCard task={activeTask} onClick={() => {}} />
+            <KanbanCardOverlay task={activeTask} />
           </div>
         ) : null}
       </DragOverlay>
