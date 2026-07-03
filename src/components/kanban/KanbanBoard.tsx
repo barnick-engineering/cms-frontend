@@ -17,7 +17,7 @@ import type {
   KanbanStage,
   KanbanTask,
 } from '@/interface/kanbanInterface'
-import { KanbanCard, KanbanCardOverlay } from './KanbanCard'
+import { KanbanCardOverlay } from './KanbanCard'
 import { KanbanColumn } from './KanbanColumn'
 import { useKanbanContext } from './kanban-provider'
 

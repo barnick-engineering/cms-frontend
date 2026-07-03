@@ -13,23 +13,6 @@ type KanbanCardProps = {
   onClick: (task: KanbanTask) => void
 }
 
-function CardBody({ task }: { task: KanbanTask }) {
-  const now = useMinuteTicker()
-
-  let deadlineLabel = task.deadline
-  try {
-    deadlineLabel = format(parseISO(task.deadline), 'MMM d, yyyy')
-  } catch { /* keep raw */ }
-
-  const { isMissed, countdown } = getDeadlineStatus(task.deadline, {
-    isOverdue: task.is_overdue,
-    stage: task.stage,
-    now,
-  })
-
-  return { isMissed, countdown, deadlineLabel }
-}
-
 // Pure visual card — no DND hooks. Safe inside DragOverlay.
 export function KanbanCardOverlay({ task }: { task: KanbanTask }) {
   const now = useMinuteTicker()
