@@ -19,4 +19,6 @@ export const expensePurposes: { label: string; value: string }[] = [
   { label: "sample making", value: "sample making" },
   { label: "others", value: "others" },
   { label: "personal", value: "personal" },
+  { label: "labour", value: "labour" },
+  { label: "cutting", value: "cutting" },
 ];
