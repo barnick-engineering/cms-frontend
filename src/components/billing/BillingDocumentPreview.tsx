@@ -128,7 +128,7 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
         {/* Header */}
         <header
           className="flex flex-col gap-4 border-b px-4 py-5 sm:flex-row sm:items-start sm:justify-between sm:gap-6 sm:px-8 sm:py-6 print:flex-row print:items-start print:justify-between print:px-0 print:py-4"
-          style={{ borderBottomColor: primary, borderBottomWidth: '2px' }}
+          style={{ borderBottomColor: primary, borderBottomWidth: "2px" }}
         >
           <div className="flex items-center gap-3 sm:gap-4">
             <img
@@ -160,7 +160,7 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
             </p>
             {data.document_number && (
               <p className="mt-2 break-words text-sm text-neutral-700">
-                {documentNumberLabel(data.document_type)}{' '}
+                {documentNumberLabel(data.document_type)}{" "}
                 <span className="font-semibold" style={{ color: primaryDark }}>
                   {data.document_number}
                 </span>
@@ -168,7 +168,7 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
             )}
             {data.document_date && (
               <p className="mt-1 text-sm text-neutral-700">
-                Date:{' '}
+                Date:{" "}
                 <span className="font-semibold" style={{ color: primaryDark }}>
                   {formatDate(data.document_date)}
                 </span>
@@ -183,7 +183,7 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
           style={{
             borderColor: `${primary}33`,
             backgroundColor: primaryLight,
-            borderLeftWidth: '4px',
+            borderLeftWidth: "4px",
             borderLeftColor: accent,
           }}
         >
@@ -191,13 +191,13 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
             className="mb-3 text-xs font-bold uppercase tracking-widest"
             style={{ color: primary }}
           >
-            Bill To
+            To
           </p>
           <div className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
             {recipient && (
               <div>
                 <span className="font-semibold" style={{ color: primaryDark }}>
-                  Recipient:{' '}
+                  Recipient:{" "}
                 </span>
                 {recipient}
               </div>
@@ -205,7 +205,7 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
             {phone && (
               <div>
                 <span className="font-semibold" style={{ color: primaryDark }}>
-                  Phone:{' '}
+                  Phone:{" "}
                 </span>
                 {phone}
               </div>
@@ -213,7 +213,7 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
             {subject && (
               <div className="sm:col-span-2">
                 <span className="font-semibold" style={{ color: primaryDark }}>
-                  Subject:{' '}
+                  Subject:{" "}
                 </span>
                 {subject}
               </div>
@@ -267,15 +267,15 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
                   key={idx}
                   className="border-b border-neutral-200"
                   style={{
-                    pageBreakInside: 'avoid',
-                    backgroundColor: idx % 2 === 1 ? primaryLight : 'white',
+                    pageBreakInside: "avoid",
+                    backgroundColor: idx % 2 === 1 ? primaryLight : "white",
                   }}
                 >
                   <td className="break-words px-1.5 py-2 align-top sm:px-2 sm:py-2.5">
-                    {item.product || '—'}
+                    {item.product || "—"}
                   </td>
                   <td className="break-words px-1.5 py-2 align-top text-neutral-700 sm:px-2 sm:py-2.5">
-                    {item.description || 'As per Sample'}
+                    {item.description || "As per Sample"}
                   </td>
                   <td className="px-1.5 py-2 text-center align-top sm:px-2 sm:py-2.5">
                     {item.quantity || 0}
@@ -304,17 +304,17 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
         {(showTotals || showPaymentDetails) && (
           <div
             className={`billing-totals-block mt-4 px-4 sm:px-8 print:mt-2 print:px-0 ${
-              showTotals && !showPaymentDetails ? 'flex justify-end' : ''
+              showTotals && !showPaymentDetails ? "flex justify-end" : ""
             }`}
-            style={{ pageBreakInside: 'avoid' }}
+            style={{ pageBreakInside: "avoid" }}
           >
             <div
               className={`flex w-full gap-4 pt-2 text-sm print:gap-3 print:pt-1.5 ${
                 showPaymentDetails && showTotals
-                  ? 'flex-col sm:flex-row sm:items-start sm:justify-between print:flex-row'
+                  ? "flex-col sm:flex-row sm:items-start sm:justify-between print:flex-row"
                   : showTotals
-                    ? 'justify-end'
-                    : 'justify-start'
+                    ? "justify-end"
+                    : "justify-start"
               }`}
               style={{ borderTop: `2px solid ${primary}` }}
             >
@@ -324,46 +324,66 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
                   style={{
                     borderLeft: `3px solid ${accent}`,
                     backgroundColor: primaryLight,
-                    padding: '6px 10px',
+                    padding: "6px 10px",
                   }}
                 >
                   {showBankDetails && (
                     <div className="billing-bank-details-block space-y-0.5">
                       <p
                         className="font-bold uppercase tracking-wide"
-                        style={{ color: primary, fontSize: '10px' }}
+                        style={{ color: primary, fontSize: "10px" }}
                       >
                         Bank Details
                       </p>
                       <p>
-                        <span className="font-bold" style={{ color: primaryDark }}>
-                          Bank:{' '}
+                        <span
+                          className="font-bold"
+                          style={{ color: primaryDark }}
+                        >
+                          Bank:{" "}
                         </span>
                         {bankDetails.bank_name}
-                        {' · '}
-                        <span className="font-bold" style={{ color: primaryDark }}>
-                          Acc:{' '}
+                        {" · "}
+                        <span
+                          className="font-bold"
+                          style={{ color: primaryDark }}
+                        >
+                          Acc:{" "}
                         </span>
-                        <span className="font-bold tabular-nums" style={{ color: primary }}>
+                        <span
+                          className="font-bold tabular-nums"
+                          style={{ color: primary }}
+                        >
                           {bankDetails.bank_account_number}
                         </span>
                       </p>
                       <p>
-                        <span className="font-bold" style={{ color: primaryDark }}>
-                          Name:{' '}
+                        <span
+                          className="font-bold"
+                          style={{ color: primaryDark }}
+                        >
+                          Name:{" "}
                         </span>
                         {bankDetails.bank_account_name}
                       </p>
                       <p>
-                        <span className="font-bold" style={{ color: primaryDark }}>
-                          Branch:{' '}
+                        <span
+                          className="font-bold"
+                          style={{ color: primaryDark }}
+                        >
+                          Branch:{" "}
                         </span>
                         {bankDetails.bank_branch}
-                        {' · '}
-                        <span className="font-bold" style={{ color: primaryDark }}>
-                          Routing:{' '}
+                        {" · "}
+                        <span
+                          className="font-bold"
+                          style={{ color: primaryDark }}
+                        >
+                          Routing:{" "}
                         </span>
-                        <span className="font-bold tabular-nums">{bankDetails.bank_routing_number}</span>
+                        <span className="font-bold tabular-nums">
+                          {bankDetails.bank_routing_number}
+                        </span>
                       </p>
                     </div>
                   )}
@@ -377,15 +397,21 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
                     <div className="billing-mfs-details-block space-y-0.5">
                       <p
                         className="font-bold uppercase tracking-wide"
-                        style={{ color: accent, fontSize: '10px' }}
+                        style={{ color: accent, fontSize: "10px" }}
                       >
                         MFS ({mfsDetails.mfs_provider})
                       </p>
                       <p>
-                        <span className="font-bold" style={{ color: primaryDark }}>
-                          No:{' '}
+                        <span
+                          className="font-bold"
+                          style={{ color: primaryDark }}
+                        >
+                          No:{" "}
                         </span>
-                        <span className="font-bold tabular-nums" style={{ color: primaryDark }}>
+                        <span
+                          className="font-bold tabular-nums"
+                          style={{ color: primaryDark }}
+                        >
                           {mfsDetails.mfs_number}
                         </span>
                       </p>
@@ -397,7 +423,9 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
                 <div className="w-full shrink-0 space-y-1.5 sm:w-72">
                   <div className="flex justify-between">
                     <span className="text-neutral-600">Subtotal</span>
-                    <span className="tabular-nums font-medium">{formatAmount(subtotal)}</span>
+                    <span className="tabular-nums font-medium">
+                      {formatAmount(subtotal)}
+                    </span>
                   </div>
                   {(data.delivery_cost ?? 0) > 0 && (
                     <div className="flex justify-between">
@@ -425,7 +453,9 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
                   {showAdvance && (
                     <>
                       <div className="flex justify-between">
-                        <span className="text-neutral-600">Advance Payment</span>
+                        <span className="text-neutral-600">
+                          Advance Payment
+                        </span>
                         <span className="tabular-nums font-medium">
                           {formatAmount(Number(data.advance_payment))}
                         </span>
@@ -435,7 +465,9 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
                         style={{ color: primaryDark }}
                       >
                         <span>Balance Due</span>
-                        <span className="tabular-nums">{formatAmount(balanceDue)}</span>
+                        <span className="tabular-nums">
+                          {formatAmount(balanceDue)}
+                        </span>
                       </div>
                     </>
                   )}
@@ -448,66 +480,66 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
         <div className="billing-print-closing-pin">
           <footer className="billing-document-footer mt-4 print:mt-0">
             <div className="billing-footer-closing px-4 pb-4 sm:px-8 print:px-[8mm]">
-          <div
-            className={
-              showTerms
-                ? 'grid gap-6 md:grid-cols-[1fr_auto] md:items-end md:gap-8'
-                : undefined
-            }
-          >
-            {showTerms && (
               <div
-                className="pl-4 md:mb-0 md:pb-0 print:mb-0"
-                style={{ borderLeft: `4px solid ${accent}` }}
+                className={
+                  showTerms
+                    ? "grid gap-6 md:grid-cols-[1fr_auto] md:items-end md:gap-8"
+                    : undefined
+                }
               >
-                <h3
-                  className="mb-2 text-sm font-bold uppercase tracking-wide"
-                  style={{ color: primaryDark }}
-                >
-                  Terms &amp; Conditions
-                </h3>
-                <ul className="list-disc space-y-1 pl-4 text-sm text-neutral-700">
-                  {termsLines.map((line, i) => (
-                    <li key={i}>{line}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <div
-              className={`flex items-end gap-6 sm:gap-8 ${
-                data.document_type === 'delivery_challan'
-                  ? 'justify-between md:col-span-2'
-                  : showTerms
-                    ? 'justify-end md:justify-end'
-                    : 'justify-end'
-              }`}
-            >
-              {data.document_type === 'delivery_challan' && (
-                <div className="w-full max-w-[11rem] text-center sm:w-44">
-                  <div className="mb-1 h-10" />
+                {showTerms && (
                   <div
-                    className="pt-1 text-sm"
-                    style={{ borderTop: `1px solid ${primary}` }}
+                    className="pl-4 md:mb-0 md:pb-0 print:mb-0"
+                    style={{ borderLeft: `4px solid ${accent}` }}
                   >
-                    Received by
+                    <h3
+                      className="mb-2 text-sm font-bold uppercase tracking-wide"
+                      style={{ color: primaryDark }}
+                    >
+                      Terms &amp; Conditions
+                    </h3>
+                    <ul className="list-disc space-y-1 pl-4 text-sm text-neutral-700">
+                      {termsLines.map((line, i) => (
+                        <li key={i}>{line}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <div
+                  className={`flex items-end gap-6 sm:gap-8 ${
+                    data.document_type === "delivery_challan"
+                      ? "justify-between md:col-span-2"
+                      : showTerms
+                        ? "justify-end md:justify-end"
+                        : "justify-end"
+                  }`}
+                >
+                  {data.document_type === "delivery_challan" && (
+                    <div className="w-full max-w-[11rem] text-center sm:w-44">
+                      <div className="mb-1 h-10" />
+                      <div
+                        className="pt-1 text-sm"
+                        style={{ borderTop: `1px solid ${primary}` }}
+                      >
+                        Received by
+                      </div>
+                    </div>
+                  )}
+                  <div className="w-full max-w-[13rem] text-center sm:w-52">
+                    <div className="mb-1 h-10" />
+                    <div
+                      className="pt-1 text-sm italic text-neutral-600"
+                      style={{ borderTop: `1px solid ${primary}` }}
+                    >
+                      Authorized signature
+                    </div>
+                    <p className="mt-1 text-sm" style={{ color: primaryDark }}>
+                      On behalf of {COMPANY_DETAILS.name}
+                    </p>
                   </div>
                 </div>
-              )}
-              <div className="w-full max-w-[13rem] text-center sm:w-52">
-                <div className="mb-1 h-10" />
-                <div
-                  className="pt-1 text-sm italic text-neutral-600"
-                  style={{ borderTop: `1px solid ${primary}` }}
-                >
-                  Authorized signature
-                </div>
-                <p className="mt-1 text-sm" style={{ color: primaryDark }}>
-                  On behalf of {COMPANY_DETAILS.name}
-                </p>
               </div>
-            </div>
-          </div>
             </div>
 
             <div className="h-1 w-full" style={{ backgroundColor: accent }} />
@@ -515,12 +547,14 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
               className="px-4 py-4 text-center text-sm text-white sm:px-8 print:px-6 print:py-3 print:text-xs"
               style={{ backgroundColor: primary }}
             >
-              <p className="break-all sm:break-normal">{COMPANY_DETAILS.email}</p>
+              <p className="break-all sm:break-normal">
+                {COMPANY_DETAILS.email}
+              </p>
               <p className="mt-1">
                 {COMPANY_DETAILS.phone}
                 {COMPANY_DETAILS.phoneSecondary
                   ? ` · ${COMPANY_DETAILS.phoneSecondary}`
-                  : ''}
+                  : ""}
               </p>
               {COMPANY_DETAILS.address && (
                 <p className="mx-auto mt-1 max-w-md break-words px-2 leading-snug whitespace-pre-line opacity-80">
@@ -537,5 +571,5 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }
