@@ -122,4 +122,11 @@ export const apiEndpoints: ApiEndpoints = {
     deleteDocument: '/api/v1/billing/documents/',
     finalizeDocument: '/api/v1/billing/documents/',
   },
+  project: {
+    projectList: '/api/v1/project/',
+    createProject: '/api/v1/project/',
+    getProjectById: '/api/v1/project/',
+    updateProject: '/api/v1/project/',
+    deleteProject: '/api/v1/project/',
+  },
 }

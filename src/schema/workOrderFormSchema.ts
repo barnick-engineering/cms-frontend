@@ -28,6 +28,10 @@ export const workOrderFormSchema = z.object({
     (value) => (value === "" || value == null ? undefined : Number(value)),
     z.number().optional()
   ),
+  project_id: z.preprocess(
+    (value) => (value === "" || value === "none" || value == null ? null : Number(value)),
+    z.number().nullable().optional()
+  ),
   items: z
     .array(
       z.object({

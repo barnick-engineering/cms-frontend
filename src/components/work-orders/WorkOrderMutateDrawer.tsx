@@ -31,7 +31,15 @@ import type { WorkOrderMutateDrawerProps, WorkOrderFormInterface } from "@/inter
 import { workOrderFormSchema, type WorkOrderFormSchema } from "@/schema/workOrderFormSchema"
 import { useCreateWorkOrder, useUpdateWorkOrderFull, useWorkOrderById } from "@/hooks/useWorkOrder"
 import { useCustomerList } from "@/hooks/useCustomer"
+import { useProjectList } from "@/hooks/useProject"
 import { Combobox } from "@/components/ui/combobox"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Plus, Minus } from "lucide-react"
 
 const WorkOrderMutateDrawer = ({
@@ -63,6 +71,15 @@ const WorkOrderMutateDrawer = ({
     }))
   }, [customersData])
 
+  // Fetch projects for dropdown
+  const { data: projectsData } = useProjectList()
+  const projectOptions = useMemo(() => {
+    return (projectsData?.data || []).map((p) => ({
+      value: String(p.id),
+      label: p.name,
+    }))
+  }, [projectsData])
+
   const emptyItem = {
     item: "",
     total_order: undefined,
@@ -73,6 +90,7 @@ const WorkOrderMutateDrawer = ({
     resolver: zodResolver(workOrderFormSchema) as Resolver<WorkOrderFormSchema>,
     defaultValues: {
       customer: undefined,
+      project_id: null,
       items: [emptyItem],
       date: new Date().toISOString().split("T")[0],
       total_paid: undefined,
@@ -91,6 +109,7 @@ const WorkOrderMutateDrawer = ({
     if (open && isUpdate && workOrderDetails) {
       form.reset({
         customer: workOrderDetails.customer.id,
+        project_id: workOrderDetails.project?.id ?? null,
         items: workOrderDetails.items.map((item) => ({
           id: item.id,
           item: item.item,
@@ -109,6 +128,7 @@ const WorkOrderMutateDrawer = ({
     } else if (!open) {
       form.reset({
         customer: undefined,
+        project_id: null,
         items: [{ ...emptyItem, details: null }],
         date: new Date().toISOString().split("T")[0],
         total_paid: undefined,
@@ -141,6 +161,7 @@ const WorkOrderMutateDrawer = ({
 
     const normalizedData: WorkOrderFormInterface = {
       customer: data.customer || undefined,
+      project_id: data.project_id ?? null,
       items: data.items.map((item) => ({
         ...(item.id && { id: item.id }),
         item: item.item.trim(),
@@ -249,6 +270,37 @@ const WorkOrderMutateDrawer = ({
                       loading={customersLoading}
                       placeholder="Search and select customer..."
                     />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="project_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Project</FormLabel>
+                  <FormControl>
+                    <Select
+                      value={field.value != null ? String(field.value) : "none"}
+                      onValueChange={(val) =>
+                        field.onChange(val === "none" ? null : Number(val))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="No project" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No project</SelectItem>
+                        {projectOptions.map((p) => (
+                          <SelectItem key={p.value} value={p.value}>
+                            {p.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
