@@ -7,6 +7,7 @@ export interface WorkOrderItem {
 
 export interface WorkOrderFormInterface {
   customer?: number
+  project_id?: number | null
   items: WorkOrderItem[]
   date?: string
   amount?: number
@@ -34,6 +35,7 @@ export interface WorkOrderListParams {
   limit?: number
   offset?: number
   customer_id?: string | number
+  project_id?: string | number
   start_date?: string
   end_date?: string
   payment_status?: WorkOrderPaymentStatus
@@ -52,6 +54,8 @@ export interface WorkOrder {
   id: number
   customer: string // Customer name
   customer_id?: number
+  project_id?: number | null
+  project?: string | null
   total_items: number
   created: string
   status: boolean
@@ -126,6 +130,10 @@ export interface WorkOrderDetailData {
     address?: string
     contact_person_name?: string
   }
+  project?: {
+    id: number
+    name: string
+  } | null
   items: WorkOrderDetailItem[]
   total_items: number
   expense: WorkOrderDetailExpense[]

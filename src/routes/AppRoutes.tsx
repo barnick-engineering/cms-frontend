@@ -14,6 +14,8 @@ const Products = lazy(() => import("@/pages/Products"))
 const Inventory = lazy(() => import("@/pages/Inventory"))
 const WorkOrders = lazy(() => import("@/pages/WorkOrders"))
 const WorkOrderDetail = lazy(() => import("@/pages/WorkOrderDetail"))
+const Projects = lazy(() => import("@/pages/Projects"))
+const ProjectDetail = lazy(() => import("@/pages/ProjectDetail"))
 const Kanban = lazy(() => import("@/pages/Kanban"))
 const Expense = lazy(() => import("@/pages/Expense"))
 const Loan = lazy(() => import("@/pages/Loan"))
@@ -47,6 +49,8 @@ const AppRoutes = () => {
                             <Route path="/inventory" element={<Inventory />} />
                             <Route path="/work-orders" element={<WorkOrders />} />
                             <Route path="/work-orders/:id" element={<WorkOrderDetail />} />
+                            <Route path="/projects" element={<Projects />} />
+                            <Route path="/projects/:id" element={<ProjectDetail />} />
                             <Route path="/kanban" element={<Kanban />} />
                             <Route path="/expense" element={<Expense />} />
                             <Route path="/loan" element={<Loan />} />

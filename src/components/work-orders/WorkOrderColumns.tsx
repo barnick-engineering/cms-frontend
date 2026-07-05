@@ -48,6 +48,20 @@ export const WorkOrderColumns: ColumnDef<WorkOrderListInterface>[] = [
     },
   },
   {
+    accessorKey: 'project',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Project' />
+    ),
+    cell: ({ row }) => {
+      const project = row.original.project
+      return project ? (
+        <span className="text-sm">{project}</span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      )
+    },
+  },
+  {
     accessorKey: 'date',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Date' />

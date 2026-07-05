@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useCustomerList } from '@/hooks/useCustomer'
+import { useProjectList } from '@/hooks/useProject'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useIsMobile } from '@/hooks/use-mobile'
 import type { WorkOrderPaymentStatus } from '@/interface/workOrderInterface'
@@ -38,6 +39,7 @@ export type WorkOrderFilterValues = {
   startDate?: Date
   endDate?: Date
   customerId?: string | number
+  projectId?: string | number
   paymentStatus?: WorkOrderPaymentStatus
   workOrderNo?: string
 }
@@ -52,6 +54,7 @@ function countAdvancedFilters(values: WorkOrderFilterValues) {
   let n = 0
   if (values.workOrderNo) n++
   if (values.customerId) n++
+  if (values.projectId) n++
   if (values.paymentStatus) n++
   if (values.startDate && values.endDate) n++
   return n
@@ -64,6 +67,8 @@ function AdvancedFilterFields({
   customerOptions,
   customersLoading,
   onCustomerSelect,
+  projectOptions,
+  onProjectSelect,
   dateRange,
   onDateChange,
   className,
@@ -74,6 +79,8 @@ function AdvancedFilterFields({
   customerOptions: { value: string; label: string }[]
   customersLoading: boolean
   onCustomerSelect: (value: string) => void
+  projectOptions: { value: string; label: string }[]
+  onProjectSelect: (value: string) => void
   dateRange: DateRange | undefined
   onDateChange: (from?: Date, to?: Date) => void
   className?: string
@@ -117,6 +124,26 @@ function AdvancedFilterFields({
           loading={customersLoading}
           className="h-8 w-full bg-background"
         />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label className="text-xs font-medium">Project</Label>
+        <Select
+          value={values.projectId ? String(values.projectId) : 'all'}
+          onValueChange={(v) => onProjectSelect(v)}
+        >
+          <SelectTrigger className="h-8 w-full bg-background">
+            <SelectValue placeholder="All projects" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All projects</SelectItem>
+            {projectOptions.map((p) => (
+              <SelectItem key={p.value} value={p.value}>
+                {p.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-1.5">
@@ -172,6 +199,7 @@ export function WorkOrderFilters({
     100,
     0
   )
+  const { data: projectsData } = useProjectList()
 
   const customerOptions = useMemo(() => {
     const options = (customersData?.data || []).map((customer) => ({
@@ -181,8 +209,19 @@ export function WorkOrderFilters({
     return [{ value: '__clear__', label: 'All customers' }, ...options]
   }, [customersData])
 
+  const projectOptions = useMemo(() => {
+    return (projectsData?.data || []).map((p) => ({
+      value: String(p.id),
+      label: p.name,
+    }))
+  }, [projectsData])
+
   const selectedCustomerLabel = customerOptions.find(
     (c) => c.value === String(values.customerId)
+  )?.label
+
+  const selectedProjectLabel = projectOptions.find(
+    (p) => p.value === String(values.projectId)
   )?.label
 
   useEffect(() => {
@@ -213,6 +252,14 @@ export function WorkOrderFilters({
     onChange({ customerId: value })
   }
 
+  const handleProjectSelect = (value: string) => {
+    if (value === 'all' || !value) {
+      onChange({ projectId: undefined })
+      return
+    }
+    onChange({ projectId: value })
+  }
+
   const handleClearAll = () => {
     setSearchInput('')
     onClear()
@@ -226,6 +273,8 @@ export function WorkOrderFilters({
     customerOptions,
     customersLoading,
     onCustomerSelect: handleCustomerSelect,
+    projectOptions,
+    onProjectSelect: handleProjectSelect,
     dateRange,
     onDateChange: handleDateChange,
   }
@@ -244,6 +293,13 @@ export function WorkOrderFilters({
       key: 'customer',
       label: selectedCustomerLabel,
       onRemove: () => onChange({ customerId: undefined }),
+    })
+  }
+  if (values.projectId && selectedProjectLabel) {
+    chips.push({
+      key: 'project',
+      label: selectedProjectLabel,
+      onRemove: () => onChange({ projectId: undefined }),
     })
   }
   if (values.paymentStatus) {
@@ -329,6 +385,7 @@ export function WorkOrderFilters({
                         onChange({
                           workOrderNo: undefined,
                           customerId: undefined,
+                          projectId: undefined,
                           paymentStatus: undefined,
                           startDate: undefined,
                           endDate: undefined,
@@ -402,6 +459,7 @@ export function WorkOrderFilters({
                   onChange({
                     workOrderNo: undefined,
                     customerId: undefined,
+                    projectId: undefined,
                     paymentStatus: undefined,
                     startDate: undefined,
                     endDate: undefined,
@@ -433,6 +491,7 @@ export function workOrderFiltersToParams(
     search: filters.search,
     work_order_no: filters.workOrderNo,
     customer_id: filters.customerId,
+    project_id: filters.projectId,
     payment_status: filters.paymentStatus,
     start_date:
       filters.startDate ? format(filters.startDate, 'yyyy-MM-dd') : undefined,

@@ -111,4 +111,11 @@ export interface ApiEndpoints {
     deleteDocument: string
     finalizeDocument: string
   }
+  project: {
+    projectList: string
+    createProject: string
+    getProjectById: string
+    updateProject: string
+    deleteProject: string
+  }
 }

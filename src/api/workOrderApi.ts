@@ -28,6 +28,9 @@ function appendWorkOrderListParams(params: URLSearchParams, filters: WorkOrderLi
         : filters.is_delivered === "true"
     params.append("is_delivered", delivered ? "true" : "false")
   }
+  if (filters.project_id != null && filters.project_id !== "") {
+    params.append("project_id", String(filters.project_id))
+  }
 }
 
 export const workOrderList = async (
