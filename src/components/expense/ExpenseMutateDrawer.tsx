@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useForm, type SubmitHandler } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { ChevronsUpDown, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
     Form,
@@ -19,6 +20,12 @@ import {
     SheetHeader,
     SheetTitle,
 } from "@/components/ui/sheet"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { NumberInput } from "@/components/ui/number-input"
 import { coerceNumber } from "@/lib/numberInput"
@@ -35,12 +42,126 @@ import { useCustomerList } from "@/hooks/useCustomer"
 import { useTeamList } from "@/hooks/useTeam"
 import type { TeamMember } from "@/interface/teamInterface"
 import { expensePurposes } from "@/constance/expenseConstance"
+import { cn } from "@/lib/utils"
 
 interface ExpenseMutateDrawerProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     currentRow?: Expense | null
     onSave?: (data: ExpenseFormInterface) => void
+}
+
+const KNOWN_PURPOSE_VALUES = new Set(expensePurposes.map((p) => p.value))
+
+function parsePurposeString(raw: string): { selected: string[]; otherText: string } {
+    if (!raw.trim()) return { selected: [], otherText: "" }
+    const parts = raw.split(", ").map((p) => p.trim()).filter(Boolean)
+    const selected: string[] = []
+    let otherText = ""
+    for (const part of parts) {
+        if (part.startsWith("others: ")) {
+            selected.push("others")
+            otherText = part.slice("others: ".length)
+        } else if (KNOWN_PURPOSE_VALUES.has(part)) {
+            selected.push(part)
+        } else {
+            // Legacy: unknown value stored as custom others text
+            selected.push("others")
+            otherText = part
+        }
+    }
+    return { selected, otherText }
+}
+
+function buildPurposeString(selected: string[], otherText: string): string {
+    return selected
+        .map((p) =>
+            p === "others" && otherText.trim() ? `others: ${otherText.trim()}` : p
+        )
+        .join(", ")
+}
+
+interface PurposeMultiSelectProps {
+    options: { value: string; label: string }[]
+    value: string[]
+    onChange: (val: string[]) => void
+}
+
+function PurposeMultiSelect({ options, value, onChange }: PurposeMultiSelectProps) {
+    const [open, setOpen] = useState(false)
+    const [search, setSearch] = useState("")
+
+    const filtered = options.filter((o) =>
+        o.label.toLowerCase().includes(search.toLowerCase())
+    )
+
+    const toggle = (val: string) => {
+        if (value.includes(val)) {
+            onChange(value.filter((v) => v !== val))
+        } else {
+            onChange([...value, val])
+        }
+    }
+
+    const displayText =
+        value.length === 0
+            ? "Select purposes..."
+            : value.length === 1
+              ? options.find((o) => o.value === value[0])?.label ?? value[0]
+              : `${value.length} purposes selected`
+
+    return (
+        <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) setSearch("") }}>
+            <PopoverTrigger asChild>
+                <Button
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open}
+                    className="w-full justify-between h-8"
+                >
+                    <span className="truncate text-sm">{displayText}</span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
+                <div className="flex items-center gap-2 border-b px-3 py-2">
+                    <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <input
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Search purposes..."
+                        className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                    />
+                </div>
+                <div className="overflow-y-auto max-h-52 p-1">
+                    {filtered.length === 0 ? (
+                        <p className="py-4 text-center text-sm text-muted-foreground">No results.</p>
+                    ) : (
+                        filtered.map((option) => (
+                            <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => toggle(option.value)}
+                                className={cn(
+                                    "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent cursor-pointer text-left",
+                                    value.includes(option.value) && "bg-accent/50"
+                                )}
+                            >
+                                <Checkbox
+                                    checked={value.includes(option.value)}
+                                    className="pointer-events-none shrink-0"
+                                />
+                                <span className={cn(value.includes(option.value) && "font-medium")}>
+                                    {option.label}
+                                </span>
+                            </button>
+                        ))
+                    )}
+                </div>
+            </PopoverContent>
+        </Popover>
+    )
 }
 
 const ExpenseMutateDrawer = ({
@@ -90,7 +211,7 @@ const ExpenseMutateDrawer = ({
     const { data: teamData, isLoading: teamLoading } = useTeamList()
     const paidByOptions = useMemo(() => {
         if (!teamData || !Array.isArray(teamData) || teamData.length === 0) return []
-        
+
         const searchLower = paidBySearch.toLowerCase()
         return teamData
             .filter((member: TeamMember) => {
@@ -118,7 +239,8 @@ const ExpenseMutateDrawer = ({
         resolver: zodResolver(expenseFormSchema),
         defaultValues: {
             work_order: "",
-            purpose: "",
+            purpose: [],
+            other_purpose: "",
             customer: undefined,
             paid_by: undefined,
             details: "",
@@ -128,12 +250,15 @@ const ExpenseMutateDrawer = ({
         },
     })
 
+    const watchedPurpose = form.watch("purpose")
+
     useEffect(() => {
         if (open && currentRow && isUpdate) {
-            // Populate form with current row data for update
+            const { selected, otherText } = parsePurposeString(currentRow.purpose || "")
             form.reset({
                 work_order: currentRow.work_order ? String(currentRow.work_order) : "",
-                purpose: currentRow.purpose || "",
+                purpose: selected,
+                other_purpose: otherText,
                 customer: currentRow.customer ? String(currentRow.customer) : undefined,
                 paid_by: currentRow.paid_by ? String(currentRow.paid_by) : undefined,
                 details: currentRow.details || "",
@@ -142,10 +267,10 @@ const ExpenseMutateDrawer = ({
                 remarks: currentRow.remarks || "",
             })
         } else if (!open) {
-            // Reset form when closing
             form.reset({
                 work_order: "",
-                purpose: "",
+                purpose: [],
+                other_purpose: "",
                 customer: undefined,
                 paid_by: undefined,
                 details: "",
@@ -160,9 +285,10 @@ const ExpenseMutateDrawer = ({
     }, [open, currentRow, isUpdate, form])
 
     const onSubmit: SubmitHandler<ExpenseFormType> = (data) => {
+        const purposeString = buildPurposeString(data.purpose, data.other_purpose || "")
         const payload: ExpenseFormInterface = {
             work_order: normalizeOptionalId(data.work_order),
-            purpose: data.purpose.trim(),
+            purpose: purposeString,
             customer: normalizeOptionalId(data.customer),
             paid_by: normalizeOptionalId(data.paid_by),
             details: data.details?.trim() || null,
@@ -281,17 +407,35 @@ const ExpenseMutateDrawer = ({
                   <FormItem>
                     <FormLabel>Purpose *</FormLabel>
                     <FormControl className="w-full">
-                      <Combobox
+                      <PurposeMultiSelect
                         options={purposeOptions}
-                        value={field.value || ""}
-                        onSelect={(val) => field.onChange(val)}
-                        placeholder="Select purpose..."
+                        value={field.value || []}
+                        onChange={field.onChange}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              {watchedPurpose.includes("others") && (
+                <FormField
+                  control={form.control}
+                  name="other_purpose"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Other Purpose</FormLabel>
+                      <FormControl className="w-full">
+                        <Input
+                          {...field}
+                          value={field.value || ""}
+                          placeholder="Specify the other purpose..."
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               <FormField
                 control={form.control}
                 name="paid_by"
@@ -358,15 +502,11 @@ const ExpenseMutateDrawer = ({
                 control={form.control}
                 name="expense_date"
                 render={({ field }) => {
-                  // Convert date string (YYYY-MM-DD) to local Date object
                   const parseDateString = (dateString: string): Date => {
-                    const [year, month, day] = dateString
-                      .split("-")
-                      .map(Number);
+                    const [year, month, day] = dateString.split("-").map(Number);
                     return new Date(year, month - 1, day);
                   };
 
-                  // Convert Date object to date string (YYYY-MM-DD) in local timezone
                   const formatDateToString = (date: Date): string => {
                     const year = date.getFullYear();
                     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -380,14 +520,10 @@ const ExpenseMutateDrawer = ({
                       <FormControl className="w-full">
                         <DatePicker
                           selected={
-                            field.value
-                              ? parseDateString(field.value)
-                              : undefined
+                            field.value ? parseDateString(field.value) : undefined
                           }
                           onSelect={(date) => {
-                            field.onChange(
-                              date ? formatDateToString(date) : undefined,
-                            );
+                            field.onChange(date ? formatDateToString(date) : undefined);
                           }}
                           placeholder="Pick a date"
                         />

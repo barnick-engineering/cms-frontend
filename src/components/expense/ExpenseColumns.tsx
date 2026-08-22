@@ -53,7 +53,17 @@ export const ExpenseColumns: ColumnDef<Expense>[] = [
         header: ({ column }) => <DataTableColumnHeader column={column} title='Purpose' />,
         cell: ({ row }) => {
             const purpose = row.getValue<string>('purpose')
-            return <Badge variant="secondary">{purpose}</Badge>
+            if (!purpose) return <span className="text-muted-foreground">—</span>
+            const parts = purpose.split(', ').map((p) =>
+                p.startsWith('others: ') ? p.slice('others: '.length) : p
+            )
+            return (
+                <div className="flex flex-wrap gap-1">
+                    {parts.map((p, i) => (
+                        <Badge key={i} variant="secondary">{p}</Badge>
+                    ))}
+                </div>
+            )
         },
     },
     {
