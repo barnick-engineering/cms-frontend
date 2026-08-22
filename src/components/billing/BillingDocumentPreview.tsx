@@ -286,6 +286,16 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
                 >
                   <td className="break-words px-1.5 py-2 align-top sm:px-2 sm:py-2.5">
                     {item.product || "—"}
+                    {item.image && (
+                      <div className="mt-1">
+                        <img
+                          src={item.image}
+                          alt={item.product || "Product"}
+                          className="max-h-20 max-w-full object-contain"
+                          style={{ maxHeight: "80px" }}
+                        />
+                      </div>
+                    )}
                   </td>
                   <td className="break-words px-1.5 py-2 align-top text-neutral-700 sm:px-2 sm:py-2.5">
                     {item.description || "As per Sample"}
