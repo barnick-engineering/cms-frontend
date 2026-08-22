@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { ImagePlus, Plus, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -299,6 +299,43 @@ export function BillingDocumentForm({
                     }
                     placeholder="Product name"
                   />
+                  <div className="mt-1">
+                    {item.image ? (
+                      <div className="relative inline-block">
+                        <img
+                          src={item.image}
+                          alt="Product"
+                          className="h-14 w-14 rounded border object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => updateLineItem(index, { image: undefined })}
+                          className="absolute -right-1.5 -top-1.5 rounded-full bg-destructive p-0.5 text-white"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+                        <ImagePlus className="h-3.5 w-3.5" />
+                        Add image
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="sr-only"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (!file) return
+                            const reader = new FileReader()
+                            reader.onload = () =>
+                              updateLineItem(index, { image: reader.result as string })
+                            reader.readAsDataURL(file)
+                            e.target.value = ''
+                          }}
+                        />
+                      </label>
+                    )}
+                  </div>
                 </div>
                 <div className="sm:col-span-3 space-y-1">
                   <Label className="text-xs">Description</Label>

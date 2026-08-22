@@ -14,6 +14,7 @@ export interface BillingLineItem {
   quantity: number
   rate: number
   amount?: number
+  image?: string   // base64 data URL — frontend-only, not persisted by backend
 }
 
 export interface BillingDocument {
