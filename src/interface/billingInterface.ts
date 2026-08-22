@@ -77,6 +77,7 @@ export interface BillingDocumentFormPayload {
   mfs_provider?: string
   mfs_number?: string
   terms?: string | null
+  show_signature?: boolean
   line_items?: BillingLineItem[]
 }
 
@@ -170,6 +171,67 @@ export const DEFAULT_QUOTATION_TERMS =
   'Valid for 15 days from issue date unless specified (*depends on raw materials price).\n' +
   'Delivery dates agreed upon at order confirmation.'
 
+export interface TermItem {
+  text: string
+  show: boolean
+  bold: boolean
+}
+
+export const DEFAULT_TERM_ITEMS: TermItem[] = [
+  {
+    text: 'A 50% advance payment is required. Remaining 50% due upon completion within 15 days of delivery.',
+    show: true,
+    bold: false,
+  },
+  {
+    text: 'Valid for 15 days from issue date unless specified (*depends on raw materials price).',
+    show: true,
+    bold: false,
+  },
+  {
+    text: 'Delivery dates agreed upon at order confirmation.',
+    show: true,
+    bold: false,
+  },
+  {
+    text: 'All prices are subject to change without prior notice.',
+    show: false,
+    bold: false,
+  },
+  {
+    text: 'Goods once sold are not subject to return or exchange.',
+    show: false,
+    bold: false,
+  },
+]
+
+export function serializeTermItems(items: TermItem[]): string {
+  return JSON.stringify(items)
+}
+
+export function deserializeTermItems(terms: string | null | undefined): TermItem[] {
+  const defaults = DEFAULT_TERM_ITEMS.map((t) => ({ ...t }))
+  if (!terms?.trim()) return defaults
+  try {
+    const parsed = JSON.parse(terms)
+    if (Array.isArray(parsed) && parsed.length > 0 && 'text' in parsed[0]) {
+      // Pad to 5 if stored with fewer
+      while (parsed.length < 5) {
+        const idx = parsed.length
+        parsed.push({ ...(defaults[idx] ?? { text: '', show: false, bold: false }) })
+      }
+      return parsed
+    }
+  } catch {
+    // not JSON — legacy plain text below
+  }
+  // Legacy: each line becomes a shown item; remainder from defaults (hidden)
+  const lines = terms.split('\n').map((l) => l.trim()).filter(Boolean)
+  return defaults.map((def, i) =>
+    i < lines.length ? { text: lines[i], show: true, bold: false } : { ...def, show: false }
+  )
+}
+
 export function defaultBillingBankFields() {
   return {
     bank_name: DEFAULT_BANK_DETAILS.bank_name,
@@ -237,7 +299,7 @@ export function emptyBillingDocument(
     show_mfs_details: false,
     ...defaultBillingBankFields(),
     ...defaultBillingMfsFields(),
-    terms: documentType === 'quotation' ? DEFAULT_QUOTATION_TERMS : null,
+    terms: documentType === 'quotation' ? serializeTermItems(DEFAULT_TERM_ITEMS.map((t) => ({ ...t }))) : null,
     line_items: [emptyBillingLineItem()],
   }
 }

@@ -103,11 +103,24 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
       : 0
   const showAdvance =
     data.document_type === 'invoice' && (Number(data.advance_payment) || 0) > 0
-  const termsLines = (data.terms || '')
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
-  const showTerms = data.document_type === 'quotation' && termsLines.length > 0
+  type TermRenderItem = { text: string; bold: boolean }
+  let termRenderItems: TermRenderItem[] = []
+  try {
+    const parsed = JSON.parse(data.terms || '')
+    if (Array.isArray(parsed)) {
+      termRenderItems = (parsed as { text?: string; show?: boolean; bold?: boolean }[])
+        .filter((t) => t.show && t.text?.trim())
+        .map((t) => ({ text: (t.text ?? '').trim(), bold: Boolean(t.bold) }))
+    }
+  } catch {
+    // Legacy plain text
+    termRenderItems = (data.terms || '')
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .map((text) => ({ text, bold: false }))
+  }
+  const showTerms = data.document_type === 'quotation' && termRenderItems.length > 0
   const recipient = fieldValue(data.recipient)
   const phone = fieldValue(data.phone)
   const subject = fieldValue(
@@ -499,8 +512,10 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
                       Terms &amp; Conditions
                     </h3>
                     <ul className="list-disc space-y-1 pl-4 text-sm text-neutral-700">
-                      {termsLines.map((line, i) => (
-                        <li key={i}>{line}</li>
+                      {termRenderItems.map((item, i) => (
+                        <li key={i} className={item.bold ? 'font-bold text-neutral-900' : ''}>
+                          {item.text}
+                        </li>
                       ))}
                     </ul>
                   </div>
@@ -527,7 +542,15 @@ export function BillingDocumentPreview({ data }: BillingDocumentPreviewProps) {
                     </div>
                   )}
                   <div className="w-full max-w-[13rem] text-center sm:w-52">
-                    <div className="mb-1 h-10" />
+                    <div className="mb-1 h-10 flex items-end justify-center">
+                      {data.show_signature && (
+                        <img
+                          src="/images/signature.png"
+                          alt="Authorized signature"
+                          className="max-h-10 max-w-full object-contain"
+                        />
+                      )}
+                    </div>
                     <div
                       className="pt-1 text-sm italic text-neutral-600"
                       style={{ borderTop: `1px solid ${primary}` }}

@@ -54,11 +54,10 @@ export const WorkOrderColumns: ColumnDef<WorkOrderListInterface>[] = [
     ),
     cell: ({ row }) => {
       const project = row.original.project
-      return project ? (
-        <span className="text-sm">{project}</span>
-      ) : (
-        <span className="text-muted-foreground">—</span>
-      )
+      if (!project) return <span className="text-muted-foreground">—</span>
+      const words = project.trim().split(/\s+/)
+      const display = words.length > 2 ? `${words.slice(0, 2).join(' ')}...` : project
+      return <span className="text-sm" title={project}>{display}</span>
     },
   },
   {

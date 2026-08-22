@@ -47,7 +47,14 @@ const ExpenseViewDrawer = ({
 
                     <div>
                         <span className="font-medium text-foreground">Purpose:</span>{' '}
-                        <span className="text-muted-foreground">{currentRow.purpose}</span>
+                        <span className="text-muted-foreground">
+                            {currentRow.purpose
+                                ? currentRow.purpose
+                                    .split(', ')
+                                    .map((p) => p.startsWith('others: ') ? p.slice('others: '.length) : p)
+                                    .join(', ')
+                                : 'N/A'}
+                        </span>
                     </div>
 
                     <div>

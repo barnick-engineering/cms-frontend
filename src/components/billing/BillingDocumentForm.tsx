@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,6 +8,7 @@ import { Combobox } from '@/components/ui/combobox'
 import { DatePicker } from '@/components/date-picker'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Select,
   SelectContent,
@@ -21,13 +22,16 @@ import type {
   BillingDocumentFormPayload,
   BillingDocumentType,
   BillingLineItem,
+  TermItem,
 } from '@/interface/billingInterface'
 import {
   BILLING_DOCUMENT_TYPE_LABELS,
-  DEFAULT_QUOTATION_TERMS,
+  DEFAULT_TERM_ITEMS,
   defaultBillingBankFields,
   defaultBillingMfsFields,
+  deserializeTermItems,
   emptyBillingLineItem,
+  serializeTermItems,
 } from '@/interface/billingInterface'
 import { formatDateToString, parseDateString } from '@/lib/loanDateUtils'
 
@@ -99,11 +103,39 @@ export function BillingDocumentForm({
     update({ line_items: lineItems })
   }
 
+  // ── Terms structured state ──────────────────────────────────────────
+  const [termItems, setTermItems] = useState<TermItem[]>(() =>
+    deserializeTermItems(form.terms)
+  )
+  const lastTermsRef = useRef<string>(form.terms ?? '')
+
+  useEffect(() => {
+    const incoming = form.terms ?? ''
+    if (incoming !== lastTermsRef.current) {
+      lastTermsRef.current = incoming
+      setTermItems(deserializeTermItems(incoming))
+    }
+  }, [form.terms])
+
+  const updateTermItem = (index: number, patch: Partial<TermItem>) => {
+    const next = termItems.map((item, i) => (i === index ? { ...item, ...patch } : item))
+    setTermItems(next)
+    const serialized = serializeTermItems(next)
+    lastTermsRef.current = serialized
+    update({ terms: serialized })
+  }
+
   const handleTypeChange = (type: BillingDocumentType) => {
-    update({
-      document_type: type,
-      terms: type === 'quotation' ? DEFAULT_QUOTATION_TERMS : null,
-    })
+    const newTerms =
+      type === 'quotation'
+        ? serializeTermItems(DEFAULT_TERM_ITEMS.map((t) => ({ ...t })))
+        : null
+    if (type === 'quotation') {
+      const items = DEFAULT_TERM_ITEMS.map((t) => ({ ...t }))
+      setTermItems(items)
+      lastTermsRef.current = newTerms!
+    }
+    update({ document_type: type, terms: newTerms })
   }
 
   const showPricing = form.document_type !== 'delivery_challan'
@@ -482,14 +514,64 @@ export function BillingDocumentForm({
           </>
         )}
 
+        <div className="flex items-center justify-between rounded-lg border p-3">
+          <div className="space-y-0.5">
+            <Label htmlFor="show-signature">Show signature</Label>
+            <p className="text-xs text-muted-foreground">
+              Display the authorized signature image on the document
+            </p>
+          </div>
+          <Switch
+            id="show-signature"
+            checked={form.show_signature === true}
+            onCheckedChange={(checked) => update({ show_signature: checked })}
+          />
+        </div>
+
         {form.document_type === 'quotation' && (
-          <div className="space-y-2">
-            <Label>Terms & Conditions</Label>
-            <Textarea
-              value={form.terms ?? ''}
-              onChange={(e) => update({ terms: e.target.value })}
-              rows={4}
-            />
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>Terms &amp; Conditions</Label>
+              <div className="flex items-center gap-4 text-xs text-muted-foreground pr-1">
+                <span className="w-10 text-center">Show</span>
+                <span className="w-10 text-center">Bold</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              {termItems.map((item, index) => (
+                <div
+                  key={index}
+                  className={`flex items-center gap-3 rounded-md border px-3 py-2 transition-opacity ${
+                    item.show ? '' : 'opacity-50'
+                  }`}
+                >
+                  <Input
+                    value={item.text}
+                    onChange={(e) => updateTermItem(index, { text: e.target.value })}
+                    className={`h-8 flex-1 text-sm ${item.bold ? 'font-bold' : ''}`}
+                  />
+                  <div className="flex items-center gap-4 shrink-0">
+                    <div className="flex w-10 justify-center">
+                      <Checkbox
+                        checked={item.show}
+                        onCheckedChange={(checked) =>
+                          updateTermItem(index, { show: Boolean(checked) })
+                        }
+                      />
+                    </div>
+                    <div className="flex w-10 justify-center">
+                      <Checkbox
+                        checked={item.bold}
+                        disabled={!item.show}
+                        onCheckedChange={(checked) =>
+                          updateTermItem(index, { bold: Boolean(checked) })
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </CardContent>
