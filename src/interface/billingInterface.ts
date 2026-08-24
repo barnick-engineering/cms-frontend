@@ -190,17 +190,17 @@ export const DEFAULT_TERM_ITEMS: TermItem[] = [
     bold: false,
   },
   {
-    text: 'Delivery dates agreed upon at order confirmation.',
+    text: 'Changes after confirmation may incur additional charges.',
     show: true,
     bold: false,
   },
   {
-    text: 'All prices are subject to change without prior notice.',
+    text: 'Delivery dates agreed upon at order confirmation.',
     show: false,
     bold: false,
   },
   {
-    text: 'Goods once sold are not subject to return or exchange.',
+    text: 'Prices exclude VAT & Taxes. A carring charge will be added.',
     show: false,
     bold: false,
   },
