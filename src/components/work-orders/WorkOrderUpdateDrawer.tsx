@@ -36,7 +36,6 @@ import { toast } from "sonner"
 import type { AxiosError } from "axios"
 import type { WorkOrder, WorkOrderPaymentMethod } from "@/interface/workOrderInterface"
 import { useUpdateWorkOrder } from "@/hooks/useWorkOrder"
-import { DEFAULT_BKASH_NUMBER } from "@/lib/workOrderPaymentStatus"
 
 const updateWorkOrderSchema = z
   .object({
@@ -44,26 +43,38 @@ const updateWorkOrderSchema = z
       .number({ error: "Amount is required" })
       .min(0, "Amount must be 0 or more")
       .optional(),
-    method: z.enum(["cash", "bank", "bkash"]),
-    bkash_number: z.string().optional(),
+    method: z.enum(["cash", "bank", "bkash", "nagad", "cheque"]),
+    bank_name: z.string().optional(),
+    bank_account_name: z.string().optional(),
+    cheque_number: z.string().optional(),
+    mobile_number: z.string().optional(),
     paid: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
     if (!data.paid && data.amount === undefined) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Enter an amount or mark as paid",
         path: ["amount"],
       })
     }
-    if (data.method === "bkash" && (data.amount ?? 0) > 0) {
-      const number = (data.bkash_number || "").trim()
-      if (!number) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Bkash number is required",
-          path: ["bkash_number"],
-        })
+    const amt = data.amount ?? 0
+    if (data.method === "bank" && amt > 0) {
+      if (!(data.bank_name || "").trim()) {
+        ctx.addIssue({ code: "custom", message: "Bank name is required", path: ["bank_name"] })
+      }
+      if (!(data.bank_account_name || "").trim()) {
+        ctx.addIssue({ code: "custom", message: "Account name is required", path: ["bank_account_name"] })
+      }
+    }
+    if (data.method === "cheque" && amt > 0) {
+      if (!(data.cheque_number || "").trim()) {
+        ctx.addIssue({ code: "custom", message: "Cheque number is required", path: ["cheque_number"] })
+      }
+    }
+    if ((data.method === "bkash" || data.method === "nagad") && amt > 0) {
+      if (!(data.mobile_number || "").trim()) {
+        ctx.addIssue({ code: "custom", message: "Mobile number is required", path: ["mobile_number"] })
       }
     }
   })
@@ -94,7 +105,10 @@ const WorkOrderUpdateDrawer = ({
     defaultValues: {
       amount: undefined,
       method: "cash",
-      bkash_number: DEFAULT_BKASH_NUMBER,
+      bank_name: "",
+      bank_account_name: "",
+      cheque_number: "",
+      mobile_number: "",
       paid: false,
     },
   })
@@ -106,7 +120,10 @@ const WorkOrderUpdateDrawer = ({
       form.reset({
         amount: undefined,
         method: "cash",
-        bkash_number: DEFAULT_BKASH_NUMBER,
+        bank_name: "",
+        bank_account_name: "",
+        cheque_number: "",
+        mobile_number: "",
         paid: false,
       })
     }
@@ -125,8 +142,15 @@ const WorkOrderUpdateDrawer = ({
         data: {
           amount: paymentAmount,
           method: data.method as WorkOrderPaymentMethod,
-          ...(data.method === "bkash" && {
-            bkash_number: (data.bkash_number || DEFAULT_BKASH_NUMBER).trim(),
+          ...(data.method === "bank" && {
+            bank_name: data.bank_name?.trim(),
+            bank_account_name: data.bank_account_name?.trim(),
+          }),
+          ...(data.method === "cheque" && {
+            cheque_number: data.cheque_number?.trim(),
+          }),
+          ...((data.method === "bkash" || data.method === "nagad") && {
+            mobile_number: data.mobile_number?.trim(),
           }),
           ...(data.paid && { is_paid: true }),
         },
@@ -196,8 +220,10 @@ const WorkOrderUpdateDrawer = ({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="cash">Cash</SelectItem>
-                      <SelectItem value="bank">Bank</SelectItem>
+                      <SelectItem value="bank">Bank Transfer</SelectItem>
                       <SelectItem value="bkash">Bkash</SelectItem>
+                      <SelectItem value="nagad">Nagad</SelectItem>
+                      <SelectItem value="cheque">Cheque</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -205,15 +231,62 @@ const WorkOrderUpdateDrawer = ({
               )}
             />
 
-            {watchedMethod === "bkash" && (
+            {watchedMethod === "bank" && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="bank_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bank name</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="e.g. Dutch-Bangla Bank" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="bank_account_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Account name</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Account holder name" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
+
+            {watchedMethod === "cheque" && (
               <FormField
                 control={form.control}
-                name="bkash_number"
+                name="cheque_number"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Bkash number</FormLabel>
+                    <FormLabel>Cheque number</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder={DEFAULT_BKASH_NUMBER} />
+                      <Input {...field} placeholder="e.g. 0012345" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {(watchedMethod === "bkash" || watchedMethod === "nagad") && (
+              <FormField
+                control={form.control}
+                name="mobile_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mobile number</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="01XXXXXXXXX" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -125,3 +125,14 @@ export const deleteWorkOrder = async (id: string | number) => {
 
   return res.data
 }
+
+// delete a single payment from a work order
+export const deleteWorkOrderPayment = async (
+  workOrderId: string | number,
+  paymentId: number
+): Promise<WorkOrderDetailData> => {
+  const res = await axiosInstance.delete<{ data: WorkOrderDetailData }>(
+    `${apiEndpoints.workOrder.addWorkOrderPayment}${workOrderId}/payments/${paymentId}/`
+  )
+  return res.data.data
+}

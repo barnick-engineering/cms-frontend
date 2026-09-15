@@ -109,12 +109,16 @@ export interface WorkOrderDetailExpense {
   details: WorkOrderDetailExpenseItem[]
 }
 
-export type WorkOrderPaymentMethod = 'cash' | 'bank' | 'bkash'
+export type WorkOrderPaymentMethod = 'cash' | 'bank' | 'bkash' | 'nagad' | 'cheque'
 
 export interface WorkOrderPaymentRecord {
   id: number
   amount: number
   method: WorkOrderPaymentMethod
+  bank_name: string | null
+  bank_account_name: string | null
+  cheque_number: string | null
+  mobile_number: string | null
   bkash_number: string | null
   created: string
   paid_by: string | null
