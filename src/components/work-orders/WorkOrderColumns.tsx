@@ -102,7 +102,7 @@ export const WorkOrderColumns: ColumnDef<WorkOrderListInterface>[] = [
         row.getValue<number>('total_expense') || row.original.total_expense || 0
       const net = amount - totalExpense
       const profitPct =
-        totalExpense > 0 ? (net / totalExpense) * 100 : null
+        amount > 0 ? (net / amount) * 100 : null
       const netStr = `৳${net.toLocaleString('en-IN')}`
       const pctStr =
         profitPct !== null ? ` (${profitPct.toFixed(2)}%)` : ''
