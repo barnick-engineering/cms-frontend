@@ -1,14 +1,43 @@
+import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import type { WorkOrderDetailData } from '@/interface/workOrderInterface'
+import { Button } from '@/components/ui/button'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
+import type { WorkOrderDetailData, WorkOrderPaymentRecord } from '@/interface/workOrderInterface'
 import { getPaymentStatus, getPendingAmount, PAYMENT_METHOD_LABELS } from '@/lib/workOrderPaymentStatus'
+import { useDeleteWorkOrderPayment } from '@/hooks/useWorkOrder'
 
 type WorkOrderDetailContentProps = {
   workOrderDetail: WorkOrderDetailData
 }
 
+function paymentSourceDetail(p: WorkOrderPaymentRecord): string {
+  if (p.method === 'bank') {
+    const parts = [p.bank_name, p.bank_account_name].filter(Boolean)
+    return parts.length ? parts.join(' / ') : p.paid_by || '—'
+  }
+  if (p.method === 'cheque') return p.cheque_number || p.paid_by || '—'
+  if (p.method === 'bkash' || p.method === 'nagad') {
+    return p.mobile_number || p.bkash_number || p.paid_by || '—'
+  }
+  return p.paid_by || '—'
+}
+
 export function WorkOrderDetailContent({ workOrderDetail }: WorkOrderDetailContentProps) {
+  const [pendingDelete, setPendingDelete] = useState<WorkOrderPaymentRecord | null>(null)
+  const deleteMutation = useDeleteWorkOrderPayment()
   const isPaid =
     getPaymentStatus(
       workOrderDetail.amount,
@@ -166,6 +195,7 @@ export function WorkOrderDetailContent({ workOrderDetail }: WorkOrderDetailConte
                     <th className="p-3 text-left font-medium">Method</th>
                     <th className="p-3 text-left font-medium">Details</th>
                     <th className="p-3 text-right font-medium">Amount</th>
+                    <th className="p-3 w-10" />
                   </tr>
                 </thead>
                 <tbody>
@@ -180,12 +210,20 @@ export function WorkOrderDetailContent({ workOrderDetail }: WorkOrderDetailConte
                         {PAYMENT_METHOD_LABELS[payment.method] || payment.method}
                       </td>
                       <td className="p-3 text-muted-foreground">
-                        {payment.method === 'bkash' && payment.bkash_number
-                          ? payment.bkash_number
-                          : payment.paid_by || '—'}
+                        {paymentSourceDetail(payment)}
                       </td>
                       <td className="p-3 text-right font-semibold">
                         ৳{payment.amount.toLocaleString('en-IN')}
+                      </td>
+                      <td className="p-3">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-destructive hover:text-destructive"
+                          onClick={() => setPendingDelete(payment)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -195,6 +233,43 @@ export function WorkOrderDetailContent({ workOrderDetail }: WorkOrderDetailConte
           </CardContent>
         </Card>
       )}
+
+      <AlertDialog open={!!pendingDelete} onOpenChange={(open) => { if (!open) setPendingDelete(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete payment?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the{' '}
+              <strong>৳{pendingDelete?.amount.toLocaleString('en-IN')}</strong> payment and
+              subtract it from the work order total. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (!pendingDelete) return
+                deleteMutation.mutate(
+                  { workOrderId: workOrderDetail.id, paymentId: pendingDelete.id },
+                  {
+                    onSuccess: () => {
+                      toast.success('Payment deleted.')
+                      setPendingDelete(null)
+                    },
+                    onError: () => {
+                      toast.error('Failed to delete payment.')
+                      setPendingDelete(null)
+                    },
+                  }
+                )
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Items */}
       {workOrderDetail.items && workOrderDetail.items.length > 0 && (

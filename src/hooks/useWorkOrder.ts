@@ -2,6 +2,7 @@ import {
   addWorkOrderPayment,
   createWorkOrder,
   deleteWorkOrder,
+  deleteWorkOrderPayment,
   getWorkOrderById,
   updateWorkOrderFull,
   workOrderList,
@@ -102,6 +103,20 @@ export const useDeleteWorkOrder = () => {
     mutationFn: (id: string | number) => deleteWorkOrder(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORK_ORDER_KEYS.all })
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] })
+    },
+  })
+}
+
+// delete a single payment
+export const useDeleteWorkOrderPayment = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ workOrderId, paymentId }: { workOrderId: string | number; paymentId: number }) =>
+      deleteWorkOrderPayment(workOrderId, paymentId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: WORK_ORDER_KEYS.all })
+      queryClient.invalidateQueries({ queryKey: WORK_ORDER_KEYS.detail(variables.workOrderId) })
       queryClient.invalidateQueries({ queryKey: ["dashboard"] })
     },
   })

@@ -30,8 +30,10 @@ export function getPendingAmount(
 
 export const PAYMENT_METHOD_LABELS: Record<string, string> = {
   cash: 'Cash',
-  bank: 'Bank',
+  bank: 'Bank Transfer',
   bkash: 'Bkash',
+  nagad: 'Nagad',
+  cheque: 'Cheque',
 }
 
 export const DEFAULT_BKASH_NUMBER = '01671737258'
