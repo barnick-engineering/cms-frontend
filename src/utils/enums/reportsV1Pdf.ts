@@ -154,10 +154,11 @@ export function generateExpenseReportV1Pdf(
     r.work_order ?? '–',
     r.customer ?? '–',
     r.paid_by,
+    (r.work_order_items ?? []).map((wi) => wi.item).join(', ') || '–',
   ])
   autoTable(doc, {
     startY: y,
-    head: [['No', 'Purpose', 'Amount', 'Details', 'Date', 'Work Order', 'Customer', 'Paid By']],
+    head: [['No', 'Purpose', 'Amount', 'Details', 'Date', 'Work Order', 'Customer', 'Paid By', 'WO Items']],
     body: tableRows,
     theme: 'striped',
     headStyles: { fillColor: [51, 65, 85], textColor: 255, halign: 'center' },
