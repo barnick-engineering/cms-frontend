@@ -25,7 +25,6 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { NumberInput } from "@/components/ui/number-input"
 import { coerceNumber } from "@/lib/numberInput"
@@ -37,7 +36,7 @@ import { useCreateExpense, useUpdateExpense } from "@/hooks/useExpense"
 import type { ExpenseFormInterface, Expense } from "@/interface/expenseInterface"
 import { expenseFormSchema, type ExpenseFormType } from "@/schema/expenseFormSchema"
 import { Combobox } from "@/components/ui/combobox"
-import { useWorkOrderList } from "@/hooks/useWorkOrder"
+import { useWorkOrderList, useWorkOrderById } from "@/hooks/useWorkOrder"
 import { useCustomerList } from "@/hooks/useCustomer"
 import { useTeamList } from "@/hooks/useTeam"
 import type { TeamMember } from "@/interface/teamInterface"
@@ -65,7 +64,6 @@ function parsePurposeString(raw: string): { selected: string[]; otherText: strin
         } else if (KNOWN_PURPOSE_VALUES.has(part)) {
             selected.push(part)
         } else {
-            // Legacy: unknown value stored as custom others text
             selected.push("others")
             otherText = part
         }
@@ -79,6 +77,21 @@ function buildPurposeString(selected: string[], otherText: string): string {
             p === "others" && otherText.trim() ? `others: ${otherText.trim()}` : p
         )
         .join(", ")
+}
+
+function CheckMark({ checked }: { checked: boolean }) {
+    return (
+        <div className={cn(
+            "shrink-0 h-4 w-4 rounded-sm border flex items-center justify-center transition-colors",
+            checked ? "bg-primary border-primary" : "border-input bg-background"
+        )}>
+            {checked && (
+                <svg viewBox="0 0 12 12" className="h-3 w-3 text-primary-foreground" fill="none">
+                    <polyline points="2,6 5,9 10,3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+            )}
+        </div>
+    )
 }
 
 interface PurposeMultiSelectProps {
@@ -148,10 +161,7 @@ function PurposeMultiSelect({ options, value, onChange }: PurposeMultiSelectProp
                                     value.includes(option.value) && "bg-accent/50"
                                 )}
                             >
-                                <Checkbox
-                                    checked={value.includes(option.value)}
-                                    className="pointer-events-none shrink-0"
-                                />
+                                <CheckMark checked={value.includes(option.value)} />
                                 <span className={cn(value.includes(option.value) && "font-medium")}>
                                     {option.label}
                                 </span>
@@ -247,14 +257,55 @@ const ExpenseMutateDrawer = ({
             amount: undefined,
             expense_date: new Date().toISOString().split("T")[0],
             remarks: "",
+            work_order_items_ids: [],
         },
     })
 
     const watchedPurpose = form.watch("purpose")
+    const watchedWorkOrder = form.watch("work_order")
+
+    // Derive numeric work order ID for fetching items
+    const selectedWorkOrderId = useMemo(() => {
+        if (!watchedWorkOrder || watchedWorkOrder === "" || watchedWorkOrder === "__none__") return null
+        const parsed = Number(watchedWorkOrder)
+        return Number.isFinite(parsed) ? parsed : null
+    }, [watchedWorkOrder])
+
+    // Fetch work order detail to get items when a WO is selected
+    const { data: workOrderDetail } = useWorkOrderById(
+        selectedWorkOrderId ?? 0,
+        { enabled: !!selectedWorkOrderId }
+    )
+
+    const workOrderItems = useMemo(() => workOrderDetail?.items ?? [], [workOrderDetail])
+
+    // Track selected item IDs (synced with form field)
+    const watchedItemIds = form.watch("work_order_items_ids") ?? []
+
+    const toggleItem = (itemId: number) => {
+        const current = form.getValues("work_order_items_ids") ?? []
+        let next: number[]
+        if (current.includes(itemId)) {
+            next = current.filter((id) => id !== itemId)
+        } else {
+            next = [...current, itemId]
+        }
+        form.setValue("work_order_items_ids", next, { shouldValidate: false })
+    }
+
+    // When work order changes, clear previously selected items
+    const prevWorkOrderIdRef = useMemo(() => ({ value: selectedWorkOrderId }), [])
+    useEffect(() => {
+        if (prevWorkOrderIdRef.value !== selectedWorkOrderId) {
+            prevWorkOrderIdRef.value = selectedWorkOrderId
+            form.setValue("work_order_items_ids", [], { shouldValidate: false })
+        }
+    }, [selectedWorkOrderId, form, prevWorkOrderIdRef])
 
     useEffect(() => {
         if (open && currentRow && isUpdate) {
             const { selected, otherText } = parsePurposeString(currentRow.purpose || "")
+            const linkedItemIds = (currentRow.work_order_items ?? []).map((wi) => wi.id)
             form.reset({
                 work_order: currentRow.work_order ? String(currentRow.work_order) : "",
                 purpose: selected,
@@ -265,6 +316,7 @@ const ExpenseMutateDrawer = ({
                 amount: currentRow.amount || 0,
                 expense_date: currentRow.expense_date || new Date().toISOString().split("T")[0],
                 remarks: currentRow.remarks || "",
+                work_order_items_ids: linkedItemIds,
             })
         } else if (!open) {
             form.reset({
@@ -277,6 +329,7 @@ const ExpenseMutateDrawer = ({
                 amount: undefined,
                 expense_date: new Date().toISOString().split("T")[0],
                 remarks: "",
+                work_order_items_ids: [],
             })
             setWorkOrderSearch("")
             setCustomerSearch("")
@@ -295,6 +348,7 @@ const ExpenseMutateDrawer = ({
             amount: coerceNumber(data.amount),
             expense_date: data.expense_date || new Date().toISOString().split("T")[0],
             remarks: data.remarks?.trim() || null,
+            work_order_items_ids: data.work_order_items_ids ?? [],
         }
 
         if (isUpdate && currentRow?.id) {
@@ -400,6 +454,54 @@ const ExpenseMutateDrawer = ({
                   </FormItem>
                 )}
               />
+
+              {/* Work Order Items selector — shown when a WO with items is selected */}
+              {selectedWorkOrderId && workOrderItems.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium leading-none">
+                    Work Order Items
+                    <span className="ml-1 text-xs text-muted-foreground font-normal">
+                      (select to link &amp; auto-fill amount)
+                    </span>
+                  </p>
+                  <div className="rounded-md border divide-y">
+                    {workOrderItems.map((item) => {
+                      const itemId = item.id as number
+                      const unitPrice = item.unit_price !== undefined ? Number(item.unit_price) : 0
+                      const isChecked = watchedItemIds.includes(itemId)
+                      return (
+                        <div
+                          key={itemId}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => toggleItem(itemId)}
+                          onKeyDown={(e) => { if (e.key === " " || e.key === "Enter") toggleItem(itemId) }}
+                          className={cn(
+                            "flex w-full cursor-pointer items-center gap-3 px-3 py-2 text-sm text-left hover:bg-accent/50 transition-colors",
+                            isChecked && "bg-accent/30"
+                          )}
+                        >
+                          <CheckMark checked={isChecked} />
+                          <span className={cn("flex-1 truncate", isChecked && "font-medium")}>
+                            {item.item}
+                          </span>
+                          {unitPrice > 0 && (
+                            <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+                              ৳{unitPrice.toLocaleString("en-IN")}
+                            </span>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {watchedItemIds.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {watchedItemIds.length} item{watchedItemIds.length > 1 ? "s" : ""} selected — amount auto-filled. You can still edit it manually.
+                    </p>
+                  )}
+                </div>
+              )}
+
               <FormField
                 control={form.control}
                 name="purpose"

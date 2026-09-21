@@ -96,6 +96,7 @@ export interface ExpenseReportV1Row {
   customer_id: number | null
   paid_by: string
   remarks: string | null
+  work_order_items?: Array<{ id: number; item: string }>
 }
 
 export interface ExpenseReportV1Summary {

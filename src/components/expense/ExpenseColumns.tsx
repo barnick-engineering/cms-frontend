@@ -41,6 +41,21 @@ export const ExpenseColumns: ColumnDef<Expense>[] = [
         header: ({ column }) => <DataTableColumnHeader column={column} title='Work Order' />,
     },
     {
+        accessorKey: 'work_order_items',
+        header: ({ column }) => <DataTableColumnHeader column={column} title='WO Items' />,
+        cell: ({ row }) => {
+            const items = row.getValue<Array<{ id: number; item: string }> | undefined>('work_order_items')
+            if (!items || items.length === 0) return <span className="text-muted-foreground">—</span>
+            return (
+                <div className="flex flex-wrap gap-1">
+                    {items.map((wi) => (
+                        <Badge key={wi.id} variant="outline" className="text-xs">{wi.item}</Badge>
+                    ))}
+                </div>
+            )
+        },
+    },
+    {
         accessorKey: 'client',
         header: ({ column }) => <DataTableColumnHeader column={column} title='Customer' />,
         cell: ({ row }) => {

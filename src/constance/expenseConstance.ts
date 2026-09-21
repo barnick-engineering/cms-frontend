@@ -21,4 +21,7 @@ export const expensePurposes: { label: string; value: string }[] = [
   { label: "personal", value: "personal" },
   { label: "labour", value: "labour" },
   { label: "cutting", value: "cutting" },
+  { label: "advance", value: "advance" },
+  { label: "bill print", value: "bill print" },
+  { label: "chalan print", value: "chalan print" },
 ];

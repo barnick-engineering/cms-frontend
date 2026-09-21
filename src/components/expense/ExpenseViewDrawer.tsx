@@ -95,6 +95,22 @@ const ExpenseViewDrawer = ({
                         </div>
                     )}
 
+                    {currentRow.work_order_items && currentRow.work_order_items.length > 0 && (
+                        <div className="col-span-2">
+                            <span className="font-medium text-foreground">Work Order Items:</span>
+                            <div className="mt-1 space-y-1">
+                                {currentRow.work_order_items.map((wi) => (
+                                    <div key={wi.id} className="flex items-center justify-between rounded-sm bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
+                                        <span>{wi.item}</span>
+                                        {wi.unit_price && (
+                                            <span className="tabular-nums">৳{Number(wi.unit_price).toLocaleString("en-IN")}</span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {currentRow.remarks && (
                         <div className="col-span-2">
                             <span className="font-medium text-foreground">Remarks:</span>{' '}

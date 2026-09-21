@@ -12,6 +12,7 @@ export const expenseFormSchema = z.object({
     .min(0, 'Amount must be non-negative'),
   expense_date: z.string().optional(),
   remarks: z.string().optional().nullable(),
+  work_order_items_ids: z.array(z.number()),
 })
 
 export type ExpenseFormType = z.infer<typeof expenseFormSchema>

@@ -1,3 +1,12 @@
+// Work order item linked to an expense
+export interface WorkOrderItemDetail {
+  id: number
+  item: string
+  details: string | null
+  unit_price: string | null
+  total_order: string | null
+}
+
 // Expense item from API
 export interface Expense {
   id: number
@@ -14,6 +23,7 @@ export interface Expense {
   work_order: number | null
   customer: number | null
   paid_by: number | null
+  work_order_items?: WorkOrderItemDetail[]
 }
 
 // Expense list response
@@ -37,6 +47,7 @@ export interface ExpenseFormInterface {
   amount?: number
   expense_date?: string
   remarks?: string | null
+  work_order_items_ids?: number[]
 }
 
 // Table props

@@ -107,7 +107,7 @@ export function generateExpenseReportV1Excel(
 ) {
   const rows = [
     ...headerRows('Expense Report', dateRange),
-    ['No', 'Purpose', 'Amount', 'Details', 'Expense Date', 'Work Order', 'Customer', 'Paid By'],
+    ['No', 'Purpose', 'Amount', 'Details', 'Expense Date', 'Work Order', 'Customer', 'Paid By', 'WO Items'],
     ...data.map((r) => [
       r.no,
       r.purpose,
@@ -117,6 +117,7 @@ export function generateExpenseReportV1Excel(
       r.work_order ?? '',
       r.customer ?? '',
       r.paid_by,
+      (r.work_order_items ?? []).map((wi) => wi.item).join(', '),
     ]),
     [],
     ['Total expenses', summary.total_expenses],
