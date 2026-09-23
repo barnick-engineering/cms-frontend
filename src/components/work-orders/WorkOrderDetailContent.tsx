@@ -340,11 +340,12 @@ export function WorkOrderDetailContent({ workOrderDetail }: WorkOrderDetailConte
                 <Separator />
                 {expenseGroup.details && expenseGroup.details.length > 0 && (
                   <div className="overflow-x-auto rounded-lg border [-webkit-overflow-scrolling:touch]">
-                    <table className="w-full min-w-[42rem] text-sm sm:text-base">
+                    <table className="w-full min-w-208 text-sm sm:text-base">
                       <thead className="bg-muted">
                         <tr>
                           <th className="p-3 text-left font-medium">Expense No</th>
                           <th className="p-3 text-left font-medium">Purpose</th>
+                          <th className="p-3 text-left font-medium">WO Item</th>
                           <th className="p-3 text-left font-medium">Details</th>
                           <th className="p-3 text-left font-medium">Paid By</th>
                           <th className="p-3 text-left font-medium">Date</th>
@@ -357,6 +358,11 @@ export function WorkOrderDetailContent({ workOrderDetail }: WorkOrderDetailConte
                             <td className="p-3 font-medium">{expense.no || 'N/A'}</td>
                             <td className="p-3">
                               <Badge variant="secondary">{expense.purpose || '-'}</Badge>
+                            </td>
+                            <td className="p-3 text-muted-foreground">
+                              {expense.work_order_items && expense.work_order_items.length > 0
+                                ? expense.work_order_items.map((wi) => wi.item).join(', ')
+                                : '-'}
                             </td>
                             <td className="p-3 text-muted-foreground">{expense.details || '-'}</td>
                             <td className="p-3">{expense.paid_by || '-'}</td>
@@ -371,7 +377,7 @@ export function WorkOrderDetailContent({ workOrderDetail }: WorkOrderDetailConte
                           </tr>
                         ))}
                         <tr className="border-t-2 border-primary bg-muted/30">
-                          <td colSpan={5} className="p-3 text-right font-bold">
+                          <td colSpan={6} className="p-3 text-right font-bold">
                             Subtotal:
                           </td>
                           <td className="p-3 text-right text-lg font-bold">
