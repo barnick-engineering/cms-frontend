@@ -102,6 +102,7 @@ export interface WorkOrderDetailExpenseItem {
   paid_by: string
   expense_date: string
   bill_disbursed_date: string | null
+  work_order_items?: Array<{ id: number; item: string }>
 }
 
 export interface WorkOrderDetailExpense {
