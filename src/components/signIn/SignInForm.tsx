@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { ArrowRight, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -49,7 +50,7 @@ const SignInForm = ({ className, ...props }: React.HTMLAttributes<HTMLFormElemen
       <form 
         onSubmit={form.handleSubmit(onSubmit)} 
         noValidate
-        className={cn('grid gap-3', className)} 
+        className={cn('grid gap-4', className)} 
         {...props}>
         <FormField
           control={form.control}
@@ -58,7 +59,13 @@ const SignInForm = ({ className, ...props }: React.HTMLAttributes<HTMLFormElemen
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder='example@gmail.com' {...field} />
+                <Input
+                  type='email'
+                  autoComplete='email'
+                  placeholder='you@barnickpracharani.com'
+                  className='bg-card h-11'
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -72,7 +79,12 @@ const SignInForm = ({ className, ...props }: React.HTMLAttributes<HTMLFormElemen
             <FormItem className='relative'>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <PasswordInput placeholder='********' {...field} />
+                <PasswordInput
+                  autoComplete='current-password'
+                  placeholder='Enter your password'
+                  inputClassName='bg-card h-11 text-base md:text-sm pe-10'
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
               {/* <Link
@@ -85,8 +97,22 @@ const SignInForm = ({ className, ...props }: React.HTMLAttributes<HTMLFormElemen
           )}
         />
 
-        <Button type='submit' className='mt-2' disabled={isLoading}>
-          {isLoading ? 'Logging in...' : 'Login'}
+        <Button
+          type='submit'
+          className='hover:bg-primary-hover group mt-3 h-11 text-sm font-semibold tracking-wide'
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className='animate-spin' />
+              Signing in…
+            </>
+          ) : (
+            <>
+              Sign in
+              <ArrowRight className='transition-transform group-hover:translate-x-0.5' />
+            </>
+          )}
         </Button>
         {/* Registration link disabled on this branch
         <p className='text-muted-foreground text-center text-sm'>
