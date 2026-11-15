@@ -142,7 +142,7 @@ export function ReportDetailView({
 
   const { data: customerData } =
     useCustomerWorkOrdersReport(
-      reportParams ? { ...reportParams, limit: 100, offset: 0 } : undefined,
+      reportParams ? { ...reportParams, limit: REPORT_EXPORT_MAX, offset: 0 } : undefined,
       { enabled: enabled && needsCustomerBulk && !isCustomerWise }
     )
   const { data: customerPagedData, isLoading: customerPagedLoading } =
@@ -156,7 +156,7 @@ export function ReportDetailView({
   const { data: woDetailsData, isLoading: woLoading } =
     useWorkOrderDetailsReport(
       isProductMix && reportParams
-        ? { ...reportParams, limit: 100, offset: 0 }
+        ? { ...reportParams, limit: REPORT_EXPORT_MAX, offset: 0 }
         : paginatedParams,
       {
         enabled:
@@ -167,7 +167,7 @@ export function ReportDetailView({
   const { data: expensesData, isLoading: expensesLoading } =
     useExpensesReportV1(
       isExpenseByPurpose && reportParams
-        ? { ...reportParams, limit: 100, offset: 0 }
+        ? { ...reportParams, limit: REPORT_EXPORT_MAX, offset: 0 }
         : paginatedParams,
       {
         enabled: enabled && (isExpenseReport || isExpenseByPurpose),
@@ -179,12 +179,12 @@ export function ReportDetailView({
   )
 
   const { data: executiveExpenseData } = useExpensesReportV1(
-    reportParams ? { ...reportParams, limit: 100, offset: 0 } : undefined,
+    reportParams ? { ...reportParams, limit: REPORT_EXPORT_MAX, offset: 0 } : undefined,
     { enabled: enabled && isExecutive }
   )
 
   const { data: executiveCustomerData } = useCustomerWorkOrdersReport(
-    reportParams ? { ...reportParams, limit: 100, offset: 0 } : undefined,
+    reportParams ? { ...reportParams, limit: REPORT_EXPORT_MAX, offset: 0 } : undefined,
     { enabled: enabled && isExecutive }
   )
 
@@ -193,7 +193,7 @@ export function ReportDetailView({
     reportParams?.startDate,
     reportParams?.endDate,
     undefined,
-    100,
+    REPORT_EXPORT_MAX,
     0,
     { enabled: enabled && isLoan }
   )
@@ -327,8 +327,9 @@ export function ReportDetailView({
           sortCustomersByAmount(customerData?.data ?? []).filter((c) => c.pending > 0),
           customerSummary,
           exportDateRange,
-          collected,
-          dashboardRes?.data?.total_pending ?? customerSummary.grand_total_pending
+          // Use the report's own summary so the headline matches the table rows.
+          customerSummary.grand_total_paid,
+          customerSummary.grand_total_pending
         )
       } else if (slug === ReportSlug.EXPENSE_BY_PURPOSE && expensesData?.data) {
         generateExpenseByPurposePdf(expensesData.data, exportDateRange)
@@ -373,7 +374,6 @@ export function ReportDetailView({
     trendingList,
     slug,
     customerData?.data,
-    dashboardRes?.data?.total_pending,
     expensesData?.data,
     woDetailsData?.data,
     isExecutive,

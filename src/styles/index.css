@@ -2,7 +2,38 @@
 @import 'tw-animate-css';
 @import './theme.css';
 
+/* Font classes are applied dynamically by FontProvider, so generate them explicitly. */
+@source inline('font-geist font-inter font-manrope');
+
 @custom-variant dark (&:is(.dark *));
+
+/* Brand fonts, self-hosted (same files as barnickpracharani.com). */
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/geist-latin.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Fraunces';
+  src: url('/fonts/fraunces-latin.woff2') format('woff2');
+  font-weight: 500 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Noto Sans Bengali';
+  src: url('/fonts/noto-sans-bengali-bengali.woff2') format('woff2');
+  font-weight: 400 700;
+  font-display: swap;
+  unicode-range: U+0951-0952, U+0964-0965, U+0980-09FE, U+1CD0, U+1CD2, U+1CD5-1CD6, U+1CD8, U+1CE1, U+1CEA, U+1CED, U+1CF2, U+1CF5-1CF7, U+200C-200D, U+20B9, U+25CC, U+A8F1;
+}
+@font-face {
+  font-family: 'Noto Serif Bengali';
+  src: url('/fonts/noto-serif-bengali-bengali.woff2') format('woff2');
+  font-weight: 500 800;
+  font-display: swap;
+  unicode-range: U+0951-0952, U+0964-0965, U+0980-09FE, U+1CD0, U+1CD2, U+1CD5-1CD6, U+1CD8, U+1CE1, U+1CEA, U+1CED, U+1CF2, U+1CF5-1CF7, U+200C-200D, U+20B9, U+25CC, U+A8F1;
+}
 
 @layer base {
   * {
@@ -12,6 +43,13 @@
   }
   html {
     @apply overflow-x-hidden;
+  }
+  /* Editorial serif headings, as on the website */
+  h1,
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.01em;
   }
   body {
     @apply bg-background text-foreground has-[div[data-variant='inset']]:bg-sidebar min-h-svh w-full;

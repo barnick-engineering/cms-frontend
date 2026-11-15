@@ -1,3 +1,4 @@
+import { REPORT_EXPORT_MAX } from '@/api/reportV1Api'
 import { useLoanList } from '@/hooks/useLoan'
 import { ReportCard } from '@/components/report/ReportCard'
 import { formatReportCurrency } from '@/lib/reports/collectedProfit'
@@ -19,7 +20,7 @@ export function LoanSummaryReport({
     reportParams?.startDate,
     reportParams?.endDate,
     undefined,
-    100,
+    REPORT_EXPORT_MAX,
     0,
     { enabled }
   )

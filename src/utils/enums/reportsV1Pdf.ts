@@ -90,7 +90,8 @@ export function generateBalanceSheetPdf(
   const d = payload.data
   const income = collectedIncome ?? d.income
   const profit = realizedNetProfit ?? d.net_profit
-  const margin = realizedMargin ?? d.profit_margin_percent
+  // Margin is on collected income; if nothing was collected there is no margin.
+  const margin = collectedIncome != null ? realizedMargin : d.profit_margin_percent
   doc.setFont('helvetica', 'bold')
   doc.text('Collected income:', 14, y)
   doc.setFont('helvetica', 'normal')
@@ -106,7 +107,7 @@ export function generateBalanceSheetPdf(
   doc.setFont('helvetica', 'bold')
   doc.text('Margin on collected:', 14, y + 24)
   doc.setFont('helvetica', 'normal')
-  doc.text(`${margin?.toFixed(1) ?? d.profit_margin_percent}%`, 80, y + 24)
+  doc.text(margin != null ? `${margin.toFixed(1)}%` : '—', 80, y + 24)
   pageFooter(doc)
   doc.save(`Realized_PL_Report_${Date.now()}.pdf`)
 }
