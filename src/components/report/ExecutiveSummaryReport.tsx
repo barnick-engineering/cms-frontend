@@ -1,3 +1,4 @@
+import { REPORT_EXPORT_MAX } from '@/api/reportV1Api'
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useDashboardData } from '@/hooks/useDashboard'
@@ -45,12 +46,12 @@ export function ExecutiveSummaryReport({
     useBalanceSheetReportV1(reportParams, { enabled })
   const { data: customerReport, isLoading: customersLoading } =
     useCustomerWorkOrdersReport(
-      reportParams ? { ...reportParams, limit: 100, offset: 0 } : undefined,
+      reportParams ? { ...reportParams, limit: REPORT_EXPORT_MAX, offset: 0 } : undefined,
       { enabled }
     )
   const { data: expenseReport, isLoading: expensesLoading } =
     useExpensesReportV1(
-      reportParams ? { ...reportParams, limit: 100, offset: 0 } : undefined,
+      reportParams ? { ...reportParams, limit: REPORT_EXPORT_MAX, offset: 0 } : undefined,
       { enabled }
     )
   const { data: trendingData, isLoading: trendingLoading } = useTrendingReport(

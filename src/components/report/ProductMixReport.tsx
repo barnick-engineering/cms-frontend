@@ -1,3 +1,4 @@
+import { REPORT_EXPORT_MAX } from '@/api/reportV1Api'
 import { useMemo } from 'react'
 import {
   ChartContainer,
@@ -29,7 +30,7 @@ export function ProductMixReport({
   enabled,
 }: ProductMixReportProps) {
   const { data, isLoading } = useWorkOrderDetailsReport(
-    reportParams ? { ...reportParams, limit: 100, offset: 0 } : undefined,
+    reportParams ? { ...reportParams, limit: REPORT_EXPORT_MAX, offset: 0 } : undefined,
     { enabled }
   )
 
@@ -77,7 +78,7 @@ export function ProductMixReport({
   return (
     <div className="space-y-6">
       <p className="text-xs text-muted-foreground">
-        Aggregated from work order line items (first {data?.data?.length ?? 0} jobs loaded).
+        Aggregated from line items of {data?.data?.length ?? 0} work orders in this period.
       </p>
 
       {chartData.length > 0 && (

@@ -1,3 +1,4 @@
+import { REPORT_EXPORT_MAX } from '@/api/reportV1Api'
 import { useMemo } from 'react'
 import {
   ChartContainer,
@@ -31,7 +32,7 @@ export function ExpenseByPurposeReport({
   enabled,
 }: ExpenseByPurposeReportProps) {
   const { data, isLoading } = useExpensesReportV1(
-    reportParams ? { ...reportParams, limit: 100, offset: 0 } : undefined,
+    reportParams ? { ...reportParams, limit: REPORT_EXPORT_MAX, offset: 0 } : undefined,
     { enabled }
   )
 

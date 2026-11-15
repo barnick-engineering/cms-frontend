@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { REPORT_EXPORT_MAX } from '@/api/reportV1Api'
 import { Link } from 'react-router-dom'
 import {
   ChartContainer,
@@ -50,15 +51,17 @@ export function CollectionsOutstandingReport({
   )
   const { data: customerReport, isLoading: customersLoading } =
     useCustomerWorkOrdersReport(
-      reportParams ? { ...reportParams, limit: 100, offset: 0 } : undefined,
+      reportParams ? { ...reportParams, limit: REPORT_EXPORT_MAX, offset: 0 } : undefined,
       { enabled }
     )
 
   const isLoading = dashLoading || customersLoading
   const summary = customerReport?.summary
-  const paid = dashboardRes?.data?.paid ?? summary?.grand_total_paid ?? 0
+  // Prefer the customer report summary: it is computed per order with the same
+  // rules as the follow-up list, so the totals reconcile with the rows.
+  const paid = summary?.grand_total_paid ?? dashboardRes?.data?.paid ?? 0
   const pending =
-    dashboardRes?.data?.total_pending ?? summary?.grand_total_pending ?? 0
+    summary?.grand_total_pending ?? dashboardRes?.data?.total_pending ?? 0
 
   const followUpList = useMemo(
     () =>

@@ -63,7 +63,10 @@ export function generateBalanceSheetExcel(
     ['Collected income', collectedIncome ?? d.income],
     ['Expenses', d.expenses],
     ['Realized net profit', realizedNetProfit ?? d.net_profit],
-    ['Margin on collected (%)', realizedMargin ?? d.profit_margin_percent],
+    [
+      'Margin on collected (%)',
+      collectedIncome != null ? (realizedMargin ?? '—') : d.profit_margin_percent,
+    ],
   ]
   const ws = XLSX.utils.aoa_to_sheet(rows)
   const wb = XLSX.utils.book_new()
