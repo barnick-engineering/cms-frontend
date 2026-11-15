@@ -1,71 +1,85 @@
+/*
+ * Barnick brand palette, matched to barnickpracharani.com:
+ * warm cream paper, near-black ink, burnt-orange accent, square corners.
+ */
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  --radius: 0rem;
+  --background: hsl(41 40% 92.2%);
+  --foreground: hsl(0 0% 6.7%);
+  --card: hsl(42 50% 96.1%);
+  --card-foreground: hsl(0 0% 6.7%);
+  --popover: hsl(42 50% 96.1%);
+  --popover-foreground: hsl(0 0% 6.7%);
+  --primary: hsl(17 76% 48.4%);
+  --primary-foreground: hsl(0 0% 6.7%);
+  --primary-hover: hsl(17 77% 60%);
+  --primary-strong: hsl(18 78% 36.5%);
+  --secondary: hsl(41 33% 87.1%);
+  --secondary-foreground: hsl(0 0% 6.7%);
+  --muted: hsl(41 33% 87.1%);
+  --muted-foreground: hsl(37 9% 33.7%);
+  --accent: hsl(22 68% 88.8%);
+  --accent-foreground: hsl(0 0% 6.7%);
+  --destructive: hsl(4 76% 40%);
+  --border: hsl(41 23% 79%);
+  --input: hsl(37 7% 51%);
+  --ring: hsl(0 0% 6.7%);
+  --chart-1: hsl(17 76% 48.4%);
+  --chart-2: hsl(0 0% 6.7%);
+  --chart-3: hsl(17 77% 60%);
+  --chart-4: hsl(37 9% 33.7%);
+  --chart-5: hsl(41 23% 79%);
 
-  --sidebar: var(--background);
+  --sidebar: hsl(41 33% 89.5%);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: var(--accent);
-  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-accent: var(--secondary);
+  --sidebar-accent-foreground: var(--foreground);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
 }
 
+/* Dark: the website's ink surfaces (surface-ink / on-ink) extended to the whole app. */
 .dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.14 0.04 259.21);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
+  --background: hsl(0 0% 6.7%);
+  --foreground: hsl(41 40% 92.2%);
+  --card: hsl(30 5% 10%);
+  --card-foreground: hsl(41 40% 92.2%);
+  --popover: hsl(30 5% 10%);
+  --popover-foreground: hsl(41 40% 92.2%);
+  --primary: hsl(17 77% 60%);
+  --primary-foreground: hsl(0 0% 6.7%);
+  --primary-hover: hsl(17 77% 66%);
+  --primary-strong: hsl(17 76% 48.4%);
+  --secondary: hsl(37 7% 16%);
+  --secondary-foreground: hsl(41 40% 92.2%);
+  --muted: hsl(37 7% 16%);
+  --muted-foreground: hsl(40 14% 70%);
+  --accent: hsl(18 40% 20%);
+  --accent-foreground: hsl(41 40% 92.2%);
+  --destructive: hsl(4 70% 58%);
+  --border: hsl(37 7% 22.4%);
+  --input: hsl(37 7% 32%);
+  --ring: hsl(41 40% 92.2%);
+  --chart-1: hsl(17 77% 60%);
+  --chart-2: hsl(41 40% 92.2%);
+  --chart-3: hsl(17 76% 48.4%);
+  --chart-4: hsl(40 14% 70%);
+  --chart-5: hsl(37 7% 32%);
+
+  --sidebar: hsl(30 5% 8.5%);
+  --sidebar-accent: hsl(37 7% 16%);
 }
 
 @theme inline {
-  --font-inter: 'Inter', 'sans-serif';
-  --font-manrope: 'Manrope', 'sans-serif';
+  --font-geist: 'Geist', 'Noto Sans Bengali', system-ui, sans-serif;
+  --font-inter: 'Inter', 'Noto Sans Bengali', sans-serif;
+  --font-manrope: 'Manrope', 'Noto Sans Bengali', sans-serif;
+  --font-display: 'Fraunces', 'Noto Serif Bengali', Georgia, serif;
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: max(0px, calc(var(--radius) - 4px));
+  --radius-md: max(0px, calc(var(--radius) - 2px));
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --color-background: var(--background);
@@ -76,6 +90,8 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-strong: var(--primary-strong);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
